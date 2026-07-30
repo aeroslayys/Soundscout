@@ -1,2 +1,39 @@
+# --- Dependencies ---
 node_modules/
+package-lock.json
+
+# --- Environment variables (never commit real secrets) ---
 .env
+.env.local
+.env.*.local
+
+# --- Logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# --- OS files ---
+.DS_Store
+Thumbs.db
+
+# --- Editor / IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Build output (if you add a bundler later) ---
+dist/
+build/
+
+# --- Coverage / test output ---
+coverage/
+
+# --- Runtime data ---
+*.pid
+*.seed
+
+# --- Optional: local SQLite/Postgres dumps if you ever export one ---
+*.sql.bak
+*.dump
