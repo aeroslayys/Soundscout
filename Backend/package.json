@@ -1,0 +1,20 @@
+{
+  "name": "soundscout-auth-backend",
+  "version": "1.0.0",
+  "description": "Passwordless OTP auth backend for SoundScout, using Mailtrap for email delivery",
+  "main": "src/server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "pg": "^8.12.0",
+    "nodemailer": "^9.0.3",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoundScout — Log in</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+
+    <div class="auth-brand">
+      <div class="brand-mark"></div>
+      <div>
+        <div class="brand-name">SoundScout</div>
+        <div class="brand-tag">know before you go</div>
+      </div>
+    </div>
+
+    <!-- STEP 1: email entry -->
+    <div class="auth-step" id="stepEmail">
+      <p class="auth-title">Log in or sign up</p>
+      <p class="auth-sub">We'll email you a one-time code — no passwords to remember.</p>
+
+      <label class="field-label">Email</label>
+      <input type="email" id="emailInput" placeholder="you@example.com" autocomplete="email" />
+
+      <button class="btn-primary full" id="continueBtn">Continue</button>
+      <p class="auth-status" id="emailStatus"></p>
+    </div>
+
+    <!-- STEP 2: OTP + (conditionally) profile fields -->
+    <div class="auth-step" id="stepVerify" style="display:none;">
+      <p class="auth-title" id="verifyTitle">Enter your code</p>
+      <p class="auth-sub" id="verifySub">We sent a 6-digit code to <span id="verifyEmailLabel"></span>.</p>
+
+      <label class="field-label">Verification code</label>
+      <input type="text" id="otpInput" inputmode="numeric" maxlength="6" placeholder="000000" class="otp-input" autocomplete="one-time-code" />
+
+      <div class="resend-row">
+        <button class="link-btn" id="resendBtn">Resend code</button>
+        <span class="resend-timer" id="resendTimer"></span>
+      </div>
+
+      <!-- Only shown for new accounts -->
+      <div id="newUserFields" style="display:none;">
+        <div class="field-divider"></div>
+
+        <label class="field-label">Name</label>
+        <input type="text" id="nameInput" placeholder="Your name" />
+
+        <label class="field-label">Age</label>
+        <input type="number" id="ageInput" placeholder="Your age" min="1" max="119" />
+
+        <label class="field-label">Sound sensitivity <span class="field-label-hint">(1 = not sensitive, 5 = very sensitive)</span></label>
+        <div class="sensitivity-scale" id="sensitivityScale">
+          <div class="sens-opt" data-val="1">1</div>
+          <div class="sens-opt" data-val="2">2</div>
+          <div class="sens-opt" data-val="3">3</div>
+          <div class="sens-opt" data-val="4">4</div>
+          <div class="sens-opt" data-val="5">5</div>
+        </div>
+      </div>
+
+      <button class="btn-primary full" id="verifyBtn" style="margin-top:16px;" disabled>Verify code</button>
+      <p class="auth-status" id="verifyStatus"></p>
+
+      <button class="link-btn back-link" id="backBtn">← Use a different email</button>
+    </div>
+
+  </div>
+</div>
+
+<script src="login.js"></script>
+</body>
+</html>
