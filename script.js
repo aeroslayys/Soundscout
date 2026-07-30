@@ -265,6 +265,7 @@
       venues.push(v);
       buildMarker(v);
       nextId++;
+    
     } else {
       var target = venues.find(function(x){ return x.id === ratingTargetId; });
       if(target){
