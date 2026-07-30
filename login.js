@@ -190,7 +190,7 @@ verifyBtn.addEventListener('click', async () => {
 
     setStatus(verifyStatus, 'Success! Redirecting...', 'success');
     setTimeout(() => {
-      window.location.href = 'home.html'; // swap for your actual home page route
+      window.location.href = 'home/home.html'; // swap for your actual home page route
     }, 600);
   } catch(err){
     setStatus(verifyStatus, err.message, 'error');
