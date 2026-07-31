@@ -352,11 +352,301 @@
 
   locateBtn.addEventListener("click", locateUser);
 
+  // ---------- Audio clip: record via mic, or upload a file (5-10s) ----------
+  var MIN_CLIP_SECONDS = 5;
+  var MAX_CLIP_SECONDS = 10;
+
+  var pendingAudioBlob = null;
+  var mediaRecorder = null;
+  var mediaStream = null;
+  var recordChunks = [];
+  var recordStartTime = null;
+  var recordTimerInterval = null;
+  var autoStopTimeout = null;
+
+  var audioField = document.createElement("div");
+  audioField.className = "field";
+  audioField.id = "audio-clip-field";
+
+  var audioLabel = document.createElement("label");
+  audioLabel.textContent = "Record or upload a 5–10s clip";
+  audioLabel.style.display = "block";
+  audioLabel.style.marginBottom = "6px";
+  audioField.appendChild(audioLabel);
+
+  var audioControlsRow = document.createElement("div");
+  audioControlsRow.style.display = "flex";
+  audioControlsRow.style.alignItems = "center";
+  audioControlsRow.style.gap = "10px";
+  audioControlsRow.style.flexWrap = "wrap";
+
+  var recordBtn = document.createElement("button");
+  recordBtn.type = "button";
+  recordBtn.id = "record-btn";
+  recordBtn.textContent = "● Record clip";
+  recordBtn.style.padding = "8px 14px";
+  recordBtn.style.fontFamily = "'Inter', sans-serif";
+  recordBtn.style.fontSize = "13px";
+  recordBtn.style.fontWeight = "600";
+  recordBtn.style.color = "#D9695A";
+  recordBtn.style.background = "#ffffff";
+  recordBtn.style.border = "1.5px solid #D9695A";
+  recordBtn.style.borderRadius = "8px";
+  recordBtn.style.cursor = "pointer";
+
+  var recordTimerLabel = document.createElement("span");
+  recordTimerLabel.id = "record-timer";
+  recordTimerLabel.style.fontFamily = "monospace";
+  recordTimerLabel.style.fontSize = "12.5px";
+  recordTimerLabel.style.color = "#5B6472";
+  recordTimerLabel.textContent = "";
+
+  var uploadLabel = document.createElement("label");
+  uploadLabel.textContent = "or choose a file";
+  uploadLabel.style.fontSize = "12.5px";
+  uploadLabel.style.color = "#2B6E6E";
+  uploadLabel.style.textDecoration = "underline";
+  uploadLabel.style.cursor = "pointer";
+
+  var audioFileInput = document.createElement("input");
+  audioFileInput.type = "file";
+  audioFileInput.accept = "audio/*";
+  audioFileInput.hidden = true;
+  uploadLabel.appendChild(audioFileInput);
+
+  audioControlsRow.appendChild(recordBtn);
+  audioControlsRow.appendChild(recordTimerLabel);
+  audioControlsRow.appendChild(uploadLabel);
+  audioField.appendChild(audioControlsRow);
+
+  var audioResult = document.createElement("div");
+  audioResult.id = "audio-result";
+  audioResult.style.display = "none";
+  audioResult.style.marginTop = "10px";
+  audioResult.style.alignItems = "center";
+  audioResult.style.gap = "10px";
+  audioResult.style.flexWrap = "wrap";
+
+  var audioPlayback = document.createElement("audio");
+  audioPlayback.controls = true;
+  audioPlayback.style.height = "32px";
+
+  var audioDurationBadge = document.createElement("span");
+  audioDurationBadge.style.fontFamily = "monospace";
+  audioDurationBadge.style.fontSize = "11.5px";
+  audioDurationBadge.style.fontWeight = "700";
+  audioDurationBadge.style.color = "#1E4F4F";
+  audioDurationBadge.style.background = "#E1F5EE";
+  audioDurationBadge.style.padding = "2px 8px";
+  audioDurationBadge.style.borderRadius = "8px";
+
+  var removeAudioBtn = document.createElement("button");
+  removeAudioBtn.type = "button";
+  removeAudioBtn.textContent = "Remove";
+  removeAudioBtn.style.fontSize = "12px";
+  removeAudioBtn.style.color = "#5B6472";
+  removeAudioBtn.style.background = "none";
+  removeAudioBtn.style.border = "1px solid #E3DFD3";
+  removeAudioBtn.style.borderRadius = "6px";
+  removeAudioBtn.style.padding = "4px 10px";
+  removeAudioBtn.style.cursor = "pointer";
+
+  audioResult.appendChild(audioPlayback);
+  audioResult.appendChild(audioDurationBadge);
+  audioResult.appendChild(removeAudioBtn);
+  audioField.appendChild(audioResult);
+
+  var audioStatus = document.createElement("p");
+  audioStatus.id = "audio-status";
+  audioStatus.style.fontSize = "12px";
+  audioStatus.style.margin = "8px 0 0 0";
+  audioStatus.style.minHeight = "14px";
+  audioField.appendChild(audioStatus);
+
+  var quietSliderField = document.getElementById("quiet-slider").closest(".field");
+  quietSliderField.parentNode.insertBefore(audioField, quietSliderField);
+
+  function setAudioStatus(msg, kind){
+    audioStatus.textContent = msg;
+    audioStatus.style.color = kind === "error" ? "#D9695A" : (kind === "success" ? "#1E4F4F" : "#5B6472");
+  }
+
+  function resetAudioClip(){
+    pendingAudioBlob = null;
+    audioFileInput.value = "";
+    audioResult.style.display = "none";
+    audioPlayback.src = "";
+    setAudioStatus("", "");
+    recordTimerLabel.textContent = "";
+    recordBtn.textContent = "● Record clip";
+    recordBtn.disabled = false;
+  }
+
+  function finishClip(blob, duration){
+    pendingAudioBlob = blob;
+    var url = URL.createObjectURL(blob);
+    audioPlayback.src = url;
+    audioDurationBadge.textContent = duration.toFixed(1) + "s";
+    audioResult.style.display = "flex";
+    setAudioStatus("Analyzing clip...", "");
+    analyzeAudioClip();
+  }
+
+  var AUDIO_API_BASE = 'http://localhost:4000/api/audio';
+
+  function analyzeAudioClip(){
+    fetch(AUDIO_API_BASE + '/analyze', {
+      method: 'POST',
+      body: (function(){
+        var form = new FormData();
+        form.append('clip', pendingAudioBlob, 'clip.webm');
+        return form;
+      })()
+    })
+      .then(function(res){
+        if(!res.ok) return res.json().then(function(d){ throw new Error(d.error || 'Analysis failed.'); });
+        return res.json();
+      })
+      .then(function(data){
+        var suggested = data.suggested_score;
+        var slider = document.getElementById("quiet-slider");
+        slider.value = suggested;
+        updateSliderPreview();
+        var maxLine = (data.max_volume_dbfs !== null && data.max_volume_dbfs !== undefined)
+          ? " (peak " + data.max_volume_dbfs + " dBFS)"
+          : "";
+        setAudioStatus(
+          "Measured " + data.mean_volume_dbfs + " dBFS avg" + maxLine + " — suggested \"" + suggested + " · " + quietLabel(suggested) + "\", adjust the slider if needed.",
+          "success"
+        );
+      })
+      .catch(function(err){
+        setAudioStatus(err.message || "Couldn't analyze that clip. You can still rate manually.", "error");
+      });
+  }
+
+  removeAudioBtn.addEventListener("click", resetAudioClip);
+
+  audioFileInput.addEventListener("change", function(e){
+    if(!e.target.files.length) return;
+    var file = e.target.files[0];
+    if(file.type.indexOf("audio/") !== 0){
+      setAudioStatus("That doesn't look like an audio file.", "error");
+      return;
+    }
+    var probe = new Audio();
+    var objUrl = URL.createObjectURL(file);
+    probe.preload = "metadata";
+    probe.onloadedmetadata = function(){
+      URL.revokeObjectURL(objUrl);
+      var duration = probe.duration;
+      if(duration < MIN_CLIP_SECONDS){
+        setAudioStatus("Clip is only " + duration.toFixed(1) + "s — needs to be at least " + MIN_CLIP_SECONDS + "s.", "error");
+        return;
+      }
+      if(duration > MAX_CLIP_SECONDS){
+        setAudioStatus("Clip is " + duration.toFixed(1) + "s — please trim to " + MAX_CLIP_SECONDS + "s or under.", "error");
+        return;
+      }
+      finishClip(file, duration);
+    };
+    probe.onerror = function(){
+      setAudioStatus("Couldn't read that file — try a different format.", "error");
+    };
+    probe.src = objUrl;
+  });
+
+  function stopRecordingTimer(){
+    clearInterval(recordTimerInterval);
+    clearTimeout(autoStopTimeout);
+    recordTimerInterval = null;
+    autoStopTimeout = null;
+  }
+
+  recordBtn.addEventListener("click", function(){
+    if(mediaRecorder && mediaRecorder.state === "recording"){
+      mediaRecorder.stop();
+      return;
+    }
+
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      setAudioStatus("Microphone recording isn't supported on this browser.", "error");
+      return;
+    }
+
+    recordBtn.disabled = true;
+    setAudioStatus("Requesting microphone access...", "");
+
+    navigator.mediaDevices.getUserMedia({
+      audio: {
+        autoGainControl: false,
+        noiseSuppression: false,
+        echoCancellation: false
+      }
+    }).then(function(stream){
+      mediaStream = stream;
+      recordChunks = [];
+      mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorder.ondataavailable = function(e){
+        if(e.data.size > 0) recordChunks.push(e.data);
+      };
+
+      mediaRecorder.onstop = function(){
+        stopRecordingTimer();
+        mediaStream.getTracks().forEach(function(t){ t.stop(); });
+
+        var elapsedSeconds = (Date.now() - recordStartTime) / 1000;
+        var blob = new Blob(recordChunks, { type: "audio/webm" });
+
+        recordBtn.textContent = "● Record clip";
+        recordBtn.disabled = false;
+
+        if(elapsedSeconds < MIN_CLIP_SECONDS){
+          setAudioStatus("Recording was only " + elapsedSeconds.toFixed(1) + "s — needs at least " + MIN_CLIP_SECONDS + "s. Try again.", "error");
+          return;
+        }
+        finishClip(blob, elapsedSeconds);
+      };
+
+      mediaRecorder.start();
+      recordStartTime = Date.now();
+      recordBtn.disabled = true;
+      recordBtn.textContent = "■ Stop";
+      setAudioStatus("Recording... minimum " + MIN_CLIP_SECONDS + "s", "");
+
+      recordTimerInterval = setInterval(function(){
+        var elapsed = (Date.now() - recordStartTime) / 1000;
+        recordTimerLabel.textContent = elapsed.toFixed(1) + "s";
+        if(elapsed >= MIN_CLIP_SECONDS){
+          recordBtn.disabled = false;
+          recordBtn.textContent = "■ Stop (" + elapsed.toFixed(0) + "s)";
+        }
+      }, 100);
+
+      autoStopTimeout = setTimeout(function(){
+        if(mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
+      }, MAX_CLIP_SECONDS * 1000);
+
+    }).catch(function(err){
+      recordBtn.disabled = false;
+      if(err.name === "NotAllowedError"){
+        setAudioStatus("Microphone access denied.", "error");
+      } else {
+        setAudioStatus("Couldn't access the microphone.", "error");
+      }
+    });
+  });
+
   var overlay = document.getElementById("modal-overlay");
   var modalMode = "new";
   var ratingTargetId = null;
 
   function openModal(mode, venueId){
+    resetAudioClip();
+    if(mediaRecorder && mediaRecorder.state === "recording"){
+      mediaRecorder.stop();
+    }
     modalMode = mode;
     ratingTargetId = venueId || null;
     var newFields = document.getElementById("fields-new-venue");
