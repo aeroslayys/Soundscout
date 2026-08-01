@@ -4,20 +4,73 @@
   var CATEGORY_LABELS = {all:"All", cafe:"Cafés", restaurant:"Restaurants", library:"Libraries", gym:"Gyms", coworking:"Coworking"};
 
   var venues = [
-    {id:1, name:"Tangerine Reading Room", category:"library", lat:12.0068, lng:79.8107, quiet:5, time:"afternoon", access:true, toilet:true},
-    {id:2, name:"Marigold Coworking", category:"coworking", lat:12.0022, lng:79.8073, quiet:3, time:"morning", access:true, toilet:true},
-    {id:3, name:"Two Rivers Café", category:"cafe", lat:11.9989, lng:79.8135, quiet:2, time:"afternoon", access:false, toilet:false},
-    {id:4, name:"Solaris Fitness Studio", category:"gym", lat:12.0105, lng:79.8051, quiet:1, time:"evening", access:true, toilet:false},
-    {id:5, name:"Amber Leaf Restaurant", category:"restaurant", lat:11.9955, lng:79.8098, quiet:2, time:"evening", access:false, toilet:true},
-    {id:6, name:"Quiet Hour Books & Coffee", category:"cafe", lat:12.0041, lng:79.8161, quiet:4, time:"morning", access:true, toilet:true},
-    {id:7, name:"Origin Community Library", category:"library", lat:11.9917, lng:79.8047, quiet:5, time:"morning", access:true, toilet:false},
-    {id:8, name:"The Loft Coworking", category:"coworking", lat:12.0084, lng:79.8189, quiet:3, time:"afternoon", access:false, toilet:true}
+    {id:1, name:"Tangerine Reading Room", category:"library", lat:12.0068, lng:79.8107, access:true, toilet:true, ratings:[
+      {score:5, time:"morning", timestamp:Date.now()-86400000*2},
+      {score:4, time:"afternoon", timestamp:Date.now()-86400000*2},
+      {score:5, time:"evening", timestamp:Date.now()-86400000}
+    ]},
+    {id:2, name:"Marigold Coworking", category:"coworking", lat:12.0022, lng:79.8073, access:true, toilet:true, ratings:[
+      {score:3, time:"morning", timestamp:Date.now()-86400000*3},
+      {score:2, time:"afternoon", timestamp:Date.now()-86400000}
+    ]},
+    {id:3, name:"Two Rivers Café", category:"cafe", lat:11.9989, lng:79.8135, access:false, toilet:false, ratings:[
+      {score:3, time:"morning", timestamp:Date.now()-86400000*4},
+      {score:2, time:"afternoon", timestamp:Date.now()-86400000*2},
+      {score:1, time:"evening", timestamp:Date.now()-86400000}
+    ]},
+    {id:4, name:"Solaris Fitness Studio", category:"gym", lat:12.0105, lng:79.8051, access:true, toilet:false, ratings:[
+      {score:2, time:"morning", timestamp:Date.now()-86400000*3},
+      {score:1, time:"evening", timestamp:Date.now()-86400000}
+    ]},
+    {id:5, name:"Amber Leaf Restaurant", category:"restaurant", lat:11.9955, lng:79.8098, access:false, toilet:true, ratings:[
+      {score:3, time:"afternoon", timestamp:Date.now()-86400000*2},
+      {score:2, time:"evening", timestamp:Date.now()-86400000}
+    ]},
+    {id:6, name:"Quiet Hour Books & Coffee", category:"cafe", lat:12.0041, lng:79.8161, access:true, toilet:true, ratings:[
+      {score:4, time:"morning", timestamp:Date.now()-86400000*2},
+      {score:3, time:"afternoon", timestamp:Date.now()-86400000}
+    ]},
+    {id:7, name:"Origin Community Library", category:"library", lat:11.9917, lng:79.8047, access:true, toilet:false, ratings:[
+      {score:5, time:"morning", timestamp:Date.now()-86400000*3},
+      {score:5, time:"afternoon", timestamp:Date.now()-86400000}
+    ]},
+    {id:8, name:"The Loft Coworking", category:"coworking", lat:12.0084, lng:79.8189, access:false, toilet:true, ratings:[
+      {score:4, time:"morning", timestamp:Date.now()-86400000*2},
+      {score:3, time:"afternoon", timestamp:Date.now()-86400000}
+    ]}
   ];
 
   var nextId = 9;
   var state = {category:"all", search:"", accessOnly:false, toiletOnly:false, selected:null, userLocation:null, sortByDistance:false};
 
+  var TIME_BUCKETS = ["morning","afternoon","evening","night"];
+  var TIME_BUCKET_LABELS = {morning:"11am", afternoon:"3pm", evening:"7pm", night:"11pm"};
+
+  function currentTimeOfDay(){
+    var h = new Date().getHours();
+    if(h < 11) return "morning";
+    if(h < 16) return "afternoon";
+    if(h < 21) return "evening";
+    return "night";
+  }
+
+  function avgScore(v){
+    if(!v.ratings || !v.ratings.length) return null;
+    var sum = 0;
+    v.ratings.forEach(function(r){ sum += r.score; });
+    return sum / v.ratings.length;
+  }
+
+  function scoreForBucket(v, bucket){
+    var rs = (v.ratings || []).filter(function(r){ return r.time === bucket; });
+    if(!rs.length) return null;
+    var sum = 0;
+    rs.forEach(function(r){ sum += r.score; });
+    return sum / rs.length;
+  }
+
   function quietColor(q){
+    if(q === null || q === undefined) return "rgb(150,150,150)";
     var t = (q - 1) / 4;
     var qc = [0x4E,0x8F,0x73], lc = [0xBD,0x5B,0x45];
     var mix = function(i){ return Math.round(qc[i] + (lc[i]-qc[i]) * (1 - t)); };
@@ -44,13 +97,47 @@
     }
   }
 
-  function dbEstimate(quiet){
-    var table = {1:"~78 dB", 2:"~65 dB", 3:"~52 dB", 4:"~42 dB", 5:"~34 dB"};
-    return table[quiet] || "";
+  function dbEstimateValue(score){
+    if(score === null || score === undefined) return null;
+    var anchors = {1:78, 2:65, 3:52, 4:42, 5:34};
+    var lo = Math.max(1, Math.min(5, Math.floor(score)));
+    var hi = Math.max(1, Math.min(5, Math.ceil(score)));
+    if(lo === hi) return anchors[lo];
+    var frac = score - lo;
+    return anchors[lo] + (anchors[hi] - anchors[lo]) * frac;
+  }
+
+  function dbEstimate(score){
+    var val = dbEstimateValue(score);
+    return val === null ? "" : "~" + Math.round(val) + " dB";
   }
 
   function quietLabel(q){
-    return {1:"Loud", 2:"Lively", 3:"Moderate", 4:"Calm", 5:"Silent"}[q];
+    var rounded = Math.max(1, Math.min(5, Math.round(q)));
+    return {1:"Loud", 2:"Lively", 3:"Moderate", 4:"Calm", 5:"Silent"}[rounded];
+  }
+
+  function timeBarChartHTML(v){
+    var bucketsWithData = TIME_BUCKETS.filter(function(bucket){ return scoreForBucket(v, bucket) !== null; });
+    if(!bucketsWithData.length){
+      return '<p style="font-size:12px;color:#5B6472;margin:8px 0;">No ratings yet — be the first.</p>';
+    }
+
+    var MIN_DB = 30, MAX_DB = 80, MAX_BAR_PX = 54, MIN_BAR_PX = 6;
+
+    var barsHTML = bucketsWithData.map(function(bucket){
+      var s = scoreForBucket(v, bucket);
+      var db = dbEstimateValue(s);
+      var t = Math.max(0, Math.min(1, (db - MIN_DB) / (MAX_DB - MIN_DB)));
+      var barPx = Math.round(MIN_BAR_PX + (MAX_BAR_PX - MIN_BAR_PX) * t);
+      return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;flex:1;">' +
+        '<span style="font-size:9px;font-weight:700;color:#1C2430;">' + Math.round(db) + '</span>' +
+        '<div style="width:100%;max-width:32px;height:' + barPx + 'px;background:' + quietColor(s) + ';border-radius:5px 5px 2px 2px;"></div>' +
+        '<span style="font-size:9.5px;color:#5B6472;">' + TIME_BUCKET_LABELS[bucket] + '</span>' +
+        '</div>';
+    }).join('');
+
+    return '<div style="display:flex;align-items:flex-end;gap:8px;height:' + (MAX_BAR_PX + 30) + 'px;margin:10px 0 8px 0;">' + barsHTML + '</div>';
   }
 
   // ---------- Distance helpers (plain haversine formula, no external API) ----------
@@ -91,7 +178,7 @@
   function buildMarker(v){
     var icon = L.divIcon({
       className:"",
-      html:'<div class="ss-marker" style="background:'+quietColor(v.quiet)+'"></div>',
+      html:'<div class="ss-marker" style="background:'+quietColor(avgScore(v))+'"></div>',
       iconSize:[16,16]
     });
     var m = L.marker([v.lat, v.lng], {icon:icon}).addTo(map);
@@ -101,8 +188,13 @@
   }
 
   function popupHTML(v){
+    var score = avgScore(v);
+    var overallLine = score === null
+      ? "No ratings yet"
+      : CATEGORY_LABELS[v.category].replace(/s$/,'')+' · '+quietLabel(score)+' · '+dbEstimate(score);
     return '<div class="popup-body"><h3>'+escapeHTML(v.name)+'</h3>' +
-      '<p class="popup-cat">'+CATEGORY_LABELS[v.category].replace(/s$/,'')+' · '+quietLabel(v.quiet)+' · '+dbEstimate(v.quiet)+'</p>' +
+      '<p class="popup-cat">'+overallLine+'</p>' +
+      timeBarChartHTML(v) +
       '<button class="popup-rate-btn" onclick="window.__ssOpenRate('+v.id+')">Rate this place</button></div>';
   }
 
@@ -160,7 +252,12 @@
         return da - db;
       });
     } else {
-      visible.sort(function(a,b){ return b.quiet - a.quiet; });
+      visible.sort(function(a,b){
+        var sa = avgScore(a), sb = avgScore(b);
+        if(sa === null) return 1;
+        if(sb === null) return -1;
+        return sb - sa;
+      });
     }
 
     document.getElementById("list-count").textContent = visible.length + (visible.length === 1 ? " venue" : " venues");
@@ -173,21 +270,22 @@
       return;
     }
     visible.forEach(function(v){
+      var score = avgScore(v);
       var card = document.createElement("div");
       card.className = "venue-card" + (state.selected === v.id ? " selected" : "");
       card.setAttribute("tabindex","0");
       card.setAttribute("role","button");
-      card.setAttribute("aria-label", v.name + ", " + quietLabel(v.quiet));
+      card.setAttribute("aria-label", v.name + ", " + (score === null ? "no ratings yet" : quietLabel(score)));
 
       var top = document.createElement("div");
       top.className = "venue-top";
       var left = document.createElement("div");
       var distLabel = distanceLabel(v);
-      var metaLine = CATEGORY_LABELS[v.category].replace(/s$/,'') + ' · ' + v.time + (distLabel ? ' · ' + distLabel : '');
+      var metaLine = CATEGORY_LABELS[v.category].replace(/s$/,'') + (distLabel ? ' · ' + distLabel : '');
       left.innerHTML = '<p class="venue-name">'+escapeHTML(v.name)+'</p><p class="venue-cat">'+metaLine+'</p>';
       var right = document.createElement("div");
       right.className = "db-reading";
-      right.textContent = dbEstimate(v.quiet);
+      right.textContent = dbEstimate(score);
       top.appendChild(left);
       top.appendChild(right);
       card.appendChild(top);
@@ -210,7 +308,7 @@
       card.addEventListener("keydown", function(e){ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); selectVenue(v.id, true); } });
 
       list.appendChild(card);
-      renderWaveform(wf, v.quiet, v.id * 13);
+      renderWaveform(wf, score === null ? 3 : score, v.id * 13);
     });
   }
 
@@ -463,6 +561,12 @@
   audioStatus.style.minHeight = "14px";
   audioField.appendChild(audioStatus);
 
+  // The manual "time of day" picker in home.html is no longer used — time
+  // is auto-detected from the real submission timestamp instead. Hiding
+  // its wrapping .field here rather than requiring an edit to home.html.
+  var venueTimeField = document.getElementById("venue-time").closest(".field");
+  if(venueTimeField) venueTimeField.style.display = "none";
+
   var quietSliderField = document.getElementById("quiet-slider").closest(".field");
   quietSliderField.parentNode.insertBefore(audioField, quietSliderField);
 
@@ -512,11 +616,8 @@
         var slider = document.getElementById("quiet-slider");
         slider.value = suggested;
         updateSliderPreview();
-        var maxLine = (data.max_volume_dbfs !== null && data.max_volume_dbfs !== undefined)
-          ? " (peak " + data.max_volume_dbfs + " dBFS)"
-          : "";
         setAudioStatus(
-          "Measured " + data.mean_volume_dbfs + " dBFS avg" + maxLine + " — suggested \"" + suggested + " · " + quietLabel(suggested) + "\", adjust the slider if needed.",
+          "Loudness: " + data.loudness_10 + "/10 — suggested \"" + suggested + " · " + quietLabel(suggested) + "\", adjust the slider if needed.",
           "success"
         );
       })
@@ -663,6 +764,8 @@
       document.getElementById("modal-title").textContent = "Rate " + v.name;
       document.getElementById("modal-sub").textContent = "Add your own quietness reading for this place.";
       newFields.style.display = "none";
+      document.getElementById("venue-access").checked = v.access;
+      document.getElementById("venue-toilet").checked = v.toilet;
     }
     document.getElementById("quiet-slider").value = 3;
     updateSliderPreview();
@@ -685,7 +788,8 @@
 
   document.getElementById("modal-submit").addEventListener("click", function(){
     var q = parseInt(document.getElementById("quiet-slider").value, 10);
-    var time = document.getElementById("venue-time").value;
+    var time = currentTimeOfDay(); // auto-detected from the actual moment of submission, no manual picker
+    var submittedAt = Date.now(); // real submission timestamp, logged alongside the rating
 
     if(modalMode === "new"){
       var name = document.getElementById("venue-name").value.trim();
@@ -696,19 +800,30 @@
       var center = map.getCenter();
       var jitterLat = (pseudoRandom(nextId*7) - 0.5) * 0.01;
       var jitterLng = (pseudoRandom(nextId*11) - 0.5) * 0.01;
-      var v = {id:nextId, name:name, category:category, lat:center.lat+jitterLat, lng:center.lng+jitterLng, quiet:q, time:time, access:access, toilet:toilet};
+      var v = {
+        id:nextId, name:name, category:category, lat:center.lat+jitterLat, lng:center.lng+jitterLng,
+        access:access, toilet:toilet,
+        ratings:[{score:q, time:time, timestamp:submittedAt}]
+      };
       venues.push(v);
       buildMarker(v);
       nextId++;
-    
+
     } else {
       var target = venues.find(function(x){ return x.id === ratingTargetId; });
       if(target){
-        target.quiet = Math.round((target.quiet + q) / 2);
-        target.time = time;
+        // API: once you have a backend, this becomes
+        // fetch(`/api/venues/${target.id}/ratings`, { method:'POST', body: JSON.stringify({
+        //   score: q, time, timestamp: submittedAt, had_audio_clip: !!pendingAudioBlob
+        // })})
+        target.ratings.push({ score: q, time: time, timestamp: submittedAt });
+        target.access = document.getElementById("venue-access").checked;
+        target.toilet = document.getElementById("venue-toilet").checked;
+
+        var newScore = avgScore(target);
         markers[target.id].setIcon(L.divIcon({
           className:"",
-          html:'<div class="ss-marker" style="background:'+quietColor(target.quiet)+'"></div>',
+          html:'<div class="ss-marker" style="background:'+quietColor(newScore)+'"></div>',
           iconSize:[16,16]
         }));
         markers[target.id].setPopupContent(popupHTML(target));

@@ -40,11 +40,12 @@ router.post('/analyze', upload.single('clip'), (req, res) => {
       }
 
       const meanVolumeDbfs = parseFloat(meanMatch[1]);
-      const maxVolumeDbfs = maxMatch ? parseFloat(maxMatch[1]) : null;
+      const maxVolumeDbfs = maxMatch ? parseFloat(maxMatch[1]) : meanVolumeDbfs;
 
-      // Rough dBFS -> 1-5 quietness mapping. These thresholds are a starting
-      // point, not a calibrated standard — tune them once you've tested a few
-      // real clips from quiet vs loud venues and seen what values they land at.
+      // Scored on AVERAGE loudness (mean_volume) across the whole clip —
+      // this reflects the general ambient level of the space rather than
+      // a single loud transient (a dropped tray, a door, a shout), which
+      // is a better fit for "how quiet is this place generally."
       let suggestedScore;
       if (meanVolumeDbfs >= -15) suggestedScore = 1;      // loud
       else if (meanVolumeDbfs >= -25) suggestedScore = 2;
@@ -52,9 +53,16 @@ router.post('/analyze', upload.single('clip'), (req, res) => {
       else if (meanVolumeDbfs >= -45) suggestedScore = 4;
       else suggestedScore = 5;                             // near-silent
 
+      // Plain 1-10 "how loud was it" scale for a non-technical UI — same
+      // average value, just reframed so users don't need to know what dBFS is.
+      // -60dBFS (near silent) -> 1, 0dBFS (max before clipping) -> 10.
+      let loudness10 = Math.round(((meanVolumeDbfs + 60) / 60) * 9) + 1;
+      loudness10 = Math.max(1, Math.min(10, loudness10));
+
       return res.json({
         mean_volume_dbfs: meanVolumeDbfs,
         max_volume_dbfs: maxVolumeDbfs,
+        loudness_10: loudness10,
         suggested_score: suggestedScore,
       });
     }
