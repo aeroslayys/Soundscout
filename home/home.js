@@ -3,7 +3,19 @@
   var CATEGORIES = ["all","cafe","restaurant","library","gym","coworking"];
   var CATEGORY_LABELS = {all:"All", cafe:"Cafés", restaurant:"Restaurants", library:"Libraries", gym:"Gyms", coworking:"Coworking"};
 
-  var venues = [
+  // Sample data kept only as an offline fallback (e.g. backend unreachable) —
+  // the real path below loads actual venues from the database.
+  var FALLBACK_VENUES = [
+    {id:1, name:"Tangerine Reading Room", category:"library", lat:12.0068, lng:79.8107, access:true, toilet:true, ratings:[
+      {score:5, time:"morning", timestamp:Date.now()-86400000*2},
+      {score:4, time:"afternoon", timestamp:Date.now()-86400000*2}
+    ]},
+    {id:2, name:"Marigold Coworking", category:"coworking", lat:12.0022, lng:79.8073, access:true, toilet:true, ratings:[
+      {score:3, time:"morning", timestamp:Date.now()-86400000*3}
+    ]}
+  ];
+
+   var venues = [
     {id:1, name:"Tangerine Reading Room", category:"library", lat:12.0068, lng:79.8107, access:true, toilet:true, ratings:[
       {score:5, time:"morning", timestamp:Date.now()-86400000*2},
       {score:4, time:"afternoon", timestamp:Date.now()-86400000*2},
@@ -40,7 +52,15 @@
     ]}
   ];
 
-  var nextId = 9;
+  var AUTH_TOKEN = localStorage.getItem('soundscout_token');
+  var VENUES_API_BASE = 'http://localhost:4000/api/venues';
+
+  function authHeaders(){
+    var headers = { 'Content-Type': 'application/json' };
+    if(AUTH_TOKEN) headers['Authorization'] = 'Bearer ' + AUTH_TOKEN;
+    return headers;
+  }
+
   var state = {category:"all", search:"", accessOnly:false, toiletOnly:false, selected:null, userLocation:null, sortByDistance:false};
 
   var TIME_BUCKETS = ["morning","afternoon","evening","night"];
@@ -338,6 +358,71 @@
     updateMarkerVisibility();
   });
 
+  // ---------- Account / profile button ----------
+  // Adjust these two if your file locations differ.
+  var PROFILE_PAGE_URL = "../profile/profile.html";
+  var LOGIN_PAGE_URL = "../login.html";
+
+  var sidebarHeader = document.querySelector(".sidebar-header");
+  if(sidebarHeader) sidebarHeader.style.position = "relative";
+
+  var accountBtn = document.createElement("button");
+  accountBtn.type = "button";
+  accountBtn.id = "account-btn";
+  accountBtn.style.position = "absolute";
+  accountBtn.style.top = "20px";
+  accountBtn.style.right = "20px";
+  accountBtn.style.width = "36px";
+  accountBtn.style.height = "36px";
+  accountBtn.style.borderRadius = "50%";
+  accountBtn.style.display = "flex";
+  accountBtn.style.alignItems = "center";
+  accountBtn.style.justifyContent = "center";
+  accountBtn.style.fontFamily = "'Inter', sans-serif";
+  accountBtn.style.fontWeight = "700";
+  accountBtn.style.fontSize = "13px";
+  accountBtn.style.cursor = "pointer";
+  accountBtn.style.border = "1.5px solid #1E4F4F";
+  accountBtn.style.padding = "0";
+
+  function initialsFor(name){
+    if(!name) return "?";
+    var parts = name.trim().split(/\s+/);
+    var initials = parts[0][0] || "";
+    if(parts.length > 1) initials += parts[parts.length - 1][0];
+    return initials.toUpperCase();
+  }
+
+  function refreshAccountButton(){
+    var token = localStorage.getItem("soundscout_token");
+    var userRaw = localStorage.getItem("soundscout_user");
+
+    if(token && userRaw){
+      var user = JSON.parse(userRaw);
+      accountBtn.textContent = initialsFor(user.name);
+      accountBtn.style.background = "#1E4F4F";
+      accountBtn.style.color = "#ffffff";
+      accountBtn.title = user.name ? "My profile (" + user.name + ")" : "My profile";
+    } else {
+      accountBtn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1E4F4F" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg>';
+      accountBtn.style.background = "#ffffff";
+      accountBtn.title = "Log in";
+    }
+  }
+
+  refreshAccountButton();
+
+  accountBtn.addEventListener("click", function(){
+    var token = localStorage.getItem("soundscout_token");
+    window.location.href = token ? PROFILE_PAGE_URL : LOGIN_PAGE_URL;
+  });
+
+  var accountBtnStyle = document.createElement("style");
+  accountBtnStyle.textContent = "#account-btn:hover{opacity:0.85;}";
+  document.head.appendChild(accountBtnStyle);
+
+  if(sidebarHeader) sidebarHeader.appendChild(accountBtn);
+
   // ---------- Geolocation: "find my location" ----------
   // Uses the browser's built-in navigator.geolocation API — nothing to do
   // with Leaflet or Google Maps. Leaflet just draws the result once we have it.
@@ -375,6 +460,62 @@
     "#locate-me-btn:hover{background:#EAF3F3;}" +
     "#locate-me-btn:disabled{opacity:0.6;cursor:not-allowed;}";
   document.head.appendChild(locateBtnStyle);
+
+  // ---------- Profile link ----------
+  // Small link into the profile/my-ratings page, added into the sidebar
+  // header rather than requiring a home.html edit. Shows initials if
+  // someone's logged in, otherwise links straight to login.
+  (function setupProfileLink(){
+    var rawUser = localStorage.getItem('soundscout_user');
+    var user = null;
+    try{ user = rawUser ? JSON.parse(rawUser) : null; }catch(e){ user = null; }
+
+    var profileLink = document.createElement("a");
+    profileLink.href = "../profile/profile.html";
+    profileLink.style.display = "flex";
+    profileLink.style.alignItems = "center";
+    profileLink.style.gap = "8px";
+    profileLink.style.marginTop = "10px";
+    profileLink.style.padding = "8px 10px";
+    profileLink.style.borderRadius = "8px";
+    profileLink.style.textDecoration = "none";
+    profileLink.style.color = "#1C2430";
+    profileLink.style.fontFamily = "'Inter', sans-serif";
+    profileLink.style.fontSize = "13px";
+    profileLink.style.fontWeight = "600";
+    profileLink.style.border = "1px solid #E3DFD3";
+    profileLink.style.background = "#ffffff";
+
+    var avatar = document.createElement("span");
+    avatar.style.width = "22px";
+    avatar.style.height = "22px";
+    avatar.style.borderRadius = "50%";
+    avatar.style.display = "flex";
+    avatar.style.alignItems = "center";
+    avatar.style.justifyContent = "center";
+    avatar.style.fontSize = "10.5px";
+    avatar.style.fontWeight = "700";
+    avatar.style.flexShrink = "0";
+
+    if(user && user.name){
+      var initials = user.name.trim().split(/\s+/).map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
+      avatar.textContent = initials;
+      avatar.style.background = "#E1F5EE";
+      avatar.style.color = "#1E4F4F";
+      profileLink.appendChild(avatar);
+      profileLink.appendChild(document.createTextNode(user.name.split(' ')[0] + "'s profile"));
+    } else {
+      avatar.textContent = "?";
+      avatar.style.background = "#F0EDE3";
+      avatar.style.color = "#5B6472";
+      profileLink.appendChild(avatar);
+      profileLink.appendChild(document.createTextNode("Log in"));
+      profileLink.href = "/Soundscout/index.html";
+    }
+
+    var addVenueBtnRef = document.getElementById("open-add-venue");
+    addVenueBtnRef.parentNode.appendChild(profileLink);
+  })();
 
   // Minimal styles for the "you are here" marker, injected so home.css
   // doesn't need to be touched. Move this into home.css if you'd rather.
@@ -786,6 +927,34 @@
   document.getElementById("modal-cancel").addEventListener("click", closeModal);
   overlay.addEventListener("click", function(e){ if(e.target === overlay) closeModal(); });
 
+  // ---------- Persist ratings to the logged-in user's history ----------
+  // No ratings backend exists yet, so this lives in localStorage keyed by
+  // the user's email. Once /api/venues/:id/ratings exists, this becomes
+  // a fetch() call instead (or a mirror of one).
+  function logRatingToProfile(venue, score, time, timestamp, hadAudioClip){
+    var raw = localStorage.getItem('soundscout_user');
+    if(!raw) return; // not logged in — nothing to attach this to
+    var user;
+    try{ user = JSON.parse(raw); } catch(e){ return; }
+    if(!user || !user.email) return;
+
+    var historyKey = 'soundscout_ratings_' + user.email;
+    var history = [];
+    try{ history = JSON.parse(localStorage.getItem(historyKey) || '[]'); } catch(e){ history = []; }
+
+    history.unshift({
+      venueId: venue.id,
+      venueName: venue.name,
+      venueCategory: venue.category,
+      score: score,
+      time: time,
+      timestamp: timestamp,
+      hadAudioClip: !!hadAudioClip
+    });
+
+    localStorage.setItem(historyKey, JSON.stringify(history));
+  }
+
   document.getElementById("modal-submit").addEventListener("click", function(){
     var q = parseInt(document.getElementById("quiet-slider").value, 10);
     var time = currentTimeOfDay(); // auto-detected from the actual moment of submission, no manual picker
@@ -807,6 +976,7 @@
       };
       venues.push(v);
       buildMarker(v);
+      logRatingToProfile(v, q, time, submittedAt, !!pendingAudioBlob);
       nextId++;
 
     } else {
@@ -819,6 +989,7 @@
         target.ratings.push({ score: q, time: time, timestamp: submittedAt });
         target.access = document.getElementById("venue-access").checked;
         target.toilet = document.getElementById("venue-toilet").checked;
+        logRatingToProfile(target, q, time, submittedAt, !!pendingAudioBlob);
 
         var newScore = avgScore(target);
         markers[target.id].setIcon(L.divIcon({
@@ -838,4 +1009,13 @@
 
   renderChips();
   renderList();
+
+  // ---------- Deep link from profile page: home.html?venue=ID ----------
+  (function openVenueFromQueryString(){
+    var params = new URLSearchParams(window.location.search);
+    var venueId = params.get('venue');
+    if(!venueId) return;
+    var v = venues.find(function(x){ return String(x.id) === String(venueId); });
+    if(v) selectVenue(v.id, true);
+  })();
 })();

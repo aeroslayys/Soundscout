@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoundScout — My Ratings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="profile.css">
+</head>
+<body>
+
+<div class="topbar">
+  <a href="../home/home.html" class="brand-link">
+    <div class="brand-mark"></div>
+    <span class="brand-name">SoundScout</span>
+  </a>
+  <a href="../home/home.html" class="back-link">← Back to map</a>
+</div>
+
+<div class="page-wrap">
+
+  <div class="profile-card">
+    <div class="avatar" id="avatarInitials">--</div>
+    <div class="profile-info">
+      <p class="profile-name" id="profileName">—</p>
+      <p class="profile-email" id="profileEmail">—</p>
+      <div class="profile-meta-row">
+        <span class="meta-pill" id="profileAge">Age —</span>
+        <span class="meta-pill" id="profileSensitivity">Sensitivity —</span>
+      </div>
+    </div>
+    <button class="logout-btn" id="logoutBtn">Log out</button>
+  </div>
+
+  <div class="stats-row" id="statsRow"></div>
+
+  <div class="section-header">
+    <h2>My ratings</h2>
+    <p id="ratingsCount"></p>
+  </div>
+
+  <div id="ratingsList"></div>
+
+</div>
+
+<script src="profile.js"></script>
+</body>
+</html>
