@@ -1,66 +1,15 @@
 (function(){
 
+  var API_BASE = "http://localhost:4000/api";
+
   var CATEGORIES = ["all","cafe","restaurant","library","gym","coworking"];
   var CATEGORY_LABELS = {all:"All", cafe:"Cafés", restaurant:"Restaurants", library:"Libraries", gym:"Gyms", coworking:"Coworking"};
 
-  // Sample data kept only as an offline fallback (e.g. backend unreachable) —
-  // the real path below loads actual venues from the database.
-  var FALLBACK_VENUES = [
-    {id:1, name:"Tangerine Reading Room", category:"library", lat:12.0068, lng:79.8107, access:true, toilet:true, ratings:[
-      {score:5, time:"morning", timestamp:Date.now()-86400000*2},
-      {score:4, time:"afternoon", timestamp:Date.now()-86400000*2}
-    ]},
-    {id:2, name:"Marigold Coworking", category:"coworking", lat:12.0022, lng:79.8073, access:true, toilet:true, ratings:[
-      {score:3, time:"morning", timestamp:Date.now()-86400000*3}
-    ]}
-  ];
+  // Venues now load from the real backend instead of being hardcoded here.
+  // See loadVenues() near the bottom.
+  var venues = [];
 
-   var venues = [
-    {id:1, name:"Tangerine Reading Room", category:"library", lat:12.0068, lng:79.8107, access:true, toilet:true, ratings:[
-      {score:5, time:"morning", timestamp:Date.now()-86400000*2},
-      {score:4, time:"afternoon", timestamp:Date.now()-86400000*2},
-      {score:5, time:"evening", timestamp:Date.now()-86400000}
-    ]},
-    {id:2, name:"Marigold Coworking", category:"coworking", lat:12.0022, lng:79.8073, access:true, toilet:true, ratings:[
-      {score:3, time:"morning", timestamp:Date.now()-86400000*3},
-      {score:2, time:"afternoon", timestamp:Date.now()-86400000}
-    ]},
-    {id:3, name:"Two Rivers Café", category:"cafe", lat:11.9989, lng:79.8135, access:false, toilet:false, ratings:[
-      {score:3, time:"morning", timestamp:Date.now()-86400000*4},
-      {score:2, time:"afternoon", timestamp:Date.now()-86400000*2},
-      {score:1, time:"evening", timestamp:Date.now()-86400000}
-    ]},
-    {id:4, name:"Solaris Fitness Studio", category:"gym", lat:12.0105, lng:79.8051, access:true, toilet:false, ratings:[
-      {score:2, time:"morning", timestamp:Date.now()-86400000*3},
-      {score:1, time:"evening", timestamp:Date.now()-86400000}
-    ]},
-    {id:5, name:"Amber Leaf Restaurant", category:"restaurant", lat:11.9955, lng:79.8098, access:false, toilet:true, ratings:[
-      {score:3, time:"afternoon", timestamp:Date.now()-86400000*2},
-      {score:2, time:"evening", timestamp:Date.now()-86400000}
-    ]},
-    {id:6, name:"Quiet Hour Books & Coffee", category:"cafe", lat:12.0041, lng:79.8161, access:true, toilet:true, ratings:[
-      {score:4, time:"morning", timestamp:Date.now()-86400000*2},
-      {score:3, time:"afternoon", timestamp:Date.now()-86400000}
-    ]},
-    {id:7, name:"Origin Community Library", category:"library", lat:11.9917, lng:79.8047, access:true, toilet:false, ratings:[
-      {score:5, time:"morning", timestamp:Date.now()-86400000*3},
-      {score:5, time:"afternoon", timestamp:Date.now()-86400000}
-    ]},
-    {id:8, name:"The Loft Coworking", category:"coworking", lat:12.0084, lng:79.8189, access:false, toilet:true, ratings:[
-      {score:4, time:"morning", timestamp:Date.now()-86400000*2},
-      {score:3, time:"afternoon", timestamp:Date.now()-86400000}
-    ]}
-  ];
-
-  var AUTH_TOKEN = localStorage.getItem('soundscout_token');
-  var VENUES_API_BASE = 'http://localhost:4000/api/venues';
-
-  function authHeaders(){
-    var headers = { 'Content-Type': 'application/json' };
-    if(AUTH_TOKEN) headers['Authorization'] = 'Bearer ' + AUTH_TOKEN;
-    return headers;
-  }
-
+  var nextId = 9;
   var state = {category:"all", search:"", accessOnly:false, toiletOnly:false, selected:null, userLocation:null, sortByDistance:false};
 
   var TIME_BUCKETS = ["morning","afternoon","evening","night"];
@@ -72,6 +21,21 @@
     if(h < 16) return "afternoon";
     if(h < 21) return "evening";
     return "night";
+  }
+
+  // ---------- Auth helpers ----------
+  function getToken(){ return localStorage.getItem("soundscout_token"); }
+
+  function authHeaders(){
+    var t = getToken();
+    return t ? { "Authorization": "Bearer " + t } : {};
+  }
+
+  function requireLogin(actionLabel){
+    if(getToken()) return true;
+    alert("Please log in to " + (actionLabel || "do that") + ".");
+    window.location.href = "../index.html";
+    return false;
   }
 
   function avgScore(v){
@@ -207,6 +171,11 @@
     markers[v.id] = m;
   }
 
+  function clearMarkers(){
+    Object.keys(markers).forEach(function(id){ map.removeLayer(markers[id]); });
+    markers = {};
+  }
+
   function popupHTML(v){
     var score = avgScore(v);
     var overallLine = score === null
@@ -215,14 +184,12 @@
     return '<div class="popup-body"><h3>'+escapeHTML(v.name)+'</h3>' +
       '<p class="popup-cat">'+overallLine+'</p>' +
       timeBarChartHTML(v) +
-      '<button class="popup-rate-btn" onclick="window.__ssOpenRate('+v.id+')">Rate this place</button></div>';
+      '<button class="popup-rate-btn" onclick="window.__ssOpenRate(\''+v.id+'\')">Rate this place</button></div>';
   }
 
   function escapeHTML(s){
     return s.replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; });
   }
-
-  venues.forEach(buildMarker);
 
   function matchesFilters(v){
     if(state.category !== "all" && v.category !== state.category) return false;
@@ -253,6 +220,7 @@
   function updateMarkerVisibility(){
     venues.forEach(function(v){
       var m = markers[v.id];
+      if(!m) return;
       if(matchesFilters(v)){
         if(!map.hasLayer(m)) m.addTo(map);
       } else {
@@ -279,6 +247,7 @@
         return sb - sa;
       });
     }
+    
 
     document.getElementById("list-count").textContent = visible.length + (visible.length === 1 ? " venue" : " venues");
     list.innerHTML = "";
@@ -328,7 +297,7 @@
       card.addEventListener("keydown", function(e){ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); selectVenue(v.id, true); } });
 
       list.appendChild(card);
-      renderWaveform(wf, score === null ? 3 : score, v.id * 13);
+      renderWaveform(wf, score === null ? 3 : score, (typeof v.id === "number" ? v.id : v.id.length) * 13);
     });
   }
 
@@ -338,7 +307,7 @@
     var v = venues.find(function(x){ return x.id === id; });
     if(v){
       if(flyTo) map.flyTo([v.lat, v.lng], 15, {duration:0.6});
-      markers[id].openPopup();
+      if(markers[id]) markers[id].openPopup();
     }
   }
 
@@ -359,9 +328,8 @@
   });
 
   // ---------- Account / profile button ----------
-  // Adjust these two if your file locations differ.
   var PROFILE_PAGE_URL = "../profile/profile.html";
-  var LOGIN_PAGE_URL = "../login.html";
+  var LOGIN_PAGE_URL = "../index.html";
 
   var sidebarHeader = document.querySelector(".sidebar-header");
   if(sidebarHeader) sidebarHeader.style.position = "relative";
@@ -394,7 +362,7 @@
   }
 
   function refreshAccountButton(){
-    var token = localStorage.getItem("soundscout_token");
+    var token = getToken();
     var userRaw = localStorage.getItem("soundscout_user");
 
     if(token && userRaw){
@@ -413,8 +381,7 @@
   refreshAccountButton();
 
   accountBtn.addEventListener("click", function(){
-    var token = localStorage.getItem("soundscout_token");
-    window.location.href = token ? PROFILE_PAGE_URL : LOGIN_PAGE_URL;
+    window.location.href = getToken() ? PROFILE_PAGE_URL : LOGIN_PAGE_URL;
   });
 
   var accountBtnStyle = document.createElement("style");
@@ -461,64 +428,6 @@
     "#locate-me-btn:disabled{opacity:0.6;cursor:not-allowed;}";
   document.head.appendChild(locateBtnStyle);
 
-  // ---------- Profile link ----------
-  // Small link into the profile/my-ratings page, added into the sidebar
-  // header rather than requiring a home.html edit. Shows initials if
-  // someone's logged in, otherwise links straight to login.
-  (function setupProfileLink(){
-    var rawUser = localStorage.getItem('soundscout_user');
-    var user = null;
-    try{ user = rawUser ? JSON.parse(rawUser) : null; }catch(e){ user = null; }
-
-    var profileLink = document.createElement("a");
-    profileLink.href = "../profile/profile.html";
-    profileLink.style.display = "flex";
-    profileLink.style.alignItems = "center";
-    profileLink.style.gap = "8px";
-    profileLink.style.marginTop = "10px";
-    profileLink.style.padding = "8px 10px";
-    profileLink.style.borderRadius = "8px";
-    profileLink.style.textDecoration = "none";
-    profileLink.style.color = "#1C2430";
-    profileLink.style.fontFamily = "'Inter', sans-serif";
-    profileLink.style.fontSize = "13px";
-    profileLink.style.fontWeight = "600";
-    profileLink.style.border = "1px solid #E3DFD3";
-    profileLink.style.background = "#ffffff";
-
-    var avatar = document.createElement("span");
-    avatar.style.width = "22px";
-    avatar.style.height = "22px";
-    avatar.style.borderRadius = "50%";
-    avatar.style.display = "flex";
-    avatar.style.alignItems = "center";
-    avatar.style.justifyContent = "center";
-    avatar.style.fontSize = "10.5px";
-    avatar.style.fontWeight = "700";
-    avatar.style.flexShrink = "0";
-
-    if(user && user.name){
-      var initials = user.name.trim().split(/\s+/).map(function(w){ return w[0]; }).join('').slice(0,2).toUpperCase();
-      avatar.textContent = initials;
-      avatar.style.background = "#E1F5EE";
-      avatar.style.color = "#1E4F4F";
-      profileLink.appendChild(avatar);
-      profileLink.appendChild(document.createTextNode(user.name.split(' ')[0] + "'s profile"));
-    } else {
-      avatar.textContent = "?";
-      avatar.style.background = "#F0EDE3";
-      avatar.style.color = "#5B6472";
-      profileLink.appendChild(avatar);
-      profileLink.appendChild(document.createTextNode("Log in"));
-      profileLink.href = "/Soundscout/index.html";
-    }
-
-    var addVenueBtnRef = document.getElementById("open-add-venue");
-    addVenueBtnRef.parentNode.appendChild(profileLink);
-  })();
-
-  // Minimal styles for the "you are here" marker, injected so home.css
-  // doesn't need to be touched. Move this into home.css if you'd rather.
   var youMarkerStyle = document.createElement("style");
   youMarkerStyle.textContent =
     ".ss-you-marker{width:16px;height:16px;border-radius:50%;background:#378ADD;" +
@@ -571,10 +480,10 @@
         locateStatus.textContent = "Showing venues nearest to you first.";
 
         renderList();
-        // API: once you have a real backend, swap the client-side sort above
-        // for a direct query, e.g.
-        // fetch(`/api/venues/nearby?lat=${lat}&lng=${lng}&radius=2000`)
-        // using the PostGIS ST_DWithin query from the venues schema.
+        // A real PostGIS-backed nearby search is now available too:
+        // fetch(`${API_BASE}/venues/nearby?lat=${lat}&lng=${lng}&radius=2000`)
+        // — swap to that if you want the DB doing the filtering instead of
+        // sorting the full client-side list.
       },
       function(error){
         locateBtn.disabled = false;
@@ -591,11 +500,305 @@
 
   locateBtn.addEventListener("click", locateUser);
 
+  // ---------- Location search (Nominatim, proxied through our backend) ----------
+  // Only shown in "Add a venue" mode. Replaces the old map-center-jitter
+  // placement — a venue's coordinates now come from a real geocoded address.
+  var selectedLocation = null; // { display_name, lat, lng }
+  var locationSearchTimeout = null;
+  // Temporary pin used while adding a venue.
+  var locationPickerMarker = null;
+  // Only allow map pin placement while adding a new venue.
+  var isPickingVenueLocation = false;
+  var locationPickerMode = false;
+  var donePinBtn = null;
+
+  var locationField = document.createElement("div");
+  locationField.className = "field";
+  locationField.id = "location-search-field";
+
+  var locationLabel = document.createElement("label");
+  locationLabel.textContent = "Search for the venue's location";
+  locationLabel.style.display = "block";
+  locationLabel.style.marginBottom = "6px";
+  locationField.appendChild(locationLabel);
+
+  var locationInput = document.createElement("input");
+  locationInput.type = "text";
+  locationInput.id = "location-search-input";
+  locationInput.placeholder = "e.g. Blue Fox Café, Auroville";
+  locationInput.autocomplete = "off";
+  locationField.appendChild(locationInput);
+
+  var locationResults = document.createElement("div");
+  locationResults.id = "location-search-results";
+  locationResults.style.border = "1px solid #E3DFD3";
+  locationResults.style.borderRadius = "8px";
+  locationResults.style.marginTop = "4px";
+  locationResults.style.maxHeight = "160px";
+  locationResults.style.overflowY = "auto";
+  locationResults.style.display = "none";
+  locationField.appendChild(locationResults);
+
+  var locationSelectedDisplay = document.createElement("p");
+  locationSelectedDisplay.id = "location-selected-display";
+  locationSelectedDisplay.style.fontSize = "12px";
+  locationSelectedDisplay.style.color = "#1E4F4F";
+  locationSelectedDisplay.style.fontWeight = "600";
+  locationSelectedDisplay.style.margin = "6px 0 0 0";
+  locationSelectedDisplay.style.minHeight = "14px";
+  locationField.appendChild(locationSelectedDisplay);
+  
+  var adjustPinBtn = document.createElement("button");
+
+adjustPinBtn.type = "button";
+
+adjustPinBtn.id = "adjust-pin-btn";
+
+adjustPinBtn.textContent = "📍 Adjust exact pin on map";
+
+adjustPinBtn.style.marginTop = "8px";
+adjustPinBtn.style.padding = "8px 12px";
+
+adjustPinBtn.style.border = "1.5px solid #2B6E6E";
+adjustPinBtn.style.borderRadius = "8px";
+
+adjustPinBtn.style.background = "#ffffff";
+adjustPinBtn.style.color = "#2B6E6E";
+
+adjustPinBtn.style.fontFamily = "'Inter', sans-serif";
+adjustPinBtn.style.fontSize = "12.5px";
+adjustPinBtn.style.fontWeight = "600";
+
+adjustPinBtn.style.cursor = "pointer";
+
+adjustPinBtn.addEventListener("click", function(){
+
+  enterLocationPickerMode();
+
+});
+
+locationField.appendChild(adjustPinBtn);
+  var fieldsNewVenue = document.getElementById("fields-new-venue");
+  fieldsNewVenue.insertBefore(locationField, fieldsNewVenue.firstChild);
+
+  function clearLocationResults(){
+    locationResults.innerHTML = "";
+    locationResults.style.display = "none";
+  }
+
+  function resetLocationSearch(){
+    selectedLocation = null;
+    locationInput.value = "";
+    locationSelectedDisplay.textContent = "";
+    clearLocationResults();
+  }
+
+  function setVenueLocation(lat, lng, label){
+
+  selectedLocation = {
+    display_name: label || "Custom map location",
+    lat: parseFloat(lat),
+    lng: parseFloat(lng)
+  };
+
+  // Create the temporary pin if it doesn't exist.
+  if(!locationPickerMarker){
+
+    locationPickerMarker = L.marker(
+      [selectedLocation.lat, selectedLocation.lng],
+      {
+        draggable: true,
+        autoPan: true,
+        zIndexOffset: 2000
+      }
+    ).addTo(map);
+
+    locationPickerMarker.bindTooltip(
+      "Drag me to the exact venue location",
+      {
+        permanent: false,
+        direction: "top"
+      }
+    );
+
+    // Update coordinates when the user drags the pin.
+    locationPickerMarker.on("dragend", function(){
+
+      var pos = locationPickerMarker.getLatLng();
+
+      selectedLocation.lat = pos.lat;
+      selectedLocation.lng = pos.lng;
+
+      locationSelectedDisplay.textContent =
+        "✓ Exact location selected on map";
+
+      locationSelectedDisplay.style.color = "#1E4F4F";
+    });
+
+  } else {
+
+    locationPickerMarker.setLatLng([
+      selectedLocation.lat,
+      selectedLocation.lng
+    ]);
+
+  }
+
+  locationSelectedDisplay.textContent =
+    "✓ Location selected — drag the pin or click the map to adjust it";
+
+  locationSelectedDisplay.style.color = "#1E4F4F";
+}
+
+function enterLocationPickerMode(){
+
+  if(!locationPickerMarker){
+    alert("Search for a location first.");
+    return;
+  }
+
+  locationPickerMode = true;
+
+  // Hide the Add Venue modal.
+  overlay.classList.add("hidden");
+
+  // Disable sidebar interaction while picking if you want.
+  // The map remains fully usable.
+
+  if(!donePinBtn){
+
+    donePinBtn = document.createElement("button");
+
+    donePinBtn.type = "button";
+
+    donePinBtn.textContent = "✓ Done placing pin";
+
+    donePinBtn.style.position = "fixed";
+    donePinBtn.style.top = "20px";
+    donePinBtn.style.left = "50%";
+    donePinBtn.style.transform = "translateX(-50%)";
+    donePinBtn.style.zIndex = "9999";
+
+    donePinBtn.style.padding = "12px 20px";
+    donePinBtn.style.border = "none";
+    donePinBtn.style.borderRadius = "10px";
+
+    donePinBtn.style.background = "#1E4F4F";
+    donePinBtn.style.color = "#ffffff";
+
+    donePinBtn.style.fontFamily = "'Inter', sans-serif";
+    donePinBtn.style.fontSize = "14px";
+    donePinBtn.style.fontWeight = "700";
+
+    donePinBtn.style.cursor = "pointer";
+
+    donePinBtn.style.boxShadow =
+      "0 3px 12px rgba(0,0,0,0.25)";
+
+    document.body.appendChild(donePinBtn);
+
+    donePinBtn.addEventListener("click", function(){
+
+      locationPickerMode = false;
+
+      donePinBtn.style.display = "none";
+
+      // Bring the Add Venue modal back.
+      overlay.classList.remove("hidden");
+
+      // Ensure Leaflet redraws correctly after the modal disappears/reappears.
+      setTimeout(function(){
+        map.invalidateSize();
+      }, 100);
+
+    });
+
+  }
+
+  donePinBtn.style.display = "block";
+
+  // Leaflet sometimes needs this after layout changes.
+  setTimeout(function(){
+    map.invalidateSize();
+  }, 100);
+
+}
+  locationInput.addEventListener("input", function(){
+    selectedLocation = null;
+    locationSelectedDisplay.textContent = "";
+    var q = locationInput.value.trim();
+    clearTimeout(locationSearchTimeout);
+    if(q.length < 3){ clearLocationResults(); return; }
+
+    locationSearchTimeout = setTimeout(function(){
+      fetch(API_BASE + "/venues/search-location?q=" + encodeURIComponent(q))
+        .then(function(res){ return res.json(); })
+        .then(function(results){
+          if(!results.length){
+            locationResults.innerHTML = '<div style="padding:8px 10px;font-size:12.5px;color:#5B6472;">No matches found.</div>';
+            locationResults.style.display = "block";
+            return;
+          }
+          locationResults.innerHTML = "";
+          results.forEach(function(r){
+            var item = document.createElement("div");
+            item.textContent = r.display_name;
+            item.style.padding = "8px 10px";
+            item.style.fontSize = "12.5px";
+            item.style.cursor = "pointer";
+            item.style.borderBottom = "1px solid #F0EDE3";
+            item.addEventListener("mouseenter", function(){ item.style.background = "#F0EDE3"; });
+            item.addEventListener("mouseleave", function(){ item.style.background = "transparent"; });
+            item.addEventListener("click", function(){
+
+  locationInput.value = r.display_name;
+
+  clearLocationResults();
+
+  setVenueLocation(
+    r.lat,
+    r.lng,
+    r.display_name
+  );
+
+  // Move the map to the searched location.
+  map.flyTo(
+    [r.lat, r.lng],
+    17,
+    {
+      duration: 0.6
+    }
+  );
+
+});
+            locationResults.appendChild(item);
+          });
+          locationResults.style.display = "block";
+        })
+        .catch(function(){
+          locationResults.innerHTML = '<div style="padding:8px 10px;font-size:12.5px;color:#D9695A;">Search failed. Try again.</div>';
+          locationResults.style.display = "block";
+        });
+    }, 400);
+  });
+map.on("click", function(e){
+
+  // Don't accidentally move venue locations during normal browsing.
+  if(!isPickingVenueLocation) return;
+
+  setVenueLocation(
+    e.latlng.lat,
+    e.latlng.lng,
+    "Custom map location"
+  );
+
+});
   // ---------- Audio clip: record via mic, or upload a file (5-10s) ----------
   var MIN_CLIP_SECONDS = 5;
   var MAX_CLIP_SECONDS = 10;
 
   var pendingAudioBlob = null;
+  var lastMeasuredDb = null;
   var mediaRecorder = null;
   var mediaStream = null;
   var recordChunks = [];
@@ -702,9 +905,6 @@
   audioStatus.style.minHeight = "14px";
   audioField.appendChild(audioStatus);
 
-  // The manual "time of day" picker in home.html is no longer used — time
-  // is auto-detected from the real submission timestamp instead. Hiding
-  // its wrapping .field here rather than requiring an edit to home.html.
   var venueTimeField = document.getElementById("venue-time").closest(".field");
   if(venueTimeField) venueTimeField.style.display = "none";
 
@@ -718,6 +918,7 @@
 
   function resetAudioClip(){
     pendingAudioBlob = null;
+    lastMeasuredDb = null;
     audioFileInput.value = "";
     audioResult.style.display = "none";
     audioPlayback.src = "";
@@ -737,7 +938,7 @@
     analyzeAudioClip();
   }
 
-  var AUDIO_API_BASE = 'http://localhost:4000/api/audio';
+  var AUDIO_API_BASE = API_BASE + '/audio';
 
   function analyzeAudioClip(){
     fetch(AUDIO_API_BASE + '/analyze', {
@@ -754,6 +955,7 @@
       })
       .then(function(data){
         var suggested = data.suggested_score;
+        lastMeasuredDb = data.mean_volume_dbfs;
         var slider = document.getElementById("quiet-slider");
         slider.value = suggested;
         updateSliderPreview();
@@ -893,6 +1095,7 @@
     ratingTargetId = venueId || null;
     var newFields = document.getElementById("fields-new-venue");
     if(mode === "new"){
+      if(!requireLogin("add a venue")) return;
       document.getElementById("modal-title").textContent = "Add a venue";
       document.getElementById("modal-sub").textContent = "Log a place and its quietness so others know before they go.";
       newFields.style.display = "";
@@ -900,7 +1103,16 @@
       document.getElementById("venue-category").value = "cafe";
       document.getElementById("venue-access").checked = false;
       document.getElementById("venue-toilet").checked = false;
+      resetLocationSearch();
+      isPickingVenueLocation = true;
+
+locationSelectedDisplay.textContent =
+  "Search for the venue, then click or drag the pin to its exact location.";
+
+locationSelectedDisplay.style.color = "#5B6472";
     } else {
+      isPickingVenueLocation = false;
+      if(!requireLogin("rate a venue")) return;
       var v = venues.find(function(x){ return x.id === venueId; });
       document.getElementById("modal-title").textContent = "Rate " + v.name;
       document.getElementById("modal-sub").textContent = "Add your own quietness reading for this place.";
@@ -914,7 +1126,21 @@
     document.getElementById("venue-name").focus ? (mode==="new" && document.getElementById("venue-name").focus()) : null;
   }
 
-  function closeModal(){ overlay.classList.add("hidden"); }
+  function closeModal(){
+
+  overlay.classList.add("hidden");
+
+  isPickingVenueLocation = false;
+
+  if(locationPickerMarker){
+
+    map.removeLayer(locationPickerMarker);
+
+    locationPickerMarker = null;
+
+  }
+
+}
 
   function updateSliderPreview(){
     var q = parseInt(document.getElementById("quiet-slider").value, 10);
@@ -927,95 +1153,102 @@
   document.getElementById("modal-cancel").addEventListener("click", closeModal);
   overlay.addEventListener("click", function(e){ if(e.target === overlay) closeModal(); });
 
-  // ---------- Persist ratings to the logged-in user's history ----------
-  // No ratings backend exists yet, so this lives in localStorage keyed by
-  // the user's email. Once /api/venues/:id/ratings exists, this becomes
-  // a fetch() call instead (or a mirror of one).
-  function logRatingToProfile(venue, score, time, timestamp, hadAudioClip){
-    var raw = localStorage.getItem('soundscout_user');
-    if(!raw) return; // not logged in — nothing to attach this to
-    var user;
-    try{ user = JSON.parse(raw); } catch(e){ return; }
-    if(!user || !user.email) return;
+  var submitBtn = document.getElementById("modal-submit");
 
-    var historyKey = 'soundscout_ratings_' + user.email;
-    var history = [];
-    try{ history = JSON.parse(localStorage.getItem(historyKey) || '[]'); } catch(e){ history = []; }
-
-    history.unshift({
-      venueId: venue.id,
-      venueName: venue.name,
-      venueCategory: venue.category,
-      score: score,
-      time: time,
-      timestamp: timestamp,
-      hadAudioClip: !!hadAudioClip
-    });
-
-    localStorage.setItem(historyKey, JSON.stringify(history));
-  }
-
-  document.getElementById("modal-submit").addEventListener("click", function(){
+  submitBtn.addEventListener("click", function(){
     var q = parseInt(document.getElementById("quiet-slider").value, 10);
-    var time = currentTimeOfDay(); // auto-detected from the actual moment of submission, no manual picker
-    var submittedAt = Date.now(); // real submission timestamp, logged alongside the rating
+    var access = document.getElementById("venue-access").checked;
+    var toilet = document.getElementById("venue-toilet").checked;
 
     if(modalMode === "new"){
       var name = document.getElementById("venue-name").value.trim();
       if(!name){ document.getElementById("venue-name").focus(); return; }
+      if(!selectedLocation){
+        locationSelectedDisplay.textContent = "Please search and select a location first.";
+        locationSelectedDisplay.style.color = "#D9695A";
+        document.getElementById("location-search-input").focus();
+        return;
+      }
       var category = document.getElementById("venue-category").value;
-      var access = document.getElementById("venue-access").checked;
-      var toilet = document.getElementById("venue-toilet").checked;
-      var center = map.getCenter();
-      var jitterLat = (pseudoRandom(nextId*7) - 0.5) * 0.01;
-      var jitterLng = (pseudoRandom(nextId*11) - 0.5) * 0.01;
-      var v = {
-        id:nextId, name:name, category:category, lat:center.lat+jitterLat, lng:center.lng+jitterLng,
-        access:access, toilet:toilet,
-        ratings:[{score:q, time:time, timestamp:submittedAt}]
-      };
-      venues.push(v);
-      buildMarker(v);
-      logRatingToProfile(v, q, time, submittedAt, !!pendingAudioBlob);
-      nextId++;
+
+      submitBtn.disabled = true;
+      fetch(API_BASE + "/venues", {
+        method: "POST",
+        headers: Object.assign({ "Content-Type": "application/json" }, authHeaders()),
+        body: JSON.stringify({
+          name: name,
+          category: category,
+          lat: selectedLocation.lat,
+          lng: selectedLocation.lng,
+          score: q,
+          access: access,
+          toilet: toilet,
+          measured_db: lastMeasuredDb,
+          had_audio_clip: !!pendingAudioBlob
+        })
+      })
+        .then(function(res){
+          if(!res.ok) return res.json().then(function(d){ throw new Error(d.error || "Could not save venue."); });
+          return res.json();
+        })
+        .then(function(){
+          closeModal();
+          loadVenues();
+        })
+        .catch(function(err){
+          alert(err.message);
+        })
+        .finally(function(){ submitBtn.disabled = false; });
 
     } else {
-      var target = venues.find(function(x){ return x.id === ratingTargetId; });
-      if(target){
-        // API: once you have a backend, this becomes
-        // fetch(`/api/venues/${target.id}/ratings`, { method:'POST', body: JSON.stringify({
-        //   score: q, time, timestamp: submittedAt, had_audio_clip: !!pendingAudioBlob
-        // })})
-        target.ratings.push({ score: q, time: time, timestamp: submittedAt });
-        target.access = document.getElementById("venue-access").checked;
-        target.toilet = document.getElementById("venue-toilet").checked;
-        logRatingToProfile(target, q, time, submittedAt, !!pendingAudioBlob);
-
-        var newScore = avgScore(target);
-        markers[target.id].setIcon(L.divIcon({
-          className:"",
-          html:'<div class="ss-marker" style="background:'+quietColor(newScore)+'"></div>',
-          iconSize:[16,16]
-        }));
-        markers[target.id].setPopupContent(popupHTML(target));
-      }
+      submitBtn.disabled = true;
+      fetch(API_BASE + "/venues/" + ratingTargetId + "/ratings", {
+        method: "POST",
+        headers: Object.assign({ "Content-Type": "application/json" }, authHeaders()),
+        body: JSON.stringify({
+          score: q,
+          access: access,
+          toilet: toilet,
+          measured_db: lastMeasuredDb,
+          had_audio_clip: !!pendingAudioBlob
+        })
+      })
+        .then(function(res){
+          if(!res.ok) return res.json().then(function(d){ throw new Error(d.error || "Could not save rating."); });
+          return res.json();
+        })
+        .then(function(){
+          closeModal();
+          loadVenues();
+        })
+        .catch(function(err){
+          alert(err.message);
+        })
+        .finally(function(){ submitBtn.disabled = false; });
     }
-    renderList();
-    updateMarkerVisibility();
-    closeModal();
   });
 
   window.__ssOpenRate = function(id){ openModal("rate", id); };
 
-  renderChips();
-  renderList();
+  // ---------- Load venues from the real backend ----------
+  function loadVenues(){
+    fetch(API_BASE + "/venues")
+      .then(function(res){ return res.json(); })
+      .then(function(data){
+        clearMarkers();
+        venues = data;
+        venues.forEach(buildMarker);
+        renderChips();
+        renderList();
+        updateMarkerVisibility();
+      })
+      .catch(function(err){
+        console.error("Failed to load venues:", err);
+        document.getElementById("venue-list").innerHTML =
+          '<div class="empty-state">Could not reach the server. Is the backend running?</div>';
+      });
+  }
 
-  // ---------- Deep link from profile page: home.html?venue=ID ----------
-  (function openVenueFromQueryString(){
-    var params = new URLSearchParams(window.location.search);
-    var venueId = params.get('venue');
-    if(!venueId) return;
-    var v = venues.find(function(x){ return String(x.id) === String(venueId); });
-    if(v) selectVenue(v.id, true);
-  })();
+  renderChips();
+  loadVenues();
 })();

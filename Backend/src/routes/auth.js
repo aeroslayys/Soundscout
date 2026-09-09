@@ -122,7 +122,8 @@ router.post('/verify-otp', async (req, res) => {
     }
 
     const token = jwt.sign({ sub: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
-
+    console.log("JWT generated for:", user.email);
+    console.log("JWT:", token);
     return res.json({ token, user });
   } catch (err) {
     console.error('verify-otp error:', err);

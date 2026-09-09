@@ -214,3 +214,78 @@ body{
   border-radius:12px;
 }
 .empty-state a{ color: var(--dark-green); font-weight:600; }
+
+.added-venue-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  padding: 16px;
+  margin-bottom: 10px;
+
+  background: #ffffff;
+
+  border: 1px solid #E3DFD3;
+  border-radius: 12px;
+}
+
+.added-venue-score {
+  width: 46px;
+  height: 46px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: white;
+
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.added-venue-body {
+  min-width: 0;
+  flex: 1;
+}
+
+.added-venue-name {
+  margin: 0;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  color: #1C2430;
+}
+
+.added-venue-meta {
+  margin: 4px 0 0;
+
+  font-size: 12.5px;
+
+  color: #5B6472;
+}
+
+.added-venue-tags {
+  display: flex;
+  gap: 6px;
+
+  flex-wrap: wrap;
+
+  margin-top: 8px;
+}
+
+.added-venue-tag {
+  padding: 3px 8px;
+
+  border-radius: 20px;
+
+  font-size: 11px;
+  font-weight: 600;
+
+  background: #EAF3F3;
+  color: #2B6E6E;
+}

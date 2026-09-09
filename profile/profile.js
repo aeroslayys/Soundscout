@@ -1,9 +1,31 @@
 (function(){
 
-  // Adjust this if your login page lives somewhere else relative to /profile/
+  var API_BASE = "http://localhost:4000/api";
   var LOGIN_PAGE_URL = "../index.html";
 
   var TIME_BUCKET_LABELS = {morning:"11am", afternoon:"3pm", evening:"7pm", night:"11pm"};
+  var CATEGORY_LABELS = {cafe:"Café", restaurant:"Restaurant", library:"Library", gym:"Gym", coworking:"Coworking"};
+
+  function escapeHTML(value){
+
+  return String(value).replace(
+    /[&<>"']/g,
+    function(character){
+
+      return {
+
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+
+      }[character];
+
+    }
+  );
+
+}
 
   function quietColor(score){
     var t = (score - 1) / 4;
@@ -69,28 +91,272 @@
     window.location.href = LOGIN_PAGE_URL;
   });
 
-  // ---------- Ratings data ----------
-  // SAMPLE DATA — structured exactly like what a real backend endpoint
-  // should return. Once venues/ratings are persisted server-side and tied
-  // to a user id, replace this block with:
-  //
-  // const res = await fetch('/api/users/me/ratings', {
-  //   headers: { Authorization: `Bearer ${token}` }
-  // });
-  // const myRatings = await res.json();
-  var myRatings = [
-    { venueName:"Blue Fox Café", category:"Café", score:4, time:"morning", timestamp:Date.now() - 1000*60*60*6, access:true, toilet:false },
-    { venueName:"Reading Room Library", category:"Library", score:5, time:"afternoon", timestamp:Date.now() - 1000*60*60*30, access:true, toilet:true },
-    { venueName:"Grind House Gym", category:"Gym", score:1, time:"evening", timestamp:Date.now() - 1000*60*60*24*3, access:false, toilet:false },
-    { venueName:"Fern & Fork", category:"Restaurant", score:3, time:"afternoon", timestamp:Date.now() - 1000*60*60*24*8, access:true, toilet:true },
-    { venueName:"Tangerine Reading Room", category:"Library", score:4, time:"night", timestamp:Date.now() - 1000*60*60*24*16, access:true, toilet:true }
-  ];
+  // ==========================================
+// Load venues created by this user
+// ==========================================
 
-  // ---------- Stats ----------
+function loadMyVenues(){
+
+  fetch(
+    API_BASE + "/users/me/venues",
+    {
+      headers: {
+        "Authorization":
+          "Bearer " + token
+      }
+    }
+  )
+
+    .then(function(res){
+
+      if(res.status === 401){
+
+        localStorage.removeItem(
+          "soundscout_token"
+        );
+
+        localStorage.removeItem(
+          "soundscout_user"
+        );
+
+        window.location.href =
+          LOGIN_PAGE_URL;
+
+        return null;
+
+      }
+
+      if(!res.ok){
+
+        throw new Error(
+          "Could not load your venues."
+        );
+
+      }
+
+      return res.json();
+
+    })
+
+    .then(function(myVenues){
+
+      if(myVenues === null) return;
+
+      venuesCountEl.textContent =
+        myVenues.length +
+        (
+          myVenues.length === 1
+            ? " venue"
+            : " venues"
+        );
+
+      if(!myVenues.length){
+
+        venuesListEl.innerHTML =
+          '<div class="empty-state">' +
+          'You haven\'t added any venues yet. ' +
+          '<a href="../home/home.html">' +
+          'Add your first venue →' +
+          '</a>' +
+          '</div>';
+
+        return;
+
+      }
+
+
+      venuesListEl.innerHTML = "";
+
+
+      myVenues.forEach(function(v){
+
+        var card =
+          document.createElement("div");
+
+        card.className =
+          "added-venue-card";
+
+
+        // -------------------------
+        // Average score
+        // -------------------------
+
+        var score =
+          v.average_score !== null
+            ? parseFloat(v.average_score)
+            : null;
+
+
+        var scoreBadge =
+          document.createElement("div");
+
+        scoreBadge.className =
+          "added-venue-score";
+
+
+        if(score !== null){
+
+          scoreBadge.textContent =
+            score.toFixed(1);
+
+          scoreBadge.style.background =
+            quietColor(score);
+
+        } else {
+
+          scoreBadge.textContent = "—";
+
+          scoreBadge.style.background =
+            "#9AA3AD";
+
+        }
+
+
+        // -------------------------
+        // Venue information
+        // -------------------------
+
+        var body =
+          document.createElement("div");
+
+        body.className =
+          "added-venue-body";
+
+
+        var tagsHTML = "";
+
+
+        if(v.access){
+
+          tagsHTML +=
+            '<span class="added-venue-tag">' +
+            'Step-free' +
+            '</span>';
+
+        }
+
+
+        if(v.toilet){
+
+          tagsHTML +=
+            '<span class="added-venue-tag">' +
+            'Gender-neutral' +
+            '</span>';
+
+        }
+
+
+        var ratingText;
+
+
+        if(score === null){
+
+          ratingText =
+            "No ratings yet";
+
+        } else {
+
+          ratingText =
+            quietLabel(score) +
+            " · " +
+            dbEstimate(score) +
+            " · " +
+            v.rating_count +
+            (
+              v.rating_count === 1
+                ? " rating"
+                : " ratings"
+            );
+
+        }
+
+
+        body.innerHTML =
+
+          '<p class="added-venue-name">' +
+
+            escapeHTML(v.name) +
+
+          '</p>' +
+
+
+          '<p class="added-venue-meta">' +
+
+            (
+              CATEGORY_LABELS[v.category] ||
+              v.category
+            ) +
+
+            ' · ' +
+
+            ratingText +
+
+            ' · Added ' +
+
+            relativeTime(
+              new Date(
+                v.created_at
+              ).getTime()
+            ) +
+
+          '</p>' +
+
+
+          (
+
+            tagsHTML
+
+              ? '<div class="added-venue-tags">' +
+
+                  tagsHTML +
+
+                '</div>'
+
+              : ''
+
+          );
+
+
+        card.appendChild(
+          scoreBadge
+        );
+
+        card.appendChild(
+          body
+        );
+
+        venuesListEl.appendChild(
+          card
+        );
+
+      });
+
+    })
+
+    .catch(function(err){
+
+      venuesListEl.innerHTML =
+        '<div class="empty-state">' +
+
+        err.message +
+
+        '</div>';
+
+    });
+
+}
+
+  // ---------- Fetch real ratings from the backend ----------
   var statsRow = document.getElementById("statsRow");
-  var totalRatings = myRatings.length;
-  var avgScore = totalRatings ? (myRatings.reduce(function(s,r){ return s+r.score; }, 0) / totalRatings) : null;
-  var uniqueVenues = new Set(myRatings.map(function(r){ return r.venueName; })).size;
+
+var listEl =
+  document.getElementById("ratingsList");
+
+var venuesListEl =
+  document.getElementById("venuesList");
+
+var venuesCountEl =
+  document.getElementById("venuesCount");
 
   function statBox(value, label){
     var box = document.createElement("div");
@@ -98,50 +364,74 @@
     box.innerHTML = '<div class="stat-value">' + value + '</div><div class="stat-label">' + label + '</div>';
     return box;
   }
+loadMyVenues();
+  fetch(API_BASE + "/users/me/ratings", {
+    headers: { "Authorization": "Bearer " + token }
+  })
+    .then(function(res){
+      if(res.status === 401){
+        // Token expired or invalid — send them back to log in again
+        localStorage.removeItem("soundscout_token");
+        localStorage.removeItem("soundscout_user");
+        window.location.href = LOGIN_PAGE_URL;
+        return null;
+      }
+      if(!res.ok) throw new Error("Could not load your ratings.");
+      return res.json();
+    })
+    .then(function(myRatings){
+      if(myRatings === null) return; // redirected above
 
-  statsRow.appendChild(statBox(totalRatings, "Ratings submitted"));
-  statsRow.appendChild(statBox(avgScore !== null ? avgScore.toFixed(1) : "—", "Avg quietness given"));
-  statsRow.appendChild(statBox(uniqueVenues, "Venues rated"));
+      var totalRatings = myRatings.length;
+      var avgScore = totalRatings ? (myRatings.reduce(function(s,r){ return s+r.score; }, 0) / totalRatings) : null;
+      var uniqueVenues = new Set(myRatings.map(function(r){ return r.venueName; })).size;
 
-  // ---------- Ratings list ----------
-  document.getElementById("ratingsCount").textContent =
-    totalRatings + (totalRatings === 1 ? " rating" : " ratings");
+      statsRow.appendChild(statBox(totalRatings, "Ratings submitted"));
+      statsRow.appendChild(statBox(avgScore !== null ? avgScore.toFixed(1) : "—", "Avg quietness given"));
+      statsRow.appendChild(statBox(uniqueVenues, "Venues rated"));
 
-  var listEl = document.getElementById("ratingsList");
+      document.getElementById("ratingsCount").textContent =
+        totalRatings + (totalRatings === 1 ? " rating" : " ratings");
 
-  if(!totalRatings){
-    listEl.innerHTML = '<div class="empty-state">You haven\'t rated any venues yet. <a href="../home/home.html">Find a venue to rate →</a></div>';
-    return;
-  }
+      if(!totalRatings){
+        listEl.innerHTML = '<div class="empty-state">You haven\'t rated any venues yet. <a href="../home/home.html">Find a venue to rate →</a></div>';
+        return;
+      }
 
-  myRatings
-    .slice()
-    .sort(function(a,b){ return b.timestamp - a.timestamp; })
-    .forEach(function(r){
-      var card = document.createElement("div");
-      card.className = "rating-card";
+      myRatings
+        .slice()
+        .sort(function(a,b){ return b.timestamp - a.timestamp; })
+        .forEach(function(r){
+          var card = document.createElement("div");
+          card.className = "rating-card";
 
-      var badge = document.createElement("div");
-      badge.className = "rating-score-badge";
-      badge.style.background = quietColor(r.score);
-      badge.textContent = r.score;
+          var badge = document.createElement("div");
+          badge.className = "rating-score-badge";
+          badge.style.background = quietColor(r.score);
+          badge.textContent = r.score;
 
-      var body = document.createElement("div");
-      body.className = "rating-body";
+          var body = document.createElement("div");
+          body.className = "rating-body";
 
-      var tagsHTML = "";
-      if(r.access) tagsHTML += '<span class="rating-tag">Step-free</span>';
-      if(r.toilet) tagsHTML += '<span class="rating-tag">Gender-neutral</span>';
+          var tagsHTML = "";
+          if(r.access) tagsHTML += '<span class="rating-tag">Step-free</span>';
+          if(r.toilet) tagsHTML += '<span class="rating-tag">Gender-neutral</span>';
 
-      body.innerHTML =
-        '<p class="rating-venue-name">' + r.venueName + '</p>' +
-        '<p class="rating-meta">' + r.category + ' · ' + quietLabel(r.score) + ' (' + dbEstimate(r.score) + ') · ' +
-          TIME_BUCKET_LABELS[r.time] + ' · ' + relativeTime(r.timestamp) + '</p>' +
-        (tagsHTML ? '<div class="rating-tags">' + tagsHTML + '</div>' : '');
+          body.innerHTML =
+            '<p class="rating-venue-name">' +
+escapeHTML(r.venueName) +
+'</p>'
+            '<p class="rating-meta">' + (CATEGORY_LABELS[r.category] || r.category) + ' · ' + quietLabel(r.score) + ' (' + dbEstimate(r.score) + ') · ' +
+              TIME_BUCKET_LABELS[r.time] + ' · ' + relativeTime(r.timestamp) + '</p>' +
+            (tagsHTML ? '<div class="rating-tags">' + tagsHTML + '</div>' : '');
 
-      card.appendChild(badge);
-      card.appendChild(body);
-      listEl.appendChild(card);
+          card.appendChild(badge);
+          card.appendChild(body);
+          listEl.appendChild(card);
+        });
+    })
+    .catch(function(err){
+      listEl.innerHTML = '<div class="empty-state">' + err.message + '</div>';
     });
 
 })();
