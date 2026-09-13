@@ -121,10 +121,30 @@ router.post('/verify-otp', async (req, res) => {
       user = created.rows[0];
     }
 
-    const token = jwt.sign({ sub: user.id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+
+const isAdmin =
+  adminEmail &&
+  user.email.trim().toLowerCase() === adminEmail;
+
+const token = jwt.sign(
+  {
+    sub: user.id,
+    email: user.email,
+    admin: isAdmin
+  },
+  process.env.JWT_SECRET,
+  { expiresIn: '7d' }
+);
     console.log("JWT generated for:", user.email);
     console.log("JWT:", token);
-    return res.json({ token, user });
+    return res.json({
+  token,
+  user: {
+    ...user,
+    admin: isAdmin
+  }
+});
   } catch (err) {
     console.error('verify-otp error:', err);
     return res.status(500).json({ error: 'Could not verify code. Try again.' });

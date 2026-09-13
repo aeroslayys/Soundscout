@@ -190,8 +190,14 @@ verifyBtn.addEventListener('click', async () => {
 
     setStatus(verifyStatus, 'Success! Redirecting...', 'success');
     setTimeout(() => {
-      window.location.href = 'home/home.html'; // swap for your actual home page route
-    }, 600);
+
+  if (data.user.admin === true) {
+    window.location.href = 'admin/admin.html';
+  } else {
+    window.location.href = 'home/home.html';
+  }
+
+}, 600);
   } catch(err){
     setStatus(verifyStatus, err.message, 'error');
     verifyBtn.disabled = false;

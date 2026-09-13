@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>SoundScout Admin</title>
+
+    <!-- Leaflet -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="admin.css"
+    >
+
+</head>
+
+
+<body>
+
+
+    <!-- =====================================================
+         HEADER
+    ====================================================== -->
+
+    <header class="admin-header">
+
+    <div class="admin-brand">
+        <h1>SoundScout</h1>
+        <span class="dot"></span>
+        <span class="admin-label">Admin</span>
+    </div>
+
+    <div class="admin-user">
+        <span id="adminEmail"></span>
+        <button id="logoutBtn">Logout</button>
+    </div>
+
+</header>
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <main class="admin-layout">
+
+
+        <!-- =================================================
+             MAP
+        ================================================== -->
+
+        <section class="map-section">
+
+            <div id="map"></div>
+
+        </section>
+
+
+        <!-- =================================================
+             SIDEBAR
+        ================================================== -->
+
+        <aside class="sidebar">
+
+            <div class="sidebar-header">
+
+    <div class="sidebar-title-row">
+        <h2>Venues</h2>
+        <span id="venueCount">0</span>
+    </div>
+
+    <p class="sidebar-subtitle">
+        All venues currently registered in SoundScout
+    </p>
+
+</div>
+
+
+            <div id="venueList">
+
+                <p class="loading">
+                    Loading venues...
+                </p>
+
+            </div>
+
+        </aside>
+
+
+    </main>
+
+
+    <!-- Leaflet -->
+
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+
+
+    <script src="admin.js"></script>
+
+</body>
+
+</html>

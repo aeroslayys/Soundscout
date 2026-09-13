@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const audioRoutes = require('./routes/audio');
 const venueRoutes = require('./routes/venues');
 const userRoutes = require('./routes/users');
+const adminRoutes = require('./routes/admin');
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use('/api/audio', audioRoutes);
 
 app.use('/api/venues', venueRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/admin', adminRoutes);
 
 // HEALTH CHECK
 
