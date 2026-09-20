@@ -2622,9 +2622,31 @@ function enterLocationPickerMode(){
             item.style.padding = "8px 10px";
             item.style.fontSize = "12.5px";
             item.style.cursor = "pointer";
-            item.style.borderBottom = "1px solid #F0EDE3";
-            item.addEventListener("mouseenter", function(){ item.style.background = "#F0EDE3"; });
-            item.addEventListener("mouseleave", function(){ item.style.background = "transparent"; });
+            item.style.borderBottom =
+  "1px solid var(--border)";
+
+item.style.color =
+  "var(--ink)";
+
+item.addEventListener(
+  "mouseenter",
+  function(){
+
+    item.style.background =
+      "var(--surface-soft)";
+
+  }
+);
+
+item.addEventListener(
+  "mouseleave",
+  function(){
+
+    item.style.background =
+      "transparent";
+
+  }
+);
             item.addEventListener("click", function(){
 
   locationInput.value = r.display_name;
