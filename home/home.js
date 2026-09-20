@@ -10,8 +10,19 @@
   var venues = [];
 
   var nextId = 9;
-  var state = {category:"all", search:"", accessOnly:false, toiletOnly:false, selected:null, userLocation:null, sortByDistance:false};
+  var state = {
+  category:"all",
+  search:"",
+  accessOnly:false,
+  toiletOnly:false,
+  selected:null,
+  userLocation:null,
+  sortByDistance:false,
+  quietNearMe:false
+};
 
+var QUIET_NEAR_RADIUS_KM = 3;
+var QUIET_NEAR_MIN_SCORE = 4;
   var TIME_BUCKETS = ["morning","afternoon","evening","night"];
   var TIME_BUCKET_LABELS = {
   morning:"Morning",
@@ -554,6 +565,72 @@ function timeBarChartHTML(v){
     var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
   }
+  function isQuietNearMeVenue(v){
+
+  if(!state.userLocation){
+    return false;
+  }
+
+  var score = avgScore(v);
+
+  /*
+    Only Calm / Silent venues.
+  */
+  if(
+    score === null ||
+    score < QUIET_NEAR_MIN_SCORE
+  ){
+    return false;
+  }
+
+  var lat = Number(v.lat);
+  var lng = Number(v.lng);
+
+  if(
+    !Number.isFinite(lat) ||
+    !Number.isFinite(lng)
+  ){
+    return false;
+  }
+
+  var km = distanceKm(
+    state.userLocation.lat,
+    state.userLocation.lng,
+    lat,
+    lng
+  );
+
+  return km <= QUIET_NEAR_RADIUS_KM;
+
+}
+function deactivateQuietNearMe(){
+
+  state.quietNearMe = false;
+
+  // Keep distance sorting if we already know the user's location.
+  state.sortByDistance = !!state.userLocation;
+
+  updateQuietNearButton();
+
+  renderList();
+
+  updateMarkerVisibility();
+
+  refreshHeatmap();
+
+  if(state.userLocation){
+
+    locateStatus.textContent =
+      "Showing all venues nearest to you first.";
+
+  } else {
+
+    locateStatus.textContent =
+      "Showing all venues.";
+
+  }
+
+}
 
   function distanceLabel(v){
     if(!state.userLocation) return "";
@@ -571,7 +648,12 @@ function timeBarChartHTML(v){
   var markers = {};
   var youMarker = null;
   var heatLayer = null;
+  var youAccuracyCircle = null;
+  var locationWatchId = null;
+var locationWatchTimer = null;
 
+var LOCATION_SEARCH_MS = 10000;
+var GOOD_LOCATION_ACCURACY_METERS = 50;
   function accessSVG(){
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="1.6"/><path d="M6 20l3-8 3 2 3-2 3 8"/><path d="M9 12l1-4h4"/></svg>';
   }
@@ -1069,13 +1151,53 @@ recentReportsHTML(v) +
     return s.replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; });
   }
 
-  function matchesFilters(v){
-    if(state.category !== "all" && v.category !== state.category) return false;
-    if(state.search && v.name.toLowerCase().indexOf(state.search.toLowerCase()) === -1) return false;
-    if(state.accessOnly && !v.access) return false;
-    if(state.toiletOnly && !v.toilet) return false;
-    return true;
+function matchesFilters(v){
+
+  if(
+    state.category !== "all" &&
+    v.category !== state.category
+  ){
+    return false;
   }
+
+  if(
+    state.search &&
+    v.name
+      .toLowerCase()
+      .indexOf(
+        state.search.toLowerCase()
+      ) === -1
+  ){
+    return false;
+  }
+
+  if(
+    state.accessOnly &&
+    !v.access
+  ){
+    return false;
+  }
+
+  if(
+    state.toiletOnly &&
+    !v.toilet
+  ){
+    return false;
+  }
+
+  /*
+    Quiet Near Me mode.
+  */
+  if(
+    state.quietNearMe &&
+    !isQuietNearMeVenue(v)
+  ){
+    return false;
+  }
+
+  return true;
+
+}
 
   function renderChips(){
     var row = document.getElementById("category-chips");
@@ -1112,28 +1234,119 @@ recentReportsHTML(v) +
     var list = document.getElementById("venue-list");
     var visible = venues.filter(matchesFilters);
 
-    if(state.sortByDistance && state.userLocation){
-      visible.sort(function(a,b){
-        var da = distanceKm(state.userLocation.lat, state.userLocation.lng, a.lat, a.lng);
-        var db = distanceKm(state.userLocation.lat, state.userLocation.lng, b.lat, b.lng);
-        return da - db;
-      });
-    } else {
-      visible.sort(function(a,b){
-        var sa = avgScore(a), sb = avgScore(b);
-        if(sa === null) return 1;
-        if(sb === null) return -1;
-        return sb - sa;
-      });
+    if(
+  state.quietNearMe &&
+  state.userLocation
+){
+
+  /*
+    Quiet Near Me:
+    1. Quietest first
+    2. If equally quiet, nearest first
+  */
+
+  visible.sort(function(a, b){
+
+    var scoreA = avgScore(a);
+    var scoreB = avgScore(b);
+
+    if(scoreA !== scoreB){
+      return scoreB - scoreA;
     }
+
+
+    var distanceA = distanceKm(
+      state.userLocation.lat,
+      state.userLocation.lng,
+      a.lat,
+      a.lng
+    );
+
+    var distanceB = distanceKm(
+      state.userLocation.lat,
+      state.userLocation.lng,
+      b.lat,
+      b.lng
+    );
+
+    return distanceA - distanceB;
+
+  });
+
+
+} else if(
+  state.sortByDistance &&
+  state.userLocation
+){
+
+  visible.sort(function(a,b){
+
+    var da = distanceKm(
+      state.userLocation.lat,
+      state.userLocation.lng,
+      a.lat,
+      a.lng
+    );
+
+    var db = distanceKm(
+      state.userLocation.lat,
+      state.userLocation.lng,
+      b.lat,
+      b.lng
+    );
+
+    return da - db;
+
+  });
+
+
+} else {
+
+  visible.sort(function(a,b){
+
+    var sa = avgScore(a);
+    var sb = avgScore(b);
+
+    if(sa === null) return 1;
+    if(sb === null) return -1;
+
+    return sb - sa;
+
+  });
+
+}
     
 
-    document.getElementById("list-count").textContent = visible.length + (visible.length === 1 ? " venue" : " venues");
+    var countText =
+  visible.length +
+  (visible.length === 1
+    ? " venue"
+    : " venues");
+
+if(state.quietNearMe){
+  countText += " · quiet nearby";
+}
+
+document.getElementById(
+  "list-count"
+).textContent = countText;
     list.innerHTML = "";
     if(visible.length === 0){
       var empty = document.createElement("div");
       empty.className = "empty-state";
-      empty.textContent = "No venues match these filters yet. Try widening your search or be the first to add one.";
+     if(state.quietNearMe){
+
+  empty.textContent =
+    "No Calm or Silent venues found within " +
+    QUIET_NEAR_RADIUS_KM +
+    " km.";
+
+} else {
+
+  empty.textContent =
+    "No venues match these filters yet. Try widening your search or be the first to add one.";
+
+}
       list.appendChild(empty);
       return;
     }
@@ -1465,19 +1678,89 @@ if(sidebarHeader){
   var addVenueBtn = document.getElementById("open-add-venue");
   addVenueBtn.insertAdjacentElement("afterend", locateBtn);
 
+  // ---------- Quiet Near Me button ----------
+
+var quietNearBtn =
+  document.createElement("button");
+
+quietNearBtn.type = "button";
+quietNearBtn.id = "quiet-near-btn";
+
+quietNearBtn.textContent =
+  "◉ Quiet near me";
+
+quietNearBtn.style.display = "block";
+quietNearBtn.style.width = "100%";
+quietNearBtn.style.marginTop = "8px";
+quietNearBtn.style.padding = "10px 14px";
+
+quietNearBtn.style.fontFamily =
+  "'Inter', sans-serif";
+
+quietNearBtn.style.fontSize = "13.5px";
+quietNearBtn.style.fontWeight = "600";
+
+quietNearBtn.style.color =
+  "var(--quiet-deep)";
+
+quietNearBtn.style.background =
+  "var(--surface)";
+
+quietNearBtn.style.border =
+  "1.5px solid var(--quiet-deep)";
+
+quietNearBtn.style.borderRadius =
+  "8px";
+
+quietNearBtn.style.cursor =
+  "pointer";
+
+
+locateBtn.insertAdjacentElement(
+  "afterend",
+  quietNearBtn
+);
+
   var locateStatus = document.createElement("p");
   locateStatus.id = "locate-status";
   locateStatus.style.fontFamily = "'Inter', sans-serif";
   locateStatus.style.fontSize = "12px";
   locateStatus.style.color = "#5B6472";
   locateStatus.style.margin = "6px 0 0 0";
-  locateBtn.insertAdjacentElement("afterend", locateStatus);
+  quietNearBtn.insertAdjacentElement(
+  "afterend",
+  locateStatus
+);
 
   var locateBtnStyle = document.createElement("style");
   locateBtnStyle.textContent =
     "#locate-me-btn:hover{background:#EAF3F3;}" +
     "#locate-me-btn:disabled{opacity:0.6;cursor:not-allowed;}";
   document.head.appendChild(locateBtnStyle);
+
+  var quietNearBtnStyle =
+  document.createElement("style");
+
+quietNearBtnStyle.textContent =
+
+  "#quiet-near-btn:hover{" +
+    "background:var(--bg);" +
+  "}" +
+
+  "#quiet-near-btn.active{" +
+    "background:var(--action, #1E3937);" +
+    "border-color:var(--action, #1E3937);" +
+    "color:var(--on-action, #ffffff);" +
+  "}" +
+
+  "#quiet-near-btn:disabled{" +
+    "opacity:0.6;" +
+    "cursor:not-allowed;" +
+  "}";
+
+document.head.appendChild(
+  quietNearBtnStyle
+);
 
   var youMarkerStyle = document.createElement("style");
   youMarkerStyle.textContent =
@@ -1500,56 +1783,553 @@ if(sidebarHeader){
     });
   }
 
-  function locateUser(){
-    if(!("geolocation" in navigator)){
-      locateStatus.textContent = "Geolocation isn't supported on this browser.";
+function locateUser(onComplete){
+
+  if(!("geolocation" in navigator)){
+
+    locateStatus.textContent =
+      "Geolocation isn't supported on this browser.";
+
+    if(typeof onComplete === "function"){
+      onComplete(false);
+    }
+
+    return;
+  }
+
+
+  /*
+    Stop an older location search if one
+    is somehow still running.
+  */
+
+  if(locationWatchId !== null){
+
+    navigator.geolocation.clearWatch(
+      locationWatchId
+    );
+
+    locationWatchId = null;
+  }
+
+
+  if(locationWatchTimer !== null){
+
+    clearTimeout(locationWatchTimer);
+
+    locationWatchTimer = null;
+  }
+
+
+  locateBtn.disabled = true;
+  locateBtn.textContent = "Locating…";
+
+  locateStatus.textContent =
+    "Looking for an accurate location…";
+
+
+  var bestPosition = null;
+  var finished = false;
+
+
+  function finishLocation(success){
+
+    if(finished){
       return;
     }
 
-    locateBtn.disabled = true;
-    locateBtn.textContent = "Locating…";
-    locateStatus.textContent = "";
+    finished = true;
 
-    navigator.geolocation.getCurrentPosition(
-      function(position){
-        var lat = position.coords.latitude;
-        var lng = position.coords.longitude;
-        state.userLocation = {lat: lat, lng: lng};
-        state.sortByDistance = true;
 
-        if(youMarker){
-          youMarker.setLatLng([lat, lng]);
-        } else {
-          youMarker = L.marker([lat, lng], {icon: youIcon(), zIndexOffset: 1000}).addTo(map);
-          youMarker.bindTooltip("You are here");
-        }
+    if(locationWatchId !== null){
 
-        map.flyTo([lat, lng], 15, {duration:0.6});
+      navigator.geolocation.clearWatch(
+        locationWatchId
+      );
 
-        locateBtn.disabled = false;
-        locateBtn.textContent = "⦿ Re-locate me";
-        locateStatus.textContent = "Showing venues nearest to you first.";
+      locationWatchId = null;
+    }
 
-        renderList();
-        // A real PostGIS-backed nearby search is now available too:
-        // fetch(`${API_BASE}/venues/nearby?lat=${lat}&lng=${lng}&radius=2000`)
-        // — swap to that if you want the DB doing the filtering instead of
-        // sorting the full client-side list.
-      },
-      function(error){
-        locateBtn.disabled = false;
-        locateBtn.textContent = "⦿ Find my location";
-        if(error.code === error.PERMISSION_DENIED){
-          locateStatus.textContent = "Location access denied — showing all venues instead.";
-        } else {
-          locateStatus.textContent = "Couldn't get your location. Try again.";
-        }
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
+
+    if(locationWatchTimer !== null){
+
+      clearTimeout(
+        locationWatchTimer
+      );
+
+      locationWatchTimer = null;
+    }
+
+
+    locateBtn.disabled = false;
+
+
+    if(
+      !success ||
+      !bestPosition
+    ){
+
+      locateBtn.textContent =
+        "⦿ Find my location";
+
+      if(typeof onComplete === "function"){
+        onComplete(false);
+      }
+
+      return;
+    }
+
+
+    /*
+      Use the most accurate position
+      received during the search.
+    */
+
+    var lat =
+      bestPosition.coords.latitude;
+
+    var lng =
+      bestPosition.coords.longitude;
+
+    var accuracy =
+      bestPosition.coords.accuracy;
+
+
+    console.log(
+      "Best location:",
+      lat,
+      lng,
+      "Accuracy:",
+      accuracy + " metres"
     );
+
+
+    state.userLocation = {
+      lat: lat,
+      lng: lng,
+      accuracy: accuracy
+    };
+
+
+    /*
+      Normal Find My Location mode sorts
+      venues by distance.
+
+      Quiet Near Me has its own sorting.
+    */
+
+    if(!state.quietNearMe){
+      state.sortByDistance = true;
+    }
+
+
+    /*
+      Update blue location marker.
+    */
+
+    if(youMarker){
+
+      youMarker.setLatLng([
+        lat,
+        lng
+      ]);
+
+    } else {
+
+      youMarker = L.marker(
+        [lat, lng],
+        {
+          icon: youIcon(),
+          zIndexOffset: 1000
+        }
+      ).addTo(map);
+
+
+      youMarker.bindTooltip(
+        "You are here"
+      );
+
+    }
+
+
+    /*
+      Update accuracy circle.
+    */
+
+    if(youAccuracyCircle){
+
+      youAccuracyCircle.setLatLng([
+        lat,
+        lng
+      ]);
+
+      youAccuracyCircle.setRadius(
+        accuracy
+      );
+
+    } else {
+
+      youAccuracyCircle = L.circle(
+        [lat, lng],
+        {
+          radius: accuracy,
+          color: "#378ADD",
+          weight: 1,
+          fillColor: "#378ADD",
+          fillOpacity: 0.08
+        }
+      ).addTo(map);
+
+    }
+
+
+    map.flyTo(
+      [lat, lng],
+      15,
+      {
+        duration: 0.6
+      }
+    );
+
+
+    locateBtn.textContent =
+      "⦿ Re-locate me";
+
+
+    if(state.quietNearMe){
+
+      locateStatus.textContent =
+        "Location accuracy: ±" +
+        Math.round(accuracy) +
+        " m · showing quiet venues within " +
+        QUIET_NEAR_RADIUS_KM +
+        " km.";
+
+    } else {
+
+      locateStatus.textContent =
+        "Location accuracy: ±" +
+        Math.round(accuracy) +
+        " m · showing nearest venues first.";
+
+    }
+
+
+    renderList();
+
+    updateMarkerVisibility();
+
+    refreshHeatmap();
+
+
+    if(typeof onComplete === "function"){
+      onComplete(true);
+    }
+
   }
 
-  locateBtn.addEventListener("click", locateUser);
+
+  /*
+    Start listening for improved positions.
+  */
+
+  locationWatchId =
+    navigator.geolocation.watchPosition(
+
+      function(position){
+
+        var accuracy =
+          position.coords.accuracy;
+
+
+        /*
+          Keep this reading only if it is
+          better than the previous one.
+        */
+
+        if(
+          !bestPosition ||
+          accuracy <
+          bestPosition.coords.accuracy
+        ){
+
+          bestPosition = position;
+
+
+          locateStatus.textContent =
+            "Improving location… best accuracy ±" +
+            Math.round(accuracy) +
+            " m";
+
+        }
+
+
+        /*
+          Good enough — don't make the
+          user wait for all 10 seconds.
+        */
+
+        if(
+          accuracy <=
+          GOOD_LOCATION_ACCURACY_METERS
+        ){
+
+          finishLocation(true);
+
+        }
+
+      },
+
+
+      function(error){
+
+        /*
+          Permission denied cannot recover
+          by waiting longer.
+        */
+
+        if(
+          error.code ===
+          error.PERMISSION_DENIED
+        ){
+
+          locateStatus.textContent =
+            "Location access denied — showing all venues instead.";
+
+          finishLocation(false);
+
+          return;
+        }
+
+
+        /*
+          If we already received at least
+          one location, keep that result.
+        */
+
+        if(bestPosition){
+
+          finishLocation(true);
+
+          return;
+        }
+
+
+        locateStatus.textContent =
+          "Couldn't get your location. Try again.";
+
+        finishLocation(false);
+
+      },
+
+
+      {
+        enableHighAccuracy: true,
+        maximumAge: 0,
+        timeout: 10000
+      }
+
+    );
+
+
+  /*
+    Stop searching after 10 seconds and
+    use the best location received.
+  */
+
+  locationWatchTimer =
+    setTimeout(
+      function(){
+
+        if(bestPosition){
+
+          finishLocation(true);
+
+        } else {
+
+          locateStatus.textContent =
+            "Couldn't get a location fix.";
+
+          finishLocation(false);
+
+        }
+
+      },
+      LOCATION_SEARCH_MS
+    );
+
+}
+  function updateQuietNearButton(){
+
+  if(state.quietNearMe){
+
+    quietNearBtn.classList.add(
+      "active"
+    );
+
+    quietNearBtn.textContent =
+      "✓ Quiet near me";
+
+    quietNearBtn.title =
+      "Show all venues";
+
+  } else {
+
+    quietNearBtn.classList.remove(
+      "active"
+    );
+
+    quietNearBtn.textContent =
+      "◉ Quiet near me";
+
+    quietNearBtn.title =
+      "Show quiet venues nearby";
+
+  }
+
+}
+
+
+function activateQuietNearMe(){
+
+  if(!state.userLocation){
+    return;
+  }
+
+  state.quietNearMe = true;
+
+  /*
+    Quiet mode has its own sorting logic.
+  */
+  state.sortByDistance = false;
+
+  updateQuietNearButton();
+
+  renderList();
+
+  updateMarkerVisibility();
+
+  refreshHeatmap();
+
+
+  var quietVenues =
+    venues.filter(matchesFilters);
+
+
+  if(quietVenues.length){
+
+    locateStatus.textContent =
+      "Showing Calm or Silent venues within " +
+      QUIET_NEAR_RADIUS_KM +
+      " km.";
+
+  } else {
+
+    locateStatus.textContent =
+      "No Calm or Silent venues found within " +
+      QUIET_NEAR_RADIUS_KM +
+      " km.";
+
+  }
+
+
+  map.flyTo(
+    [
+      state.userLocation.lat,
+      state.userLocation.lng
+    ],
+    14,
+    {
+      duration:0.6
+    }
+  );
+
+}
+
+
+function deactivateQuietNearMe(){
+
+  state.quietNearMe = false;
+
+  /*
+    We still know the user's location,
+    so keep normal venues nearest-first.
+  */
+  state.sortByDistance =
+    !!state.userLocation;
+
+  updateQuietNearButton();
+
+  renderList();
+
+  updateMarkerVisibility();
+
+  refreshHeatmap();
+
+
+  if(state.userLocation){
+
+    locateStatus.textContent =
+      "Showing all venues nearest to you first.";
+
+  } else {
+
+    locateStatus.textContent = "";
+
+  }
+
+}
+quietNearBtn.addEventListener(
+  "click",
+  function(){
+
+    // If Quiet Near Me is already active,
+    // clicking again shows all venues.
+    if(state.quietNearMe){
+
+      deactivateQuietNearMe();
+
+      return;
+
+    }
+
+    // Already have location.
+    if(state.userLocation){
+
+      activateQuietNearMe();
+
+      return;
+
+    }
+
+    // Need location first.
+    quietNearBtn.disabled = true;
+    quietNearBtn.textContent = "Finding location…";
+
+    locateUser(function(success){
+
+      quietNearBtn.disabled = false;
+
+      if(success){
+
+        activateQuietNearMe();
+
+      } else {
+
+        updateQuietNearButton();
+
+      }
+
+    });
+
+  }
+);
+  locateBtn.addEventListener(
+  "click",
+  function(){
+    locateUser();
+  }
+);
 
   // ---------- Location search (Nominatim, proxied through our backend) ----------
   // Only shown in "Add a venue" mode. Replaces the old map-center-jitter
