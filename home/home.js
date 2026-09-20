@@ -363,8 +363,14 @@ function timeBarChartHTML(v){
   var MIN_DBFS = -60;
   var MAX_DBFS = -10;
 
-  var MAX_BAR_PX = 62;
-  var MIN_BAR_PX = 6;
+ var isMobile =
+  window.innerWidth <= 760;
+
+var MAX_BAR_PX =
+  isMobile ? 38 : 62;
+
+var MIN_BAR_PX =
+  isMobile ? 4 : 6;
 
 
   var barsHTML =
@@ -713,7 +719,27 @@ var GOOD_LOCATION_ACCURACY_METERS = 50;
       iconSize:[16,16]
     });
     var m = L.marker([v.lat, v.lng], {icon:icon}).addTo(map);
-    m.bindPopup(popupHTML(v));
+    m.bindPopup(
+  popupHTML(v),
+  {
+    maxWidth:
+      window.innerWidth <= 760
+        ? 240
+        : 300,
+
+    maxHeight:
+      window.innerWidth <= 760
+        ? 300
+        : null,
+
+    autoPan:true,
+
+    autoPanPadding:[
+      20,
+      80
+    ]
+  }
+);
     m.on('click', function(){ selectVenue(v.id, false); });
     markers[v.id] = m;
   }
@@ -970,7 +996,12 @@ function recentReportsHTML(v){
     .sort(function(a, b){
       return Number(b.timestamp) - Number(a.timestamp);
     })
-    .slice(0, 4);
+    .slice(
+  0,
+  window.innerWidth <= 760
+    ? 2
+    : 4
+);
 
 
   if(!ratings.length){
