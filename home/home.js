@@ -151,6 +151,7 @@
 
   var markers = {};
   var youMarker = null;
+  var heatLayer = null;
 
   function accessSVG(){
     return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="4" r="1.6"/><path d="M6 20l3-8 3 2 3-2 3 8"/><path d="M9 12l1-4h4"/></svg>';
@@ -175,7 +176,194 @@
     Object.keys(markers).forEach(function(id){ map.removeLayer(markers[id]); });
     markers = {};
   }
+// ---------- Sound heatmap ----------
 
+function heatWeight(v){
+
+  var score = avgScore(v);
+
+  /*
+    Venues with no ratings are excluded from the heatmap
+    because we don't know their sound level yet.
+  */
+  if(score === null || score === undefined){
+    return null;
+  }
+
+  /*
+    SoundScout quietness scale:
+
+    1 = Loud
+    2 = Lively
+    3 = Moderate
+    4 = Calm
+    5 = Silent
+
+    Leaflet.heat works the opposite way:
+    bigger weight = hotter.
+
+    Therefore:
+
+    score 1 -> 1.0
+    score 2 -> 0.8
+    score 3 -> 0.6
+    score 4 -> 0.4
+    score 5 -> 0.2
+
+    We keep silent places at 0.2 rather than zero so they
+    are still visible as green areas.
+  */
+
+  var weight = (6 - score) / 5;
+
+  return Math.max(
+    0.2,
+    Math.min(1, weight)
+  );
+}
+
+
+function getHeatPoints(){
+
+  return venues
+    .filter(matchesFilters)
+    .map(function(v){
+
+      var weight = heatWeight(v);
+
+      if(weight === null){
+        return null;
+      }
+
+      var lat = Number(v.lat);
+      var lng = Number(v.lng);
+
+      if(
+        !Number.isFinite(lat) ||
+        !Number.isFinite(lng)
+      ){
+        return null;
+      }
+
+      return [
+        lat,
+        lng,
+        weight
+      ];
+
+    })
+    .filter(function(point){
+      return point !== null;
+    });
+
+}
+
+
+function refreshHeatmap(){
+
+  var toggle =
+    document.getElementById("toggle-heatmap");
+
+
+  /*
+    Remove the previous heat layer before rebuilding it.
+
+    This lets search/category/accessibility filters update
+    the heatmap immediately.
+  */
+  if(heatLayer){
+
+    map.removeLayer(heatLayer);
+
+    heatLayer = null;
+
+  }
+
+
+  /*
+    Checkbox switched off.
+  */
+  if(!toggle || !toggle.checked){
+    return;
+  }
+
+
+  /*
+    Make sure Leaflet.heat actually loaded.
+  */
+  if(typeof L.heatLayer !== "function"){
+
+    console.error(
+      "Leaflet.heat is not loaded."
+    );
+
+    return;
+
+  }
+
+
+  var points = getHeatPoints();
+
+
+  if(!points.length){
+    return;
+  }
+
+
+  heatLayer = L.heatLayer(
+    points,
+    {
+
+      /*
+        Radius controls how far each venue's sound zone spreads.
+      */
+      radius: 48,
+
+      /*
+        Blur gives us the smooth heatmap transition.
+      */
+      blur: 32,
+
+      /*
+        Prevent the layer becoming completely transparent
+        around quieter venues.
+      */
+      minOpacity: 0.35,
+
+      /*
+        Heat intensity is already normalized from 0–1.
+      */
+      max: 1,
+
+      maxZoom: 17,
+
+
+      /*
+        SoundScout palette:
+
+        quiet       -> green
+        moderate    -> yellow
+        lively      -> orange
+        loud        -> red
+      */
+      gradient: {
+
+        0.20: "#4E8F73",
+
+        0.40: "#82A374",
+
+        0.60: "#D1B45B",
+
+        0.80: "#D7864D",
+
+        1.00: "#BD5B45"
+
+      }
+
+    }
+  ).addTo(map);
+
+}
   function popupHTML(v){
     var score = avgScore(v);
     var overallLine = score === null
@@ -212,6 +400,7 @@
         renderChips();
         renderList();
         updateMarkerVisibility();
+        refreshHeatmap();
       });
       row.appendChild(chip);
     });
@@ -325,6 +514,13 @@
     state.toiletOnly = e.target.checked;
     renderList();
     updateMarkerVisibility();
+  });
+  document
+  .getElementById("toggle-heatmap")
+  .addEventListener("change", function(){
+
+    refreshHeatmap();
+
   });
 
   // ---------- Account / profile button ----------
@@ -1241,6 +1437,7 @@ locationSelectedDisplay.style.color = "#5B6472";
         renderChips();
         renderList();
         updateMarkerVisibility();
+        refreshHeatmap();
       })
       .catch(function(err){
         console.error("Failed to load venues:", err);

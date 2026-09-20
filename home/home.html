@@ -29,6 +29,10 @@
     <div class="toggle-row">
       <label><input type="checkbox" id="filter-access"> Only show wheelchair / step-free access</label>
       <label><input type="checkbox" id="filter-toilet"> Only show gender-neutral toilets</label>
+      <label>
+    <input type="checkbox" id="toggle-heatmap">
+    Show sound heatmap
+  </label>
     </div>
   </div>
 
@@ -97,8 +101,12 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
-<script src="/Soundscout/home/home.js"></script>
 <link rel="stylesheet" href="/Soundscout/home/home.css">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+
+<script src="/Soundscout/home/home.js"></script>
 </body>
 </html>
