@@ -13,7 +13,12 @@
   var state = {category:"all", search:"", accessOnly:false, toiletOnly:false, selected:null, userLocation:null, sortByDistance:false};
 
   var TIME_BUCKETS = ["morning","afternoon","evening","night"];
-  var TIME_BUCKET_LABELS = {morning:"11am", afternoon:"3pm", evening:"7pm", night:"11pm"};
+  var TIME_BUCKET_LABELS = {
+  morning:"Morning",
+  afternoon:"Afternoon",
+  evening:"Evening",
+  night:"Night"
+};
 
   function currentTimeOfDay(){
     var h = new Date().getHours();
@@ -44,14 +49,81 @@
     v.ratings.forEach(function(r){ sum += r.score; });
     return sum / v.ratings.length;
   }
+  function measuredDbValues(v){
 
-  function scoreForBucket(v, bucket){
-    var rs = (v.ratings || []).filter(function(r){ return r.time === bucket; });
-    if(!rs.length) return null;
-    var sum = 0;
-    rs.forEach(function(r){ sum += r.score; });
-    return sum / rs.length;
+  if(!v.ratings || !v.ratings.length){
+    return [];
   }
+
+  return v.ratings
+    .map(function(r){
+      return r.measured_db;
+    })
+    .filter(function(value){
+      return value !== null &&
+             value !== undefined &&
+             value !== "" &&
+             !Number.isNaN(Number(value));
+    })
+    .map(function(value){
+      return Number(value);
+    });
+
+}
+
+
+function avgMeasuredDb(v){
+
+  var values = measuredDbValues(v);
+
+  if(!values.length){
+    return null;
+  }
+
+  /*
+    dB is logarithmic, so don't simply do:
+
+      (-20 + -40) / 2
+
+    Convert each dBFS value to linear power first,
+    average the powers, then convert back to dBFS.
+  */
+
+  var totalPower = 0;
+
+  values.forEach(function(db){
+    totalPower += Math.pow(10, db / 10);
+  });
+
+  var averagePower = totalPower / values.length;
+
+  return 10 * Math.log10(averagePower);
+
+}
+
+
+function measuredDbCount(v){
+
+  return measuredDbValues(v).length;
+
+}
+
+
+function recordedLevelLabel(db){
+
+  if(db === null){
+    return "";
+  }
+
+  if(db >= -15) return "Loud";
+  if(db >= -25) return "Lively";
+  if(db >= -35) return "Moderate";
+  if(db >= -45) return "Calm";
+
+  return "Very quiet";
+
+}
+  
 
   function quietColor(q){
     if(q === null || q === undefined) return "rgb(150,150,150)";
@@ -81,48 +153,395 @@
     }
   }
 
-  function dbEstimateValue(score){
-    if(score === null || score === undefined) return null;
-    var anchors = {1:78, 2:65, 3:52, 4:42, 5:34};
-    var lo = Math.max(1, Math.min(5, Math.floor(score)));
-    var hi = Math.max(1, Math.min(5, Math.ceil(score)));
-    if(lo === hi) return anchors[lo];
-    var frac = score - lo;
-    return anchors[lo] + (anchors[hi] - anchors[lo]) * frac;
-  }
 
-  function dbEstimate(score){
-    var val = dbEstimateValue(score);
-    return val === null ? "" : "~" + Math.round(val) + " dB";
-  }
 
   function quietLabel(q){
     var rounded = Math.max(1, Math.min(5, Math.round(q)));
     return {1:"Loud", 2:"Lively", 3:"Moderate", 4:"Calm", 5:"Silent"}[rounded];
   }
 
-  function timeBarChartHTML(v){
-    var bucketsWithData = TIME_BUCKETS.filter(function(bucket){ return scoreForBucket(v, bucket) !== null; });
-    if(!bucketsWithData.length){
-      return '<p style="font-size:12px;color:#5B6472;margin:8px 0;">No ratings yet — be the first.</p>';
-    }
+// ---------- Time-of-day recorded sound graph ----------
 
-    var MIN_DB = 30, MAX_DB = 80, MAX_BAR_PX = 54, MIN_BAR_PX = 6;
+function measuredDbValuesForBucket(v, bucket){
 
-    var barsHTML = bucketsWithData.map(function(bucket){
-      var s = scoreForBucket(v, bucket);
-      var db = dbEstimateValue(s);
-      var t = Math.max(0, Math.min(1, (db - MIN_DB) / (MAX_DB - MIN_DB)));
-      var barPx = Math.round(MIN_BAR_PX + (MAX_BAR_PX - MIN_BAR_PX) * t);
-      return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;flex:1;">' +
-        '<span style="font-size:9px;font-weight:700;color:#1C2430;">' + Math.round(db) + '</span>' +
-        '<div style="width:100%;max-width:32px;height:' + barPx + 'px;background:' + quietColor(s) + ';border-radius:5px 5px 2px 2px;"></div>' +
-        '<span style="font-size:9.5px;color:#5B6472;">' + TIME_BUCKET_LABELS[bucket] + '</span>' +
+  return (v.ratings || [])
+    .filter(function(r){
+
+      return r.time === bucket &&
+             r.measured_db !== null &&
+             r.measured_db !== undefined &&
+             r.measured_db !== "" &&
+             !Number.isNaN(Number(r.measured_db));
+
+    })
+    .map(function(r){
+
+      return Number(r.measured_db);
+
+    });
+
+}
+
+
+function measuredDbForBucket(v, bucket){
+
+  var values =
+    measuredDbValuesForBucket(v, bucket);
+
+  if(!values.length){
+    return null;
+  }
+
+  /*
+    dBFS is logarithmic.
+
+    Convert each value to linear power,
+    average the powers,
+    then convert back to dBFS.
+  */
+
+  var totalPower = 0;
+
+  values.forEach(function(db){
+
+    totalPower +=
+      Math.pow(10, db / 10);
+
+  });
+
+  var averagePower =
+    totalPower / values.length;
+
+  return 10 * Math.log10(averagePower);
+
+}
+
+
+function measuredDbCountForBucket(v, bucket){
+
+  return measuredDbValuesForBucket(
+    v,
+    bucket
+  ).length;
+
+}
+
+
+function recordedLevelColor(db){
+
+  if(db >= -15){
+    return "#BD5B45";
+  }
+
+  if(db >= -25){
+    return "#D7864D";
+  }
+
+  if(db >= -35){
+    return "#D1B45B";
+  }
+
+  if(db >= -45){
+    return "#82A374";
+  }
+
+  return "#4E8F73";
+
+}
+
+
+function timeBarChartHTML(v){
+
+  /*
+    Check whether this venue has at least
+    one genuine audio measurement.
+  */
+
+  var hasMeasurements =
+    TIME_BUCKETS.some(function(bucket){
+
+      return measuredDbForBucket(
+        v,
+        bucket
+      ) !== null;
+
+    });
+
+
+  if(!hasMeasurements){
+
+    return '' +
+
+      '<div style="' +
+        'margin:10px 0 8px 0;' +
+        'padding:9px 10px;' +
+        'background:var(--bg);' +
+        'border-radius:8px;' +
+      '">' +
+
+        '<p style="' +
+          'font-size:11px;' +
+          'color:#607470;' +
+          'margin:0;' +
+        '">' +
+
+          'No time-of-day audio measurements yet.' +
+
+        '</p>' +
+
+      '</div>';
+
+  }
+
+
+  /*
+    Graph range.
+
+    -60 dBFS = extremely low recording level
+    -10 dBFS = very strong recording level
+
+    Anything outside this range is clamped
+    visually, but the real value is still shown.
+  */
+
+  var MIN_DBFS = -60;
+  var MAX_DBFS = -10;
+
+  var MAX_BAR_PX = 62;
+  var MIN_BAR_PX = 6;
+
+
+  var barsHTML =
+    TIME_BUCKETS.map(function(bucket){
+
+      var db =
+        measuredDbForBucket(
+          v,
+          bucket
+        );
+
+      var count =
+        measuredDbCountForBucket(
+          v,
+          bucket
+        );
+
+
+      /*
+        No recorded clip in this time bucket.
+      */
+
+      if(db === null){
+
+        return '' +
+
+          '<div style="' +
+            'display:flex;' +
+            'flex-direction:column;' +
+            'align-items:center;' +
+            'justify-content:flex-end;' +
+            'gap:4px;' +
+            'flex:1;' +
+            'min-width:45px;' +
+          '">' +
+
+            '<span style="' +
+              'font-family:\'IBM Plex Mono\',monospace;' +
+              'font-size:9px;' +
+              'color:var(--muted);' +
+            '">' +
+
+              '—' +
+
+            '</span>' +
+
+            '<div style="' +
+              'width:100%;' +
+              'max-width:30px;' +
+              'height:4px;' +
+              'background:#D9E3DF;' +
+              'border-radius:3px;' +
+            '">' +
+            '</div>' +
+
+            '<span style="' +
+              'font-size:9px;' +
+              'color:#607470;' +
+              'text-align:center;' +
+            '">' +
+
+              TIME_BUCKET_LABELS[bucket] +
+
+            '</span>' +
+
+          '</div>';
+
+      }
+
+
+      /*
+        Convert dBFS into a visual percentage.
+      */
+
+      var clamped =
+        Math.max(
+          MIN_DBFS,
+          Math.min(
+            MAX_DBFS,
+            db
+          )
+        );
+
+
+      var normalized =
+        (clamped - MIN_DBFS) /
+        (MAX_DBFS - MIN_DBFS);
+
+
+      var barPx =
+        Math.round(
+          MIN_BAR_PX +
+          (
+            MAX_BAR_PX -
+            MIN_BAR_PX
+          ) *
+          normalized
+        );
+
+
+      var color =
+        recordedLevelColor(db);
+
+
+      return '' +
+
+        '<div style="' +
+          'display:flex;' +
+          'flex-direction:column;' +
+          'align-items:center;' +
+          'justify-content:flex-end;' +
+          'gap:4px;' +
+          'flex:1;' +
+          'min-width:45px;' +
+        '">' +
+
+
+          '<span style="' +
+            'font-family:\'IBM Plex Mono\',monospace;' +
+            'font-size:9px;' +
+            'font-weight:500;' +
+            'color:#1E3937;' +
+            'white-space:nowrap;' +
+          '">' +
+
+            db.toFixed(1) +
+
+          '</span>' +
+
+
+          '<div style="' +
+            'width:100%;' +
+            'max-width:30px;' +
+            'height:' +
+              barPx +
+              'px;' +
+            'background:' +
+              color +
+              ';' +
+            'border-radius:5px 5px 2px 2px;' +
+          '">' +
+          '</div>' +
+
+
+          '<span style="' +
+            'font-size:9px;' +
+            'color:#607470;' +
+            'text-align:center;' +
+          '">' +
+
+            TIME_BUCKET_LABELS[bucket] +
+
+          '</span>' +
+
+
+          '<span style="' +
+            'font-size:8px;' +
+            'color:var(--muted);' +
+            'white-space:nowrap;' +
+          '">' +
+
+            count +
+            (
+              count === 1
+                ? ' clip'
+                : ' clips'
+            ) +
+
+          '</span>' +
+
+
         '</div>';
+
     }).join('');
 
-    return '<div style="display:flex;align-items:flex-end;gap:8px;height:' + (MAX_BAR_PX + 30) + 'px;margin:10px 0 8px 0;">' + barsHTML + '</div>';
-  }
+
+  return '' +
+
+    '<div style="' +
+      'margin:12px 0 8px 0;' +
+      'padding-top:10px;' +
+      'border-top:1px solid #D9E3DF;' +
+    '">' +
+
+
+      '<div style="' +
+        'display:flex;' +
+        'align-items:center;' +
+        'justify-content:space-between;' +
+        'margin-bottom:8px;' +
+      '">' +
+
+        '<span style="' +
+          'font-size:10px;' +
+          'font-weight:600;' +
+          'letter-spacing:0.06em;' +
+          'text-transform:uppercase;' +
+          'color:#607470;' +
+        '">' +
+
+          'Recorded sound by time' +
+
+        '</span>' +
+
+        '<span style="' +
+          'font-size:9px;' +
+          'color:var(--muted);' +
+        '">' +
+
+          'dBFS' +
+
+        '</span>' +
+
+      '</div>' +
+
+
+      '<div style="' +
+        'display:flex;' +
+        'align-items:flex-end;' +
+        'gap:6px;' +
+        'height:' +
+          (MAX_BAR_PX + 48) +
+          'px;' +
+      '">' +
+
+        barsHTML +
+
+      '</div>' +
+
+
+    '</div>';
+
+}
 
   // ---------- Distance helpers (plain haversine formula, no external API) ----------
   function distanceKm(lat1, lng1, lat2, lng2){
@@ -364,16 +783,287 @@ function refreshHeatmap(){
   ).addTo(map);
 
 }
-  function popupHTML(v){
-    var score = avgScore(v);
-    var overallLine = score === null
-      ? "No ratings yet"
-      : CATEGORY_LABELS[v.category].replace(/s$/,'')+' · '+quietLabel(score)+' · '+dbEstimate(score);
-    return '<div class="popup-body"><h3>'+escapeHTML(v.name)+'</h3>' +
-      '<p class="popup-cat">'+overallLine+'</p>' +
-      timeBarChartHTML(v) +
-      '<button class="popup-rate-btn" onclick="window.__ssOpenRate(\''+v.id+'\')">Rate this place</button></div>';
+// ---------- Recent sound reports ----------
+
+function formatReportTime(timestamp){
+
+  var time = Number(timestamp);
+
+  if(!Number.isFinite(time)){
+    return "";
   }
+
+  var date = new Date(time);
+  var now = new Date();
+
+  var diffMs = now.getTime() - date.getTime();
+
+  var diffMinutes = Math.floor(diffMs / 60000);
+  var diffHours = Math.floor(diffMs / 3600000);
+  var diffDays = Math.floor(diffMs / 86400000);
+
+
+  if(diffMinutes < 1){
+    return "Just now";
+  }
+
+  if(diffMinutes < 60){
+    return diffMinutes + "m ago";
+  }
+
+  if(diffHours < 24){
+    return diffHours + "h ago";
+  }
+
+  if(diffDays === 1){
+    return "Yesterday";
+  }
+
+  if(diffDays < 7){
+    return diffDays + "d ago";
+  }
+
+
+  return date.toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short"
+  });
+
+}
+
+
+function recentReportsHTML(v){
+
+  var ratings = (v.ratings || [])
+    .slice()
+    .filter(function(r){
+      return r.timestamp !== null &&
+             r.timestamp !== undefined;
+    })
+    .sort(function(a, b){
+      return Number(b.timestamp) - Number(a.timestamp);
+    })
+    .slice(0, 4);
+
+
+  if(!ratings.length){
+    return "";
+  }
+
+
+  var reportsHTML = ratings.map(function(r){
+
+    var score = Number(r.score);
+
+    var db =
+      r.measured_db !== null &&
+      r.measured_db !== undefined &&
+      r.measured_db !== ""
+        ? Number(r.measured_db)
+        : null;
+
+
+    var readingHTML = "";
+
+
+    if(db !== null && Number.isFinite(db)){
+
+      readingHTML =
+        '<span style="' +
+          'font-family:\'IBM Plex Mono\',monospace;' +
+          'font-size:11px;' +
+          'font-weight:500;' +
+          'color:var(--ink);' +
+        '">' +
+
+          db.toFixed(1) +
+          ' dBFS' +
+
+        '</span>';
+
+    } else {
+
+      readingHTML =
+        '<span style="' +
+          'font-size:11px;' +
+          'font-weight:500;' +
+          'color:var(--ink);' +
+        '">' +
+
+          'Quietness ' +
+          score.toFixed(0) +
+          ' · ' +
+          quietLabel(score) +
+
+        '</span>';
+
+    }
+
+
+    var bucket = "";
+
+    if(r.time){
+
+      bucket =
+        r.time.charAt(0).toUpperCase() +
+        r.time.slice(1);
+
+    }
+
+
+    return '' +
+
+      '<div style="' +
+        'padding:7px 0;' +
+        'border-bottom:1px solid var(--border);' +
+      '">' +
+
+        '<div style="' +
+          'display:flex;' +
+          'justify-content:space-between;' +
+          'align-items:center;' +
+          'gap:10px;' +
+        '">' +
+
+          readingHTML +
+
+          '<span style="' +
+            'font-size:9.5px;' +
+            'color:var(--muted);' +
+            'white-space:nowrap;' +
+          '">' +
+
+            formatReportTime(r.timestamp) +
+
+          '</span>' +
+
+        '</div>' +
+
+
+        '<div style="' +
+          'font-size:9.5px;' +
+          'color:var(--muted);' +
+          'margin-top:2px;' +
+        '">' +
+
+          (db !== null
+            ? 'Audio measurement'
+            : 'Manual quietness rating') +
+
+          (bucket
+            ? ' · ' + bucket
+            : '') +
+
+        '</div>' +
+
+      '</div>';
+
+  }).join('');
+
+
+  return '' +
+
+    '<div style="' +
+      'margin-top:12px;' +
+      'padding-top:10px;' +
+      'border-top:1px solid var(--border);' +
+    '">' +
+
+      '<p style="' +
+        'font-size:10px;' +
+        'font-weight:600;' +
+        'letter-spacing:0.06em;' +
+        'text-transform:uppercase;' +
+        'color:#607470;' +
+        'margin:0 0 3px 0;' +
+      '">' +
+
+        'Recent sound reports' +
+
+      '</p>' +
+
+      reportsHTML +
+
+    '</div>';
+
+}
+  function popupHTML(v){
+
+  var score = avgScore(v);
+  var measuredDb = avgMeasuredDb(v);
+  var measurementCount = measuredDbCount(v);
+
+  var overallLine;
+
+  if(score === null){
+
+    overallLine = "No ratings yet";
+
+  } else {
+
+    overallLine =
+      CATEGORY_LABELS[v.category].replace(/s$/,'') +
+      ' · ' +
+      quietLabel(score);
+
+  }
+
+  /*
+    Only show dBFS when we actually have
+    an audio measurement.
+  */
+  if(measuredDb !== null){
+
+    overallLine +=
+      ' · ' +
+      measuredDb.toFixed(1) +
+      ' dBFS';
+
+  }
+
+
+  var measurementLine = "";
+
+  if(measurementCount > 0){
+
+    measurementLine =
+      '<p style="font-size:10.5px;color:#607470;margin:3px 0 5px 0;">' +
+        'Based on ' +
+        measurementCount +
+        (measurementCount === 1
+          ? ' audio measurement'
+          : ' audio measurements') +
+      '</p>';
+
+  }
+
+
+  return '' +
+
+    '<div class="popup-body">' +
+
+      '<h3>' +
+        escapeHTML(v.name) +
+      '</h3>' +
+
+      '<p class="popup-cat">' +
+        overallLine +
+      '</p>' +
+
+      measurementLine +
+
+timeBarChartHTML(v) +
+
+recentReportsHTML(v) +
+
+'<button class="popup-rate-btn" ' +
+        'onclick="window.__ssOpenRate(\'' + v.id + '\')">' +
+        'Rate this place' +
+      '</button>' +
+
+    '</div>';
+
+}
 
   function escapeHTML(s){
     return s.replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; });
@@ -453,7 +1143,32 @@ function refreshHeatmap(){
       card.className = "venue-card" + (state.selected === v.id ? " selected" : "");
       card.setAttribute("tabindex","0");
       card.setAttribute("role","button");
-      card.setAttribute("aria-label", v.name + ", " + (score === null ? "no ratings yet" : quietLabel(score)));
+      var measuredDb = avgMeasuredDb(v);
+var measurementCount = measuredDbCount(v);
+
+var overallLine;
+
+if(score === null){
+
+  overallLine = "No ratings yet";
+
+} else {
+
+  overallLine =
+    CATEGORY_LABELS[v.category].replace(/s$/,'') +
+    " · " +
+    quietLabel(score);
+
+}
+
+if(measuredDb !== null){
+
+  overallLine +=
+    " · " +
+    measuredDb.toFixed(1) +
+    " dBFS";
+
+}
 
       var top = document.createElement("div");
       top.className = "venue-top";
@@ -462,8 +1177,31 @@ function refreshHeatmap(){
       var metaLine = CATEGORY_LABELS[v.category].replace(/s$/,'') + (distLabel ? ' · ' + distLabel : '');
       left.innerHTML = '<p class="venue-name">'+escapeHTML(v.name)+'</p><p class="venue-cat">'+metaLine+'</p>';
       var right = document.createElement("div");
-      right.className = "db-reading";
-      right.textContent = dbEstimate(score);
+right.className = "db-reading";
+
+var measuredDb = avgMeasuredDb(v);
+var measurementCount = measuredDbCount(v);
+
+if(measuredDb !== null){
+
+  right.textContent =
+    measuredDb.toFixed(1) + " dBFS";
+
+  right.title =
+    "Average from " +
+    measurementCount +
+    (measurementCount === 1
+      ? " audio measurement"
+      : " audio measurements");
+
+} else {
+
+  right.textContent = "No audio";
+
+  right.title =
+    "No recorded sound measurements yet";
+
+}
       top.appendChild(left);
       top.appendChild(right);
       card.appendChild(top);
@@ -504,17 +1242,19 @@ function refreshHeatmap(){
     state.search = e.target.value;
     renderList();
     updateMarkerVisibility();
+    refreshHeatmap();
   });
   document.getElementById("filter-access").addEventListener("change", function(e){
     state.accessOnly = e.target.checked;
     renderList();
     updateMarkerVisibility();
+    refreshHeatmap();
   });
   document.getElementById("filter-toilet").addEventListener("change", function(e){
     state.toiletOnly = e.target.checked;
     renderList();
     updateMarkerVisibility();
-  });
+    refreshHeatmap();});
   document
   .getElementById("toggle-heatmap")
   .addEventListener("change", function(){
@@ -529,6 +1269,121 @@ function refreshHeatmap(){
 
   var sidebarHeader = document.querySelector(".sidebar-header");
   if(sidebarHeader) sidebarHeader.style.position = "relative";
+// ---------- Theme / dark mode ----------
+
+var THEME_STORAGE_KEY = "soundscout_theme";
+
+
+function preferredTheme(){
+
+  var saved =
+    localStorage.getItem(THEME_STORAGE_KEY);
+
+  if(saved === "dark" || saved === "light"){
+    return saved;
+  }
+
+  if(
+    window.matchMedia &&
+    window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches
+  ){
+    return "dark";
+  }
+
+  return "light";
+
+}
+
+
+var currentTheme = preferredTheme();
+
+
+function applyTheme(theme){
+
+  currentTheme = theme;
+
+  document.documentElement.setAttribute(
+    "data-theme",
+    theme
+  );
+
+  localStorage.setItem(
+    THEME_STORAGE_KEY,
+    theme
+  );
+
+}
+
+
+applyTheme(currentTheme);
+
+
+var themeToggle =
+  document.createElement("button");
+
+themeToggle.type = "button";
+
+themeToggle.id = "theme-toggle";
+
+themeToggle.setAttribute(
+  "aria-label",
+  "Toggle dark mode"
+);
+
+
+function updateThemeButton(){
+
+  if(currentTheme === "dark"){
+
+    themeToggle.textContent = "☀";
+
+    themeToggle.title =
+      "Switch to light mode";
+
+  } else {
+
+    themeToggle.textContent = "☾";
+
+    themeToggle.title =
+      "Switch to dark mode";
+
+  }
+
+}
+
+
+updateThemeButton();
+
+
+themeToggle.addEventListener(
+  "click",
+  function(){
+
+    var nextTheme =
+      currentTheme === "dark"
+        ? "light"
+        : "dark";
+
+    applyTheme(nextTheme);
+
+    updateThemeButton();
+
+    updateMapTheme();
+
+  }
+);
+
+
+if(sidebarHeader){
+
+  sidebarHeader.appendChild(
+    themeToggle
+  );
+
+}
+
 
   var accountBtn = document.createElement("button");
   accountBtn.type = "button";
