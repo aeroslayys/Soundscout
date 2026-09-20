@@ -144,26 +144,71 @@ function recordedLevelLabel(db){
     return "rgb(" + mix(0) + "," + mix(1) + "," + mix(2) + ")";
   }
 
-  function pseudoRandom(seed){
-    var x = Math.sin(seed) * 10000;
-    return x - Math.floor(x);
+  function renderSoundMeter(container, db){
+
+  container.innerHTML = "";
+
+  var segments = 20;
+
+
+  /*
+    Visual range:
+    -60 dBFS = extremely low
+    -10 dBFS = very strong
+  */
+
+  var normalized = 0;
+
+  if(db !== null){
+
+    var clamped =
+      Math.max(
+        -60,
+        Math.min(-10, db)
+      );
+
+    normalized =
+      (clamped + 60) / 50;
+
   }
 
-  function renderWaveform(container, quiet, seedBase){
-    container.innerHTML = "";
-    var bars = 20;
-    var color = quietColor(quiet);
-    var baseAmp = 8 + quiet * 5;
-    for(var i=0;i<bars;i++){
-      var jitter = pseudoRandom(seedBase + i * 3.7) * baseAmp;
-      var h = Math.max(3, Math.min(34, baseAmp * 0.5 + jitter));
-      var bar = document.createElement("span");
-      bar.style.height = h + "px";
-      bar.style.background = color;
-      container.appendChild(bar);
-    }
+
+  var activeSegments =
+    db === null
+      ? 0
+      : Math.max(
+          1,
+          Math.round(
+            normalized * segments
+          )
+        );
+
+
+  var color =
+    db === null
+      ? "var(--border-strong)"
+      : recordedLevelColor(db);
+
+
+  for(var i = 0; i < segments; i++){
+
+    var bar =
+      document.createElement("span");
+
+    bar.style.height = "5px";
+
+    bar.style.background =
+      i < activeSegments
+        ? color
+        : "var(--border)";
+
+    container.appendChild(bar);
+
   }
 
+}
+
+  
 
 
   function quietLabel(q){
@@ -1437,7 +1482,10 @@ if(measuredDb !== null){
       card.addEventListener("keydown", function(e){ if(e.key==="Enter" || e.key===" "){ e.preventDefault(); selectVenue(v.id, true); } });
 
       list.appendChild(card);
-      renderWaveform(wf, score === null ? 3 : score, (typeof v.id === "number" ? v.id : v.id.length) * 13);
+      renderSoundMeter(
+  wf,
+  measuredDb
+);
     });
   }
 
@@ -1583,11 +1631,8 @@ themeToggle.addEventListener(
 
     updateThemeButton();
 
-    updateMapTheme();
-
   }
 );
-
 
 if(sidebarHeader){
 
@@ -2974,11 +3019,18 @@ locationSelectedDisplay.style.color = "#5B6472";
 }
 
   function updateSliderPreview(){
-    var q = parseInt(document.getElementById("quiet-slider").value, 10);
-    document.getElementById("slider-readout").textContent = q + " · " + quietLabel(q);
-    renderWaveform(document.getElementById("preview-waveform"), q, 999);
-  }
 
+  var q = parseInt(
+    document.getElementById("quiet-slider").value,
+    10
+  );
+
+  document.getElementById(
+    "slider-readout"
+  ).textContent =
+    q + " · " + quietLabel(q);
+
+}
   document.getElementById("quiet-slider").addEventListener("input", updateSliderPreview);
   document.getElementById("open-add-venue").addEventListener("click", function(){ openModal("new"); });
   document.getElementById("modal-cancel").addEventListener("click", closeModal);
