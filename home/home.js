@@ -2674,6 +2674,7 @@ map.on("click", function(e){
   var MAX_CLIP_SECONDS = 10;
 
   var pendingAudioBlob = null;
+  var pendingAudioUrl = null;
   var lastMeasuredDb = null;
   var mediaRecorder = null;
   var mediaStream = null;
@@ -2736,6 +2737,20 @@ map.on("click", function(e){
   audioControlsRow.appendChild(recordTimerLabel);
   audioControlsRow.appendChild(uploadLabel);
   audioField.appendChild(audioControlsRow);
+  var audioPrivacyNote =
+  document.createElement("p");
+
+audioPrivacyNote.textContent =
+  "Audio is analyzed temporarily and is not stored. Only the measured sound level is saved.";
+
+audioPrivacyNote.style.fontSize = "10.5px";
+audioPrivacyNote.style.lineHeight = "1.45";
+audioPrivacyNote.style.color = "var(--muted)";
+audioPrivacyNote.style.margin = "7px 0 0 0";
+
+audioField.appendChild(
+  audioPrivacyNote
+);
 
   var audioResult = document.createElement("div");
   audioResult.id = "audio-result";
@@ -2793,27 +2808,69 @@ map.on("click", function(e){
   }
 
   function resetAudioClip(){
-    pendingAudioBlob = null;
-    lastMeasuredDb = null;
-    audioFileInput.value = "";
-    audioResult.style.display = "none";
-    audioPlayback.src = "";
-    setAudioStatus("", "");
-    recordTimerLabel.textContent = "";
-    recordBtn.textContent = "● Record clip";
-    recordBtn.disabled = false;
+
+  pendingAudioBlob = null;
+  lastMeasuredDb = null;
+
+  audioFileInput.value = "";
+
+  audioPlayback.pause();
+  audioPlayback.removeAttribute("src");
+  audioPlayback.load();
+
+  if(pendingAudioUrl){
+
+    URL.revokeObjectURL(
+      pendingAudioUrl
+    );
+
+    pendingAudioUrl = null;
+
   }
+
+  audioResult.style.display =
+    "none";
+
+  setAudioStatus("", "");
+
+  recordTimerLabel.textContent = "";
+
+  recordBtn.textContent =
+    "● Record clip";
+
+  recordBtn.disabled = false;
+
+}
 
   function finishClip(blob, duration){
-    pendingAudioBlob = blob;
-    var url = URL.createObjectURL(blob);
-    audioPlayback.src = url;
-    audioDurationBadge.textContent = duration.toFixed(1) + "s";
-    audioResult.style.display = "flex";
-    setAudioStatus("Analyzing clip...", "");
-    analyzeAudioClip();
+
+  pendingAudioBlob = blob;
+
+  if(pendingAudioUrl){
+    URL.revokeObjectURL(
+      pendingAudioUrl
+    );
   }
 
+  pendingAudioUrl =
+    URL.createObjectURL(blob);
+
+  audioPlayback.src =
+    pendingAudioUrl;
+
+  audioDurationBadge.textContent =
+    duration.toFixed(1) + "s";
+
+  audioResult.style.display = "flex";
+
+  setAudioStatus(
+    "Analyzing clip...",
+    ""
+  );
+
+  analyzeAudioClip();
+
+}
   var AUDIO_API_BASE = API_BASE + '/audio';
 
   function analyzeAudioClip(){
@@ -2836,9 +2893,15 @@ map.on("click", function(e){
         slider.value = suggested;
         updateSliderPreview();
         setAudioStatus(
-          "Loudness: " + data.loudness_10 + "/10 — suggested \"" + suggested + " · " + quietLabel(suggested) + "\", adjust the slider if needed.",
-          "success"
-        );
+  "Measured " +
+  Number(data.mean_volume_dbfs).toFixed(1) +
+  " dBFS · suggested " +
+  suggested +
+  " · " +
+  quietLabel(suggested) +
+  ". The recording will not be saved.",
+  "success"
+);
       })
       .catch(function(err){
         setAudioStatus(err.message || "Couldn't analyze that clip. You can still rate manually.", "error");

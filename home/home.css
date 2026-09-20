@@ -732,18 +732,374 @@ button,
 
 
 /* Mobile */
+@media (max-width: 760px){
 
-@media (max-width:760px){
+  html,
+  body{
+    width:100%;
+    height:100%;
+    margin:0;
+    overflow:hidden;
+  }
 
-  #theme-toggle{
 
-    top:20px;
+  body{
+    display:flex;
+    flex-direction:column;
+    height:100dvh;
+  }
 
-    right:64px;
+
+  /* ---------- Mobile sidebar ---------- */
+
+  #sidebar{
+
+    width:100%;
+    min-width:100%;
+
+    height:55dvh;
+    min-height:0;
+
+    flex:none;
+
+    overflow-y:auto;
+    overflow-x:hidden;
+
+    border-right:none;
+    border-bottom:1px solid var(--border);
 
   }
 
-}
-#preview-waveform{
-  display:none;
+
+  /* ---------- Mobile map ---------- */
+
+  #map{
+
+    width:100%;
+
+    height:45dvh;
+
+    flex:none;
+
+    min-height:0;
+
+  }
+
+
+  /* ---------- Header ---------- */
+
+  .sidebar-header{
+
+    padding:16px;
+
+    flex:none;
+
+  }
+
+
+  .brand h1{
+
+    font-size:23px;
+
+  }
+
+
+  .tagline{
+
+    font-size:12px;
+
+    margin:
+      4px
+      80px
+      12px
+      0;
+
+  }
+
+
+  /* ---------- Main buttons ---------- */
+
+  .add-btn,
+  #locate-me-btn,
+  #quiet-near-btn{
+
+    width:100%;
+
+    min-height:42px;
+
+    font-size:13px !important;
+
+  }
+
+
+  #locate-me-btn,
+  #quiet-near-btn{
+
+    margin-top:8px !important;
+
+  }
+
+
+  /* ---------- Theme / account buttons ---------- */
+
+  #account-btn{
+
+    top:16px !important;
+    right:16px !important;
+
+  }
+
+
+  #theme-toggle{
+
+    top:16px !important;
+    right:60px !important;
+
+  }
+
+
+  /* ---------- Filters ---------- */
+
+  .filters{
+
+    padding:14px 16px;
+
+    flex:none;
+
+  }
+
+
+  .search-box{
+
+    margin-bottom:12px;
+
+  }
+
+
+  .search-box input{
+
+    min-height:42px;
+
+    font-size:16px;
+
+  }
+
+
+  /*
+    Horizontal category scrolling works much
+    better than wrapping on a narrow screen.
+  */
+
+  .chip-row{
+
+    display:flex;
+
+    flex-wrap:nowrap;
+
+    overflow-x:auto;
+
+    overflow-y:hidden;
+
+    gap:6px;
+
+    padding-bottom:4px;
+
+    margin-bottom:10px;
+
+    scrollbar-width:none;
+
+    -webkit-overflow-scrolling:touch;
+
+  }
+
+
+  .chip-row::-webkit-scrollbar{
+
+    display:none;
+
+  }
+
+
+  .chip{
+
+    flex:0 0 auto;
+
+  }
+
+
+  .toggle-row{
+
+    gap:9px;
+
+  }
+
+
+  .toggle-row label{
+
+    min-height:24px;
+
+  }
+
+
+  /* ---------- Venue list ---------- */
+
+  .list-meta{
+
+    padding:
+      12px
+      16px
+      5px
+      16px;
+
+    flex:none;
+
+  }
+
+
+  #venue-list{
+
+    /*
+      Don't make this a separate tiny flex area.
+
+      Let the whole sidebar scroll naturally.
+    */
+
+    flex:none;
+
+    overflow:visible;
+
+    padding:
+      4px
+      8px
+      20px
+      8px;
+
+  }
+
+
+  .venue-card{
+
+    margin:5px 4px;
+
+    padding:12px;
+
+  }
+
+
+  .venue-name{
+
+    font-size:14px;
+
+  }
+
+
+  .db-reading{
+
+    font-size:11px;
+
+  }
+
+
+  /* ---------- Modal ---------- */
+
+  .modal-overlay{
+
+    padding:0;
+
+    align-items:flex-end;
+
+  }
+
+
+  .modal{
+
+    width:100%;
+
+    max-width:none;
+
+    max-height:94dvh;
+
+    padding:
+      20px
+      18px
+      18px
+      18px;
+
+    border-radius:
+      18px
+      18px
+      0
+      0;
+
+  }
+
+
+  .modal h2{
+
+    font-size:19px;
+
+  }
+
+
+  /*
+    16px prevents iPhone Safari from
+    automatically zooming into text inputs.
+  */
+
+  .field input[type="text"],
+  .field select{
+
+    min-height:44px;
+
+    font-size:16px;
+
+  }
+
+
+  .btn-secondary,
+  .btn-primary{
+
+    min-height:46px;
+
+  }
+
+
+  .modal-actions{
+
+    position:sticky;
+
+    bottom:-18px;
+
+    background:var(--surface);
+
+    padding:
+      10px
+      0
+      16px
+      0;
+
+    z-index:5;
+
+  }
+
+
+  /* ---------- Leaflet popup ---------- */
+
+  .leaflet-popup-content{
+
+    margin:
+      12px
+      14px;
+
+    max-width:240px;
+
+  }
+
+
+  .popup-body{
+
+    min-width:0;
+
+  }
+
 }
