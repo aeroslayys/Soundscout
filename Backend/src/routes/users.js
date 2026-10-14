@@ -137,7 +137,12 @@ router.get(
 
           COUNT(r.id) AS "ratingCount",
 
-          AVG(r.score) AS "averageScore"
+          AVG(r.score) AS "averageScore",
+
+          AVG(r.measured_db)
+            FILTER (
+              WHERE r.measured_db IS NOT NULL
+            ) AS "averageMeasuredDb"
 
         FROM venues v
 
@@ -160,7 +165,7 @@ router.get(
         `,
         [req.userId]
       );
-327319
+
       res.json(result.rows);
 
     } catch (error) {
