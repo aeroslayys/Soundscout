@@ -39,12 +39,6 @@
     return {1:"Loud", 2:"Lively", 3:"Moderate", 4:"Calm", 5:"Silent"}[rounded];
   }
 
-  function dbEstimate(score){
-    var anchors = {1:78, 2:65, 3:52, 4:42, 5:34};
-    var rounded = Math.max(1, Math.min(5, Math.round(score)));
-    return "~" + anchors[rounded] + " dB";
-  }
-
   function relativeTime(timestamp){
     var diffMs = Date.now() - timestamp;
     var diffMin = Math.floor(diffMs / 60000);
@@ -182,8 +176,26 @@ function loadMyVenues(){
         // -------------------------
 
         var score =
-          v.average_score !== null
-            ? parseFloat(v.average_score)
+          v.averageScore !== null &&
+          v.averageScore !== undefined
+            ? Number(v.averageScore)
+            : null;
+
+        if(
+          score !== null &&
+          !Number.isFinite(score)
+        ){
+          score = null;
+        }
+
+        var ratingCount =
+          Number(v.ratingCount || 0);
+
+        var averageMeasuredDb =
+          v.averageMeasuredDb !== null &&
+          v.averageMeasuredDb !== undefined &&
+          Number.isFinite(Number(v.averageMeasuredDb))
+            ? Number(v.averageMeasuredDb)
             : null;
 
 
@@ -258,12 +270,17 @@ function loadMyVenues(){
 
           ratingText =
             quietLabel(score) +
-            " · " +
-            dbEstimate(score) +
-            " · " +
-            v.rating_count +
             (
-              v.rating_count === 1
+              averageMeasuredDb !== null
+                ? " · " +
+                  averageMeasuredDb.toFixed(1) +
+                  " dBFS"
+                : ""
+            ) +
+            " · " +
+            ratingCount +
+            (
+              ratingCount === 1
                 ? " rating"
                 : " ratings"
             );
@@ -417,13 +434,48 @@ loadMyVenues();
           if(r.access) tagsHTML += '<span class="rating-tag">Step-free</span>';
           if(r.toilet) tagsHTML += '<span class="rating-tag">Gender-neutral</span>';
 
+          var measuredDbText = "";
+
+          if(
+            r.measured_db !== null &&
+            r.measured_db !== undefined &&
+            Number.isFinite(Number(r.measured_db))
+          ){
+            measuredDbText =
+              " · " +
+              Number(r.measured_db).toFixed(1) +
+              " dBFS";
+          }
+
           body.innerHTML =
             '<p class="rating-venue-name">' +
-escapeHTML(r.venueName) +
-'</p>'
-            '<p class="rating-meta">' + (CATEGORY_LABELS[r.category] || r.category) + ' · ' + quietLabel(r.score) + ' (' + dbEstimate(r.score) + ') · ' +
-              TIME_BUCKET_LABELS[r.time] + ' · ' + relativeTime(r.timestamp) + '</p>' +
-            (tagsHTML ? '<div class="rating-tags">' + tagsHTML + '</div>' : '');
+              escapeHTML(r.venueName) +
+            '</p>' +
+            '<p class="rating-meta">' +
+              escapeHTML(
+                CATEGORY_LABELS[r.category] ||
+                r.category ||
+                "Other"
+              ) +
+              ' · ' +
+              quietLabel(r.score) +
+              measuredDbText +
+              ' · ' +
+              escapeHTML(
+                TIME_BUCKET_LABELS[r.time] ||
+                r.time ||
+                "Unknown time"
+              ) +
+              ' · ' +
+              relativeTime(Number(r.timestamp)) +
+            '</p>' +
+            (
+              tagsHTML
+                ? '<div class="rating-tags">' +
+                    tagsHTML +
+                  '</div>'
+                : ''
+            );
 
           card.appendChild(badge);
           card.appendChild(body);
