@@ -84,6 +84,10 @@ router.get('/', async (req, res) => {
 
       LEFT JOIN ratings r
         ON r.venue_id = v.id
+        AND r.deleted_at IS NULL
+
+      WHERE v.deleted_at IS NULL
+        AND v.approval_status = 'approved'
 
       GROUP BY
         v.id,
@@ -261,7 +265,8 @@ router.post('/', requireAuth, async (req, res) => {
         location,
         access,
         toilet,
-        created_by
+        created_by,
+        approval_status
       )
 
       VALUES (
@@ -273,7 +278,8 @@ router.post('/', requireAuth, async (req, res) => {
         )::geography,
         $5,
         $6,
-        $7
+        $7,
+        $8
       )
 
       RETURNING
@@ -284,7 +290,8 @@ router.post('/', requireAuth, async (req, res) => {
         ST_X(location::geometry) AS lng,
         access,
         toilet,
-        created_at;
+        created_at,
+        approval_status AS status;
       `,
       [
         name.trim(),
@@ -293,7 +300,8 @@ router.post('/', requireAuth, async (req, res) => {
         latitude,
         Boolean(access),
         Boolean(toilet),
-        req.userId
+        req.userId,
+        'pending'
       ]
     );
 
@@ -410,7 +418,9 @@ router.post(
         `
         SELECT id
         FROM venues
-        WHERE id = $1;
+        WHERE id = $1
+          AND deleted_at IS NULL
+          AND approval_status = 'approved';
         `,
         [venueId]
       );
@@ -533,7 +543,9 @@ router.get('/nearby/search', async (req, res) => {
 
       FROM venues
 
-      WHERE ST_DWithin(
+      WHERE deleted_at IS NULL
+        AND approval_status = 'approved'
+        AND ST_DWithin(
         location,
         ST_SetSRID(
           ST_MakePoint($1, $2),
