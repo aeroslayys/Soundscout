@@ -25,7 +25,11 @@ Instead of relying only on photos or generic venue reviews, SoundScout lets peop
 - Accessibility and gender-neutral toilet tags
 - Passwordless email OTP authentication
 - User profiles
-- Admin venue-management dashboard
+- Admin operations dashboard with searchable venues, ratings, users, and audit history
+- Soft-delete and restore for ratings and venues, with required moderation reasons
+- Venue approval/rejection and likely-duplicate detection
+- Community flags and moderation queue
+- User suspension controls enforced by the backend
 - Light and dark themes
 - Responsive mobile layout
 
@@ -164,6 +168,18 @@ OTP_RESEND_COOLDOWN_SECONDS=30
 ```
 
 Do not commit your real `.env` file or credentials.
+
+### Apply the admin-console database migration
+
+Before starting the updated backend, apply the additive migration to the same PostgreSQL database configured by `DATABASE_URL`. It adds soft-delete fields, venue approval state, account suspension fields, moderation flags, and admin audit logs. Existing venues are marked approved by default; newly submitted venues wait for admin approval.
+
+Run this from the `Backend/` directory, with `DATABASE_URL` set in your shell:
+
+```bash
+psql "$DATABASE_URL" -f src/migrations/20261029_admin_console.sql
+```
+
+Back up the database before applying schema changes. The migration is designed to be repeatable, but it should still be applied to the intended database and verified before deploying the updated API.
 
 Start the backend:
 
