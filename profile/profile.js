@@ -1,6 +1,6 @@
 (function(){
 
-  var API_BASE = "http://localhost:4000/api";
+  var API_BASE = "/api";
   var LOGIN_PAGE_URL = "../index.html";
 
   var TIME_BUCKET_LABELS = {morning:"11am", afternoon:"3pm", evening:"7pm", night:"11pm"};

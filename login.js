@@ -6,7 +6,7 @@
    other than localhost.
    ============================================================ */
 
-const API_BASE = 'http://localhost:4000/api/auth';
+const API_BASE = '/api/auth';
 const RESEND_COOLDOWN_SECONDS = 30;
 
 let currentEmail = null;

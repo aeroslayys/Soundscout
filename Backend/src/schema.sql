@@ -1,3 +1,6 @@
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email VARCHAR(255) UNIQUE NOT NULL,
@@ -17,15 +20,40 @@ CREATE TABLE IF NOT EXISTS otp_codes (
   created_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS otp_codes_email_idx ON otp_codes (email, consumed_at, expires_at);
+CREATE INDEX IF NOT EXISTS otp_codes_email_idx
+ON otp_codes (email, consumed_at, expires_at);
 
--- Needed for gen_random_uuid() above, run once per database:
--- CREATE EXTENSION IF NOT EXISTS pgcrypto;
+CREATE TABLE IF NOT EXISTS venues (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  category VARCHAR(100) NOT NULL,
+  location GEOGRAPHY(POINT, 4326) NOT NULL,
+  access BOOLEAN DEFAULT FALSE,
+  toilet BOOLEAN DEFAULT FALSE,
+  created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);
 
--- Supabase auto-exposes every table via a public REST API using an "anon" key.
--- This app never uses that API (the Express backend connects directly via
--- DATABASE_URL, which bypasses RLS as the table owner), so enabling RLS here
--- with no policies simply blocks Supabase's auto-API from touching these
--- tables at all — a safety net in case the anon key ever leaks.
+CREATE INDEX IF NOT EXISTS venues_location_idx
+ON venues
+USING GIST (location);
+
+CREATE TABLE IF NOT EXISTS ratings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  venue_id UUID NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  score SMALLINT NOT NULL CHECK (score BETWEEN 1 AND 5),
+  time_of_day VARCHAR(20),
+  measured_db REAL,
+  had_audio_clip BOOLEAN DEFAULT FALSE,
+  submitted_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS ratings_venue_idx
+ON ratings (venue_id);
+
+CREATE INDEX IF NOT EXISTS ratings_user_idx
+ON ratings (user_id);
+
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE otp_codes ENABLE ROW LEVEL SECURITY;

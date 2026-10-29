@@ -96,7 +96,7 @@ router.post('/verify-otp', async (req, res) => {
     await pool.query('UPDATE otp_codes SET consumed_at = NOW() WHERE id = $1', [otpRow.id]);
 
     let user;
-    const existing = await pool.query('SELECT id, email, name, age, sensitivity FROM users WHERE email = $1', [email]);
+    const existing = await pool.query('SELECT id, email, name, age, sensitivity, is_suspended FROM users WHERE email = $1', [email]);
 
     if (existing.rowCount > 0) {
       user = existing.rows[0];
@@ -121,6 +121,10 @@ router.post('/verify-otp', async (req, res) => {
       user = created.rows[0];
     }
 
+    if (user.is_suspended === true) {
+      return res.status(403).json({ error: 'This account has been suspended. Contact SoundScout support if you believe this is a mistake.' });
+    }
+
     const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
 
 const isAdmin =
@@ -136,8 +140,6 @@ const token = jwt.sign(
   process.env.JWT_SECRET,
   { expiresIn: '7d' }
 );
-    console.log("JWT generated for:", user.email);
-    console.log("JWT:", token);
     return res.json({
   token,
   user: {

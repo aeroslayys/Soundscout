@@ -25,7 +25,11 @@ Instead of relying only on photos or generic venue reviews, SoundScout lets peop
 - Accessibility and gender-neutral toilet tags
 - Passwordless email OTP authentication
 - User profiles
-- Admin venue-management dashboard
+- Admin operations dashboard with searchable venues, ratings, users, and audit history
+- Soft-delete and restore for ratings and venues, with required moderation reasons
+- Venue approval/rejection and likely-duplicate detection
+- Community flags and moderation queue
+- User suspension controls enforced by the backend
 - Light and dark themes
 - Responsive mobile layout
 
@@ -152,18 +156,34 @@ ADMIN_EMAIL=admin@example.com
 
 CORS_ORIGIN=https://your-soundscout-url.example
 
-MAILTRAP_HOST=your-mailtrap-host
-MAILTRAP_PORT=587
-MAILTRAP_USER=your-mailtrap-user
-MAILTRAP_PASS=your-mailtrap-password
-MAILTRAP_FROM_NAME=SoundScout
-MAILTRAP_FROM_EMAIL=no-reply@example.com
+DATABASE_SSL=true # Use false for a local PostgreSQL server without TLS
+
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-smtp-user
+SMTP_PASS=your-smtp-password
+MAIL_FROM=no-reply@example.com
+MAIL_FROM_NAME=SoundScout
+
+# Legacy MAILTRAP_* variables are also supported.
 
 OTP_EXPIRY_MINUTES=10
 OTP_RESEND_COOLDOWN_SECONDS=30
 ```
 
 Do not commit your real `.env` file or credentials.
+
+### Apply the admin-console database migration
+
+Before starting the updated backend, apply the additive migration to the same PostgreSQL database configured by `DATABASE_URL`. It adds soft-delete fields, venue approval state, account suspension fields, moderation flags, and admin audit logs. Existing venues are marked approved by default; newly submitted venues wait for admin approval.
+
+Run this from the `Backend/` directory, with `DATABASE_URL` set in your shell:
+
+```bash
+psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f src/migrations/20261029_admin_console.sql
+```
+
+Back up the database before applying schema changes. The migration is designed to be repeatable, but it should still be applied to the intended database and verified before deploying the updated API.
 
 Start the backend:
 
@@ -257,6 +277,16 @@ The application can be hosted on a Linux machine with:
 For a self-hosted setup, Tailscale Funnel can provide a public HTTPS endpoint without directly exposing the database.
 
 Only the web/API service should be exposed. PostgreSQL should remain private.
+
+### Docker and Nginx
+
+The deployment files are:
+
+- `Backend/Dockerfile`: backend image with FFmpeg installed.
+- `Dockerfile.web`: static frontend served by Nginx.
+- `nginx.conf`: forwards `/api/` requests to a backend service named `backend` on port `4000`.
+
+The web and backend containers must share a Docker network, and the backend service must resolve as `backend` for the Nginx upstream to work. These files do not include a Compose manifest; keep the existing deployment orchestration and do not commit `.env` files or credentials.
 
 ## Security notes
 

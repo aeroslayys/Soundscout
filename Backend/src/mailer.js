@@ -1,11 +1,19 @@
 const nodemailer = require('nodemailer');
 
+const smtpPort = Number(process.env.SMTP_PORT || process.env.MAILTRAP_PORT || 587);
+const smtpHost = process.env.SMTP_HOST || process.env.MAILTRAP_HOST || 'smtp.gmail.com';
+const smtpUser = process.env.SMTP_USER || process.env.MAILTRAP_USER;
+const smtpPass = process.env.SMTP_PASS || process.env.MAILTRAP_PASS;
+const fromName = process.env.MAIL_FROM_NAME || process.env.MAILTRAP_FROM_NAME || 'SoundScout';
+const fromEmail = process.env.MAIL_FROM || process.env.MAILTRAP_FROM_EMAIL || smtpUser;
+
 const transport = nodemailer.createTransport({
-  host: process.env.MAILTRAP_HOST,
-  port: Number(process.env.MAILTRAP_PORT),
+  host: smtpHost,
+  port: smtpPort,
+  secure: smtpPort === 465,
   auth: {
-    user: process.env.MAILTRAP_USER,
-    pass: process.env.MAILTRAP_PASS,
+    user: smtpUser,
+    pass: smtpPass,
   },
 });
 
@@ -15,16 +23,16 @@ async function sendOtpEmail(toEmail, code, { isNewUser }) {
     : `Your SoundScout login code: ${code}`;
 
   const html = `
-    <div style="font-family: sans-serif; padding: 24px; color: #1C2430;">
-      <h2 style="color: #2B6E6E; margin-bottom: 4px;">SoundScout</h2>
-      <p style="font-size: 15px;">${isNewUser ? 'Welcome! Use this code to verify your email and finish creating your account:' : 'Use this code to log in:'}</p>
-      <p style="font-size: 32px; font-weight: 700; letter-spacing: 6px; color: #1E4F4F; margin: 20px 0;">${code}</p>
-      <p style="font-size: 13px; color: #5B6472;">This code expires in ${process.env.OTP_EXPIRY_MINUTES || 10} minutes. If you didn't request this, you can ignore this email.</p>
+    <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#1E3937">
+      <h2 style="margin:0 0 8px">SoundScout</h2>
+      <p style="margin:0 0 20px;color:#607470">${isNewUser ? 'Verify your email to create your account.' : 'Use this code to sign in.'}</p>
+      <div style="font-size:32px;font-weight:700;letter-spacing:8px;padding:18px 0">${code}</div>
+      <p style="color:#607470;font-size:13px">This code expires in ${process.env.OTP_EXPIRY_MINUTES || 10} minutes. If you did not request it, you can ignore this email.</p>
     </div>
   `;
 
   await transport.sendMail({
-    from: `"${process.env.MAILTRAP_FROM_NAME}" <${process.env.MAILTRAP_FROM_EMAIL}>`,
+    from: `"${fromName}" <${fromEmail}>`,
     to: toEmail,
     subject,
     html,
