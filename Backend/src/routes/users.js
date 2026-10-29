@@ -21,7 +21,7 @@ async function requireAuth(req, res, next) {
   } catch (err) {
     return res.status(401).json({ error: 'Invalid or expired token.' });
   }
-  if (!decoded.sub) return res.status(401).json({ error: 'Invalid token.' };
+  if (!decoded.sub) return res.status(401).json({ error: 'Invalid token.' });
 
   try {
     const account = await pool.query('SELECT id, email, is_suspended FROM users WHERE id = $1', [decoded.sub]);
