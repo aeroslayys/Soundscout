@@ -3239,6 +3239,7 @@ locationSelectedDisplay.style.color = "#5B6472";
         .then(function(){
           closeModal();
           loadVenues();
+          alert("Venue submitted for admin approval. It will appear on the public map once approved.");
         })
         .catch(function(err){
           alert(err.message);
