@@ -1,115 +1,81 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-
-    <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>SoundScout Admin</title>
-
-    <!-- Leaflet -->
-    <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    >
-
-    <link
-        rel="stylesheet"
-        href="admin.css"
-    >
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SoundScout Admin</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="admin.css">
 </head>
-
-
-<body>
-
-
-    <!-- =====================================================
-         HEADER
-    ====================================================== -->
-
-    <header class="admin-header">
-
+<body class="admin-console">
+  <header class="admin-header">
     <div class="admin-brand">
-        <h1>SoundScout</h1>
-        <span class="dot"></span>
-        <span class="admin-label">Admin</span>
+      <h1>SoundScout</h1><span class="dot"></span><span class="admin-label">Admin console</span>
     </div>
+    <div class="admin-user"><span id="adminEmail"></span><button id="logoutBtn">Logout</button></div>
+  </header>
 
-    <div class="admin-user">
-        <span id="adminEmail"></span>
-        <button id="logoutBtn">Logout</button>
-    </div>
+  <nav class="admin-nav" aria-label="Admin sections">
+    <button class="nav-tab active" data-panel="overview">Overview</button>
+    <button class="nav-tab" data-panel="venues">Venues</button>
+    <button class="nav-tab" data-panel="reviews">Ratings &amp; reports</button>
+    <button class="nav-tab" data-panel="moderation">Moderation queue <span id="pendingFlagBadge" class="nav-count">0</span></button>
+    <button class="nav-tab" data-panel="users">Users</button>
+    <button class="nav-tab" data-panel="audit">Audit log</button>
+  </nav>
 
-</header>
+  <main class="admin-panels">
+    <section class="admin-panel active" id="panel-overview">
+      <div class="panel-heading"><div><p class="eyebrow">OPERATIONS</p><h2>Overview</h2><p class="panel-subtitle">A quick view of SoundScout's community and moderation activity.</p></div><button class="secondary-btn" id="refreshDashboard">Refresh</button></div>
+      <div class="metric-grid" id="dashboardMetrics"><p class="loading">Loading dashboard…</p></div>
+      <div class="section-card"><div class="section-card-heading"><div><h3>Recent admin activity</h3><p>Destructive and moderation actions are recorded here.</p></div><button class="secondary-btn" data-open-panel="audit">View audit log</button></div><div id="recentActivity" class="record-list"><p class="loading">Loading activity…</p></div></div>
+    </section>
 
+    <section class="admin-panel" id="panel-venues">
+      <div class="panel-heading"><div><p class="eyebrow">PLACE DIRECTORY</p><h2>Venue management</h2><p class="panel-subtitle">Edit venue details, approve submissions, identify duplicates and restore removed venues.</p></div><button class="secondary-btn" id="scanDuplicates">Find duplicates</button></div>
+      <div class="filter-bar">
+        <input id="venueSearch" type="search" placeholder="Search venue, category or ID">
+        <select id="venueStatus"><option value="active">Active venues</option><option value="pending">Pending approval</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="deleted">Deleted / restore</option></select>
+        <button class="secondary-btn" id="searchVenues">Search</button>
+      </div>
+      <div id="duplicateResults" class="record-list"></div>
+      <div class="venue-workspace">
+        <div class="map-section"><div id="map"></div></div>
+        <aside class="venue-sidebar"><div class="sidebar-title-row"><h3>Venues</h3><span id="venueCount" class="count-pill">0</span></div><div id="venueList" class="record-list"><p class="loading">Loading venues…</p></div><div class="pagination"><button class="secondary-btn" id="venuePrev">Previous</button><span id="venuePageLabel">Page 1</span><button class="secondary-btn" id="venueNext">Next</button></div></aside>
+      </div>
+    </section>
 
-    <!-- =====================================================
-         MAIN
-    ====================================================== -->
+    <section class="admin-panel" id="panel-reviews">
+      <div class="panel-heading"><div><p class="eyebrow">COMMUNITY CONTENT</p><h2>Ratings &amp; sound reports</h2><p class="panel-subtitle">SoundScout currently stores numeric ratings and sound measurements, not text review comments.</p></div></div>
+      <div class="filter-bar"><input id="reviewSearch" type="search" placeholder="Search venue, user, email or ID"><select id="reviewStatus"><option value="active">Active</option><option value="deleted">Deleted / restore</option></select><button class="secondary-btn" id="searchReviews">Search</button></div>
+      <div id="reviewList" class="record-list"><p class="loading">Loading ratings…</p></div>
+      <div class="pagination"><button class="secondary-btn" id="reviewPrev">Previous</button><span id="reviewPageLabel">Page 1</span><button class="secondary-btn" id="reviewNext">Next</button></div>
+    </section>
 
-    <main class="admin-layout">
+    <section class="admin-panel" id="panel-moderation">
+      <div class="panel-heading"><div><p class="eyebrow">TRUST &amp; SAFETY</p><h2>Moderation queue</h2><p class="panel-subtitle">Investigate user flags, record decisions and keep a reason for each resolution.</p></div></div>
+      <div class="filter-bar"><select id="flagStatus"><option value="pending">Pending</option><option value="reviewed">Reviewed</option><option value="dismissed">Dismissed</option><option value="action_taken">Action taken</option><option value="all">All statuses</option></select><button class="secondary-btn" id="searchFlags">Refresh queue</button></div>
+      <div id="flagList" class="record-list"><p class="loading">Loading moderation queue…</p></div>
+      <p class="helper-note">The authenticated reporting endpoint is <code>POST /api/admin/flags</code> with <code>targetType</code>, <code>targetId</code>, and <code>reason</code>. It accepts venue or rating flags.</p>
+    </section>
 
+    <section class="admin-panel" id="panel-users">
+      <div class="panel-heading"><div><p class="eyebrow">COMMUNITY ACCOUNTS</p><h2>User management</h2><p class="panel-subtitle">Inspect account details and suspend or restore access when necessary.</p></div></div>
+      <div class="filter-bar"><input id="userSearch" type="search" placeholder="Search name, email or user ID"><button class="secondary-btn" id="searchUsers">Search</button></div>
+      <div id="userList" class="record-list"><p class="loading">Loading users…</p></div>
+      <div class="pagination"><button class="secondary-btn" id="userPrev">Previous</button><span id="userPageLabel">Page 1</span><button class="secondary-btn" id="userNext">Next</button></div>
+    </section>
 
-        <!-- =================================================
-             MAP
-        ================================================== -->
+    <section class="admin-panel" id="panel-audit">
+      <div class="panel-heading"><div><p class="eyebrow">ACCOUNTABILITY</p><h2>Audit log</h2><p class="panel-subtitle">A searchable, append-only history of admin actions.</p></div></div>
+      <div class="filter-bar"><input id="auditSearch" type="search" placeholder="Search admin, action, target or reason"><button class="secondary-btn" id="searchAudit">Search</button></div>
+      <div id="auditList" class="record-list"><p class="loading">Loading audit log…</p></div>
+      <div class="pagination"><button class="secondary-btn" id="auditPrev">Previous</button><span id="auditPageLabel">Page 1</span><button class="secondary-btn" id="auditNext">Next</button></div>
+    </section>
+  </main>
 
-        <section class="map-section">
-
-            <div id="map"></div>
-
-        </section>
-
-
-        <!-- =================================================
-             SIDEBAR
-        ================================================== -->
-
-        <aside class="sidebar">
-
-            <div class="sidebar-header">
-
-    <div class="sidebar-title-row">
-        <h2>Venues</h2>
-        <span id="venueCount">0</span>
-    </div>
-
-    <p class="sidebar-subtitle">
-        All venues currently registered in SoundScout
-    </p>
-
-</div>
-
-
-            <div id="venueList">
-
-                <p class="loading">
-                    Loading venues...
-                </p>
-
-            </div>
-
-        </aside>
-
-
-    </main>
-
-
-    <!-- Leaflet -->
-
-    <script
-        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-    </script>
-
-
-    <script src="admin.js"></script>
-
+  <div id="toast" class="admin-toast" role="status" aria-live="polite"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="admin.js"></script>
 </body>
-
 </html>
