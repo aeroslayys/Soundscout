@@ -43,6 +43,12 @@ router.post('/flags', requireAuth, async (req, res) => {
       : await pool.query('SELECT id FROM ratings WHERE id::text = $1 AND deleted_at IS NULL', [targetId]);
     if (!targetQuery.rowCount) return res.status(404).json({ error: 'The item could not be found.' });
 
+    const duplicate = await pool.query(
+      "SELECT id FROM moderation_flags WHERE reporter_id = $1 AND target_type = $2 AND target_id = $3 AND status = 'pending' LIMIT 1",
+      [req.userId, targetType, targetId]
+    );
+    if (duplicate.rowCount) return res.status(409).json({ error: 'You already have a pending report for this item.' });
+
     const inserted = await pool.query(
       'INSERT INTO moderation_flags (reporter_id, target_type, target_id, reason, details) VALUES ($1, $2, $3, $4, $5) RETURNING id, status, created_at',
       [req.userId, targetType, targetId, reason, details]
@@ -336,6 +342,7 @@ router.patch('/flags/:id', async (req, res) => {
   const notes = typeof req.body?.notes === 'string' ? req.body.notes.trim().slice(0, 1000) : '';
   if (!Number.isSafeInteger(id) || id < 1) return res.status(400).json({ error: 'Invalid flag ID.' });
   if (!ALLOWED_FLAG_STATUSES.has(status)) return res.status(400).json({ error: 'Invalid moderation status.' });
+  if (notes.length < 3) return res.status(400).json({ error: 'Add at least 3 characters of resolution notes.' });
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
