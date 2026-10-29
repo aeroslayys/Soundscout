@@ -929,3 +929,247 @@ button{
   }
 
 }
+
+/* =========================================================
+   ADMIN CONSOLE EXTENSIONS
+   ========================================================= */
+.admin-console{
+  height:auto;
+  min-height:100vh;
+  overflow:auto;
+  background:var(--bg);
+}
+.admin-nav{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  padding:12px 22px;
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  position:sticky;
+  top:0;
+  z-index:900;
+}
+.nav-tab{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  border:1px solid transparent;
+  background:transparent;
+  color:var(--muted);
+  border-radius:9px;
+  padding:9px 13px;
+  font-size:12.5px;
+  cursor:pointer;
+}
+.nav-tab:hover{background:var(--bg);color:var(--ink);}
+.nav-tab.active{
+  color:var(--ink);
+  background:#E6F0EB;
+  border-color:#D1E2DA;
+  font-weight:600;
+}
+.nav-count,.count-pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width:22px;
+  border-radius:100px;
+  padding:3px 7px;
+  background:var(--bg);
+  border:1px solid var(--border);
+  color:var(--ink-soft);
+  font:11px 'IBM Plex Mono',monospace;
+}
+.admin-panels{max-width:1500px;margin:0 auto;padding:26px 24px 44px;}
+.admin-panel{display:none;}
+.admin-panel.active{display:block;}
+.panel-heading,.section-card-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  margin-bottom:20px;
+}
+.panel-heading h2{
+  font-family:'Fraunces',serif;
+  font-size:27px;
+  margin:0;
+  letter-spacing:-.02em;
+}
+.eyebrow{
+  margin:0 0 5px;
+  color:var(--quiet-deep);
+  font:10px 'IBM Plex Mono',monospace;
+  letter-spacing:.12em;
+}
+.panel-subtitle,.section-card-heading p{
+  color:var(--muted);
+  font-size:12.5px;
+  line-height:1.55;
+  margin:6px 0 0;
+}
+.metric-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  gap:12px;
+  margin-bottom:22px;
+}
+.metric-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:13px;
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  gap:13px;
+  min-height:108px;
+}
+.metric-card span{font-size:12px;color:var(--muted);}
+.metric-card strong{font:26px 'IBM Plex Mono',monospace;color:var(--ink);}
+.section-card{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:18px;
+  margin:18px 0;
+}
+.section-card-heading{margin-bottom:12px;}
+.section-card-heading h3,.venue-sidebar h3{font-family:'Fraunces',serif;font-size:18px;margin:0;}
+.filter-bar{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  flex-wrap:wrap;
+  padding:12px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  margin-bottom:16px;
+}
+.filter-bar input,.filter-bar select{
+  min-width:180px;
+  flex:1;
+  border:1px solid var(--border-strong);
+  background:var(--surface);
+  color:var(--ink);
+  border-radius:8px;
+  padding:10px 11px;
+  font:12px 'Inter',sans-serif;
+}
+.secondary-btn,.success-btn,.danger-btn{
+  border:1px solid var(--border-strong);
+  border-radius:8px;
+  background:var(--surface);
+  color:var(--ink-soft);
+  padding:8px 11px;
+  font-size:11.5px;
+  font-weight:600;
+  cursor:pointer;
+  white-space:nowrap;
+}
+.secondary-btn:hover{background:var(--bg);}
+.success-btn{border-color:#B9D7C7;background:#F1F8F4;color:#2E6B4D;}
+.success-btn:hover{background:#E1F0E7;}
+.danger-btn{border-color:#E4C8C0;background:#FFF8F6;color:var(--loud-deep);}
+.danger-btn:hover{background:#F9E9E4;}
+button:disabled{opacity:.4;cursor:not-allowed;}
+.record-list{display:flex;flex-direction:column;gap:9px;}
+.record-row{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  padding:15px 16px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+}
+.record-row.compact{padding:11px 13px;}
+.record-main{min-width:0;flex:1;}
+.record-main strong,.record-title{font-size:13px;font-weight:600;color:var(--ink);line-height:1.45;}
+.record-main p{font-size:11.5px;color:var(--muted);margin:5px 0 0;line-height:1.5;overflow-wrap:anywhere;}
+.record-main small{display:block;margin-top:7px;color:var(--muted);font:10px 'IBM Plex Mono',monospace;overflow-wrap:anywhere;}
+.record-meta{font-size:10.5px;color:var(--muted);text-align:right;line-height:1.7;max-width:220px;overflow-wrap:anywhere;}
+.record-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center;max-width:280px;}
+.link-button{border:0;background:transparent;padding:0;text-align:left;cursor:pointer;}
+.link-button:hover{text-decoration:underline;}
+.status-pill{
+  display:inline-flex;
+  align-items:center;
+  border:1px solid var(--border);
+  border-radius:100px;
+  padding:3px 8px;
+  background:var(--bg);
+  color:var(--muted);
+  font:10px 'IBM Plex Mono',monospace;
+  text-transform:capitalize;
+}
+.status-approved,.status-reviewed{background:#E6F0EB;border-color:#D1E2DA;color:#3A6E58;}
+.status-pending{background:#FFF7E7;border-color:#F0DEB7;color:#86651F;}
+.status-rejected,.status-deleted,.status-dismissed{background:#FFF1ED;border-color:#EED0C8;color:#96432F;}
+.status-action_taken{background:#EAF0FA;border-color:#CDD9EE;color:#3D5F95;}
+.loading,.empty-state{padding:22px;text-align:center;color:var(--muted);font-size:12px;}
+.pagination{display:flex;align-items:center;justify-content:center;gap:15px;margin:18px 0;color:var(--muted);font-size:11px;}
+.venue-workspace{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(300px,390px);
+  min-height:520px;
+  height:min(68vh,760px);
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:14px;
+  overflow:hidden;
+}
+.venue-workspace .map-section{min-height:400px;min-width:0;position:relative;}
+.venue-workspace #map{width:100%;height:100%;min-height:400px;}
+.venue-sidebar{display:flex;flex-direction:column;min-width:0;overflow:hidden;border-left:1px solid var(--border);padding:15px;}
+.venue-sidebar .sidebar-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.venue-sidebar .record-list{overflow-y:auto;min-height:0;flex:1;}
+.venue-sidebar .record-row{padding:11px;display:block;}
+.venue-sidebar .record-actions{max-width:none;justify-content:flex-start;margin-top:10px;}
+.venue-sidebar .record-actions button{padding:7px 8px;font-size:10.5px;}
+.helper-note{font-size:11.5px;color:var(--muted);line-height:1.7;margin-top:16px;}
+.helper-note code{background:var(--surface);border:1px solid var(--border);padding:2px 4px;border-radius:4px;}
+.admin-toast{
+  position:fixed;
+  z-index:2000;
+  right:20px;
+  bottom:20px;
+  max-width:min(420px,calc(100vw - 40px));
+  background:var(--ink);
+  color:white;
+  border-radius:10px;
+  padding:12px 16px;
+  font-size:12px;
+  box-shadow:0 8px 28px rgba(20,40,38,.2);
+  opacity:0;
+  transform:translateY(8px);
+  pointer-events:none;
+  transition:opacity .18s ease,transform .18s ease;
+}
+.admin-toast.visible{opacity:1;transform:translateY(0);}
+.admin-toast.error{background:#8D3529;}
+#duplicateResults:empty{display:none;}
+@media(max-width:850px){
+  .admin-nav{position:static;padding:10px 12px;}
+  .admin-panels{padding:20px 13px 32px;}
+  .venue-workspace{grid-template-columns:1fr;height:auto;}
+  .venue-workspace .map-section,.venue-workspace #map{height:330px;min-height:330px;}
+  .venue-sidebar{border-left:0;border-top:1px solid var(--border);height:470px;}
+}
+@media(max-width:600px){
+  .admin-header{padding:0 12px;}
+  .admin-brand h1{font-size:20px;}
+  .admin-label{display:none;}
+  .nav-tab{padding:8px 9px;font-size:11px;}
+  .panel-heading,.section-card-heading{align-items:flex-start;flex-direction:column;}
+  .panel-heading h2{font-size:24px;}
+  .record-row{flex-direction:column;gap:12px;}
+  .record-meta{text-align:left;max-width:none;}
+  .record-actions{justify-content:flex-start;max-width:none;}
+  .filter-bar input,.filter-bar select{min-width:100%;width:100%;}
+  .metric-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .metric-card{padding:13px;min-height:95px;}
+  .metric-card strong{font-size:22px;}
+}
