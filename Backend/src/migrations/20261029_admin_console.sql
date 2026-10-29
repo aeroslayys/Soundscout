@@ -77,3 +77,12 @@ WHERE approval_status IS NULL OR approval_status = '';
 
 -- Soft-deleted ratings remain in the database for audit/restore, but must not
 -- be included in public rating summaries.
+
+-- Lock down moderation data: only the trusted backend database role should access these tables.
+ALTER TABLE public.admin_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.moderation_flags ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL PRIVILEGES ON TABLE public.admin_audit_logs FROM anon, authenticated;
+REVOKE ALL PRIVILEGES ON TABLE public.moderation_flags FROM anon, authenticated;
+REVOKE ALL PRIVILEGES ON SEQUENCE public.admin_audit_logs_id_seq FROM anon, authenticated;
+REVOKE ALL PRIVILEGES ON SEQUENCE public.moderation_flags_id_seq FROM anon, authenticated;
