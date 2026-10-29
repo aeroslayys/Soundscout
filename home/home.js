@@ -1114,6 +1114,10 @@ function recentReportsHTML(v){
 
         '</div>' +
 
+        '<button type="button" class="popup-report-btn" data-report-type="rating" data-report-id="' +
+          escapeHTML(String(r.id || "")) +
+        '" style="margin-top:5px;border:0;background:transparent;color:var(--muted);font-size:9px;text-decoration:underline;cursor:pointer;">Report rating</button>' +
+
       '</div>';
 
   }).join('');
@@ -1219,13 +1223,55 @@ recentReportsHTML(v) +
         'Rate this place' +
       '</button>' +
 
+      '<button type="button" class="popup-report-btn" data-report-type="venue" data-report-id="' +
+        escapeHTML(String(v.id || "")) +
+      '" style="display:block;margin:8px auto 0;border:0;background:transparent;color:var(--muted);font-size:10px;text-decoration:underline;cursor:pointer;">Report this place</button>' +
+
     '</div>';
 
 }
 
   function escapeHTML(s){
-    return s.replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; });
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; });
   }
+
+  async function reportTarget(targetType, targetId){
+    var token = getToken();
+    if(!token){
+      alert("Please sign in to report content.");
+      window.location.href = LOGIN_PAGE_URL;
+      return;
+    }
+    var reason = window.prompt("Why are you reporting this " + (targetType === "venue" ? "place" : "rating") + "? (e.g. spam, inaccurate, abusive)");
+    if(reason === null) return;
+    reason = reason.trim();
+    if(reason.length < 3 || reason.length > 80){
+      alert("Please enter a reason between 3 and 80 characters.");
+      return;
+    }
+    var details = window.prompt("Additional details (optional):", "");
+    if(details === null) return;
+    try{
+      var response = await fetch(API_BASE + "/admin/flags", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ targetType: targetType, targetId: String(targetId), reason: reason, details: details.trim() })
+      });
+      var data = await response.json();
+      if(!response.ok) throw new Error(data.error || "Could not submit report.");
+      alert("Thank you. Your report has been sent to the SoundScout moderation queue.");
+    }catch(error){
+      alert(error.message || "Could not submit report.");
+    }
+  }
+
+  document.addEventListener("click", function(event){
+    var button = event.target.closest(".popup-report-btn");
+    if(!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    reportTarget(button.dataset.reportType, button.dataset.reportId);
+  });
 
 function matchesFilters(v){
 
