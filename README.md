@@ -176,7 +176,7 @@ Before starting the updated backend, apply the additive migration to the same Po
 Run this from the `Backend/` directory, with `DATABASE_URL` set in your shell:
 
 ```bash
-psql "$DATABASE_URL" -f src/migrations/20261029_admin_console.sql
+psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f src/migrations/20261029_admin_console.sql
 ```
 
 Back up the database before applying schema changes. The migration is designed to be repeatable, but it should still be applied to the intended database and verified before deploying the updated API.
