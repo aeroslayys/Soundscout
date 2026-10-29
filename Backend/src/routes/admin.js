@@ -146,7 +146,7 @@ router.patch('/venues/:id', async (req, res) => {
   try {
     await client.query('BEGIN');
     const updated = await client.query(
-      'UPDATE venues SET name = COALESCE($2, name), category = COALESCE($3, category), location = CASE WHEN $4::double precision IS NULL THEN location ELSE ST_SetSRID(ST_MakePoint($5, $4), 4326)::geography END, access = COALESCE($6, access), toilet = COALESCE($7, toilet), approval_status = COALESCE($8, approval_status), approved_by = CASE WHEN $8 = \\'approved\\' THEN $9 ELSE approved_by END, approved_at = CASE WHEN $8 = \\'approved\\' THEN NOW() WHEN $8 = \\'pending\\' THEN NULL ELSE approved_at END, rejected_at = CASE WHEN $8 = \\'rejected\\' THEN NOW() WHEN $8 = \\'pending\\' OR $8 = \\'approved\\' THEN NULL ELSE rejected_at END WHERE id::text = $1 AND deleted_at IS NULL RETURNING id, name, category, ST_Y(location::geometry) AS lat, ST_X(location::geometry) AS lng, access, toilet, approval_status AS status',
+      'UPDATE venues SET name = COALESCE($2, name), category = COALESCE($3, category), location = CASE WHEN $4::double precision IS NULL THEN location ELSE ST_SetSRID(ST_MakePoint($5, $4), 4326)::geography END, access = COALESCE($6, access), toilet = COALESCE($7, toilet), approval_status = COALESCE($8, approval_status), approved_by = CASE WHEN $8 = \'approved\' THEN $9 ELSE approved_by END, approved_at = CASE WHEN $8 = \'approved\' THEN NOW() WHEN $8 = \'pending\' THEN NULL ELSE approved_at END, rejected_at = CASE WHEN $8 = \'rejected\' THEN NOW() WHEN $8 = \'pending\' OR $8 = \'approved\' THEN NULL ELSE rejected_at END WHERE id::text = $1 AND deleted_at IS NULL RETURNING id, name, category, ST_Y(location::geometry) AS lat, ST_X(location::geometry) AS lng, access, toilet, approval_status AS status',
       [id, name, category, lat, lng, access, toilet, status, req.userId]
     );
     if (!updated.rowCount) {
@@ -320,7 +320,7 @@ router.get('/flags', async (req, res) => {
   try {
     const count = await pool.query('SELECT COUNT(*)::int AS total FROM moderation_flags f ' + whereSql, params);
     const rows = await pool.query(
-      'SELECT f.id, f.target_type AS "targetType", f.target_id AS "targetId", f.reason, f.details, f.status, f.created_at, f.reviewed_at, f.resolution_notes AS "resolutionNotes", reporter.name AS "reporterName", reporter.email AS "reporterEmail", v.name AS "venueName", r.score AS "ratingScore" FROM moderation_flags f LEFT JOIN users reporter ON reporter.id = f.reporter_id LEFT JOIN venues v ON f.target_type = \\'venue\\' AND v.id::text = f.target_id LEFT JOIN ratings r ON f.target_type = \\'rating\\' AND r.id::text = f.target_id ' + whereSql + ' ORDER BY f.created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2),
+      'SELECT f.id, f.target_type AS "targetType", f.target_id AS "targetId", f.reason, f.details, f.status, f.created_at, f.reviewed_at, f.resolution_notes AS "resolutionNotes", reporter.name AS "reporterName", reporter.email AS "reporterEmail", v.name AS "venueName", r.score AS "ratingScore" FROM moderation_flags f LEFT JOIN users reporter ON reporter.id = f.reporter_id LEFT JOIN venues v ON f.target_type = \'venue\' AND v.id::text = f.target_id LEFT JOIN ratings r ON f.target_type = \'rating\' AND r.id::text = f.target_id ' + whereSql + ' ORDER BY f.created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2),
       params.concat([limit, offset])
     );
     res.json({ items: rows.rows, page, limit, total: count.rows[0].total });
@@ -422,7 +422,7 @@ router.get('/audit', async (req, res) => {
   let whereSql = '';
   if (search) {
     params.push('%' + search + '%');
-    whereSql = 'WHERE (admin_email ILIKE $1 OR action ILIKE $1 OR entity_type ILIKE $1 OR COALESCE(entity_id, \\'\\') ILIKE $1 OR COALESCE(reason, \\'\\') ILIKE $1)';
+    whereSql = 'WHERE (admin_email ILIKE $1 OR action ILIKE $1 OR entity_type ILIKE $1 OR COALESCE(entity_id, \'\') ILIKE $1 OR COALESCE(reason, \'\') ILIKE $1)';
   }
   try {
     const count = await pool.query('SELECT COUNT(*)::int AS total FROM admin_audit_logs ' + whereSql, params);
