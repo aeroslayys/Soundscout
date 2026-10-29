@@ -78,6 +78,7 @@ router.get(
           ON v.id = r.venue_id
 
         WHERE r.user_id = $1
+          AND r.deleted_at IS NULL
 
         ORDER BY r.submitted_at DESC;
         `,
@@ -135,6 +136,8 @@ router.get(
 
           v.created_at,
 
+          v.approval_status AS status,
+
           COUNT(r.id) AS "ratingCount",
 
           AVG(r.score) AS "averageScore",
@@ -148,8 +151,10 @@ router.get(
 
         LEFT JOIN ratings r
           ON r.venue_id = v.id
+          AND r.deleted_at IS NULL
 
         WHERE v.created_by = $1
+          AND v.deleted_at IS NULL
 
         GROUP BY
           v.id,
@@ -158,7 +163,8 @@ router.get(
           v.location,
           v.access,
           v.toilet,
-          v.created_at
+          v.created_at,
+          v.approval_status
 
         ORDER BY
           v.created_at DESC;
