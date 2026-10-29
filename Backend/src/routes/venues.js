@@ -9,36 +9,29 @@ const router = express.Router();
 // Authentication middleware
 // ==========================================
 
-function requireAuth(req, res, next) {
+async function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization;
-
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({
-      error: 'Authentication required.'
-    });
+    return res.status(401).json({ error: 'Authentication required.' });
   }
 
-  const token = authHeader.split(' ')[1];
+  let decoded;
+  try {
+    decoded = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
+  } catch (error) {
+    return res.status(401).json({ error: 'Invalid or expired token.' });
+  }
+  if (!decoded.sub) return res.status(401).json({ error: 'Invalid token.' });
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Your JWT may use either id or userId.
-    // JWT generated in auth.js stores the user UUID in `sub`
-    req.userId = decoded.sub;
-
-    if (!req.userId) {
-      return res.status(401).json({
-        error: 'Invalid token.'
-      });
-    }
-
+    const account = await pool.query('SELECT id, is_suspended FROM users WHERE id = $1', [decoded.sub]);
+    if (!account.rowCount) return res.status(401).json({ error: 'Account not found.' });
+    if (account.rows[0].is_suspended === true) return res.status(403).json({ error: 'This account has been suspended.' });
+    req.userId = account.rows[0].id;
     next();
-
   } catch (error) {
-    return res.status(401).json({
-      error: 'Invalid or expired token.'
-    });
+    console.error('Venue route auth lookup error:', error);
+    return res.status(500).json({ error: 'Could not verify account status.' });
   }
 }
 
