@@ -72,10 +72,11 @@ function showEmpty(id, message) {
 }
 function setPageInfo(key, data) {
   totals[key] = Number(data.total) || 0;
-  const label = document.getElementById(key === "venues" ? "venuePageLabel" : key + "PageLabel");
+  const uiKey = ({ venues: "venue", reviews: "review", users: "user", audit: "audit" })[key] || key;
+  const label = document.getElementById(uiKey + "PageLabel");
   if (label) label.textContent = "Page " + pages[key] + " of " + Math.max(1, Math.ceil(totals[key] / PAGE_SIZE));
-  const prev = document.getElementById(key === "venues" ? "venuePrev" : key + "Prev");
-  const next = document.getElementById(key === "venues" ? "venueNext" : key + "Next");
+  const prev = document.getElementById(uiKey + "Prev");
+  const next = document.getElementById(uiKey + "Next");
   if (prev) prev.disabled = pages[key] <= 1;
   if (next) next.disabled = pages[key] >= Math.max(1, Math.ceil(totals[key] / PAGE_SIZE));
 }
@@ -437,8 +438,9 @@ document.getElementById("scanDuplicates").addEventListener("click", loadDuplicat
   });
 });
 function bindPager(key) {
-  const prev = document.getElementById(key === "venues" ? "venuePrev" : key + "Prev");
-  const next = document.getElementById(key === "venues" ? "venueNext" : key + "Next");
+  const uiKey = ({ venues: "venue", reviews: "review", users: "user", audit: "audit" })[key] || key;
+  const prev = document.getElementById(uiKey + "Prev");
+  const next = document.getElementById(uiKey + "Next");
   prev.addEventListener("click", function () { if (pages[key] > 1) { pages[key]--; loadByKey(key); } });
   next.addEventListener("click", function () { if (pages[key] < Math.ceil(totals[key] / PAGE_SIZE)) { pages[key]++; loadByKey(key); } });
 }
