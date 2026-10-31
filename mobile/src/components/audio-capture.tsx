@@ -53,4 +53,8 @@ export default function AudioCapture({ onAnalyzed }: { onAnalyzed: (db:number, s
     {message?<Text style={s.message}>{message}</Text>:null}
   </View>;
 }
-const s=StyleSheet.create({wrap:{marginTop:12},button:{backgroundColor:C.surface,borderColor:C.accent,borderWidth:1,borderRadius:9,padding:12,alignItems:'center'},stop:{borderColor:C.danger},buttonText:{color:C.accent,fontSize:10,fontWeight:'900',letterSpacing:.7},message:{color:C.muted,fontSize:10,lineHeight:16,marginTop:7}});
+<<<<<<< HEAD
+const s=StyleSheet.create({wrap:{marginTop:12},button:{backgroundColor:C.accent,borderColor:C.accent,borderWidth:1,borderRadius:10,paddingVertical:15,paddingHorizontal:14,alignItems:'center',minHeight:48,justifyContent:'center'},stop:{backgroundColor:C.danger,borderColor:C.danger},buttonText:{color:'#101114',fontSize:11,fontWeight:'900',letterSpacing:.8},message:{color:C.muted,fontSize:10,lineHeight:16,marginTop:7}});
+=======
+const s=StyleSheet.create({wrap:{marginTop:12},button:{backgroundColor:C.accent,borderColor:C.accent,borderWidth:1,borderRadius:10,paddingVertical:15,paddingHorizontal:14,alignItems:'center',minHeight:48,justifyContent:'center'},stop:{backgroundColor:C.danger,borderColor:C.danger},buttonText:{color:'#101114',fontSize:11,fontWeight:'900',letterSpacing:.8},message:{color:C.muted,fontSize:10,lineHeight:16,marginTop:7}});
+>>>>>>> de591b4 (Make audio recording action prominent in mobile)
