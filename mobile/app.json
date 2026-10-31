@@ -26,6 +26,12 @@
     "plugins": [
       "expo-router",
       [
+        "expo-audio",
+        {
+          "microphonePermission": "Allow SoundScout to record short ambient sound clips for venue analysis."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#208AEF",
