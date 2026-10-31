@@ -243,7 +243,6 @@ export default function MapScreen() {
         showsCompass
         showsScale
         toolbarEnabled={false}
-        onPress={() => setSelected(null)}
         onRegionChangeComplete={setRegion}
       >
         {heatmapEnabled && heatPoints.length > 0 && Platform.OS === 'android' ? (
@@ -279,9 +278,7 @@ export default function MapScreen() {
               <Marker
                 key={venue.id}
                 coordinate={{ latitude: Number(venue.lat), longitude: Number(venue.lng) }}
-                title={venue.name}
-                description={score === null ? 'Not rated yet' : `${score.toFixed(1)} / 5 · ${venue.category}`}
-                pinColor={soundColor(score)}
+                                pinColor={soundColor(score)}
                 onPress={() => setSelected(venue)}
               />
             );
