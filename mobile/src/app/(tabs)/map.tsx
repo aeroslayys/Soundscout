@@ -379,7 +379,7 @@ export default function MapScreen() {
             </View>
             <View style={styles.facilityPills}>
               <Text style={styles.facilityText}>{selected.access ? '♿ Accessible' : 'Access unknown'}</Text>
-              <Text style={styles.facilityText}>{selected.toilet ? '🚻 Toilet' : 'Toilet unknown'}</Text>
+              <Text style={styles.facilityText}>{selected.toilet ? '🚻 Gender-neutral washroom' : 'Gender-neutral washroom unknown'}</Text>
             </View>
           </View>
           <Text style={styles.sheetSection}>RECENT COMMUNITY RATINGS</Text>
