@@ -236,6 +236,12 @@ export default function MapScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
+      <View style={styles.brandHeader} pointerEvents="none">
+        <View style={styles.brandMark}>
+          <Text style={styles.brandMarkText}>S</Text>
+        </View>
+        <Text style={styles.brandName}>SoundScout</Text>
+      </View>
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
@@ -448,6 +454,32 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
+  brandHeader: {
+    position: 'absolute',
+    top: 12,
+    left: 14,
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    backgroundColor: COLORS.background + 'E8',
+    borderColor: COLORS.border,
+    borderWidth: 1,
+    borderRadius: 24,
+    paddingVertical: 6,
+    paddingLeft: 6,
+    paddingRight: 14,
+  },
+  brandMark: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: COLORS.accent,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brandMarkText: { color: COLORS.background, fontSize: 17, fontWeight: '900' },
+  brandName: { color: COLORS.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.2 },
   filterRail: {
     position: 'absolute',
     top: '34%',
