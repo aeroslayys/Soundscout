@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/auth';
+import { useAppTheme, type ThemeMode, palettes } from '@/context/theme';
 
 const API_URL = 'http://192.168.101.73:8082';
 const C = {
@@ -65,12 +66,14 @@ function dateLabel(value?: number | string) {
 
 function statusColor(status?: string) {
   const normalized = (status || '').toLowerCase();
-  if (normalized === 'approved') return C.success;
+  if (normalized === 'approved') return '#8BC99C';
   if (normalized === 'rejected') return '#F08A8A';
   return C.warning;
 }
 
 export default function MyRatingsScreen() {
+  const { mode, colors: C, setMode } = useAppTheme();
+  const styles = useMemo(() => createStyles(C), [C]);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
@@ -190,7 +193,7 @@ export default function MyRatingsScreen() {
     <SafeAreaView style={styles.safe}>
       <StatusBar barStyle="light-content" />
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.eyebrow}>YOUR CONTRIBUTIONS</Text>
+        <Text style={styles.eyebrow}>YOUR CONTRIBUTIONS</Text>\n        <View style={{ flexDirection:'row', alignItems:'center', justifyContent:'space-between', marginTop:12, padding:12, borderRadius:12, backgroundColor:C.surface, borderWidth:1, borderColor:C.border }}>\n          <View style={{ flex:1 }}>\n            <Text style={{ color:C.text, fontSize:12, fontWeight:'800' }}>Appearance</Text>\n            <Text style={{ color:C.muted, fontSize:10, marginTop:3 }}>Choose how SoundScout looks</Text>\n          </View>\n          <View style={{ flexDirection:'row', gap:4 }}>\n            {(['system','light','dark'] as ThemeMode[]).map(option => <Pressable key={option} onPress={() => setMode(option)} style={{ paddingHorizontal:9, paddingVertical:8, borderRadius:8, backgroundColor:mode===option?C.accent:C.surfaceLight }}><Text style={{ color:mode===option?C.bg:C.text, fontSize:9, fontWeight:'800', textTransform:'capitalize' }}>{option}</Text></Pressable>)}\n          </View>\n        </View>
         <View style={styles.headerRow}>
           <View style={styles.headerCopy}>
             <Text style={styles.title}>My Ratings</Text>
@@ -319,7 +322,7 @@ export default function MyRatingsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (C: typeof palettes.dark) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   content: { padding: 20, paddingBottom: 48 },
   eyebrow: { color: C.accent, fontSize: 10, fontWeight: '900', letterSpacing: 2, marginTop: 14 },
