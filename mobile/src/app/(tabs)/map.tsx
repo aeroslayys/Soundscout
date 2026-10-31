@@ -17,6 +17,9 @@ const API_URL = 'http://192.168.101.73:8082';
 type Rating = {
   id: string;
   score: number;
+  time?: string;
+  measured_db?: number | null;
+  timestamp?: number;
 };
 
 type Venue = {
@@ -285,21 +288,52 @@ export default function MapScreen() {
       </View>
 
       {selected ? (
-        <Pressable
-          style={styles.selectedCard}
-          onPress={() => router.push({ pathname: '/venue/[id]', params: { id: selected.id } })}
-        >
-          <View style={[styles.soundDot, { backgroundColor: soundColor(averageRating(selected.ratings)) }]} />
-          <View style={styles.selectedInfo}>
-            <Text style={styles.selectedName} numberOfLines={1}>{selected.name}</Text>
-            <Text style={styles.selectedMeta}>
-              {selected.category.toUpperCase()} · {averageRating(selected.ratings) === null
-                ? 'NOT RATED'
-                : `${averageRating(selected.ratings)!.toFixed(1)} / 5`}
-            </Text>
+        <View style={styles.selectedSheet}>
+          <View style={styles.sheetHandle} />
+          <View style={styles.sheetHeading}>
+            <View style={[styles.soundDot, { backgroundColor: soundColor(averageRating(selected.ratings)) }]} />
+            <View style={styles.selectedInfo}>
+              <Text style={styles.selectedName}>{selected.name}</Text>
+              <Text style={styles.selectedMeta}>{selected.category.toUpperCase()}</Text>
+            </View>
+            <Pressable onPress={() => setSelected(null)} hitSlop={10}>
+              <Text style={styles.closeSheet}>✕</Text>
+            </Pressable>
           </View>
-          <Text style={styles.viewDetails}>DETAILS →</Text>
-        </Pressable>
+          <View style={styles.scoreRow}>
+            <Text style={styles.scoreValue}>
+              {averageRating(selected.ratings) === null ? '—' : averageRating(selected.ratings)!.toFixed(1)}
+            </Text>
+            <View style={styles.scoreCaption}>
+              <Text style={styles.scoreLabel}>
+                {averageRating(selected.ratings) === null ? 'Not rated yet' :
+                  averageRating(selected.ratings)! >= 4 ? 'Calm / Silent' :
+                  averageRating(selected.ratings)! >= 3 ? 'Moderate' : 'Lively / Loud'}
+              </Text>
+              <Text style={styles.sheetMuted}>{selected.ratings?.length ?? 0} community ratings</Text>
+            </View>
+            <View style={styles.facilityPills}>
+              <Text style={styles.facilityText}>{selected.access ? '♿ Accessible' : 'Access unknown'}</Text>
+              <Text style={styles.facilityText}>{selected.toilet ? '🚻 Toilet' : 'Toilet unknown'}</Text>
+            </View>
+          </View>
+          <Text style={styles.sheetSection}>RECENT COMMUNITY RATINGS</Text>
+          {(selected.ratings ?? []).length ? [...(selected.ratings ?? [])]
+            .sort((a, b) => Number(b.timestamp ?? 0) - Number(a.timestamp ?? 0))
+            .slice(0, 3).map((rating, index) => (
+              <View key={rating.id ?? String(index)} style={styles.ratingLine}>
+                <Text style={styles.ratingLineScore}>★ {rating.score}/5</Text>
+                <Text style={styles.sheetMuted}>{rating.time ?? 'Time unavailable'}</Text>
+                <Text style={styles.sheetMuted}>{rating.measured_db == null ? 'No audio' : `${Number(rating.measured_db).toFixed(1)} dBFS`}</Text>
+              </View>
+            )) : <Text style={styles.sheetMuted}>No ratings yet. Be the first to share an update.</Text>}
+          <Pressable
+            style={styles.detailsButton}
+            onPress={() => router.push({ pathname: '/venue/[id]', params: { id: selected.id } })}
+          >
+            <Text style={styles.detailsButtonText}>VIEW RATINGS & RATE THIS PLACE  →</Text>
+          </Pressable>
+        </View>
       ) : null}
 
       {loading ? (
@@ -374,20 +408,35 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   clusterCount: { color: COLORS.background, fontSize: 13, fontWeight: '900' },
-  selectedCard: {
+  selectedSheet: {
     position: 'absolute',
-    bottom: 26,
-    left: 14,
-    right: 14,
-    backgroundColor: COLORS.background + 'F5',
+    bottom: 12,
+    left: 10,
+    right: 10,
+    backgroundColor: COLORS.background + 'F8',
     borderColor: COLORS.border,
     borderWidth: 1,
-    borderRadius: 17,
-    padding: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
+    borderRadius: 22,
+    paddingHorizontal: 17,
+    paddingTop: 9,
+    paddingBottom: 15,
+    maxHeight: '48%',
   },
+  sheetHandle: { alignSelf: 'center', width: 38, height: 4, borderRadius: 3, backgroundColor: COLORS.muted, marginBottom: 12 },
+  sheetHeading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  closeSheet: { color: COLORS.muted, fontSize: 18, paddingHorizontal: 4 },
+  scoreRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12, marginBottom: 12 },
+  scoreValue: { color: COLORS.accent, fontSize: 30, fontWeight: '900' },
+  scoreCaption: { flex: 1 },
+  scoreLabel: { color: COLORS.text, fontSize: 12, fontWeight: '800' },
+  facilityPills: { alignItems: 'flex-end', gap: 4 },
+  facilityText: { color: COLORS.muted, fontSize: 9, fontWeight: '700' },
+  sheetSection: { color: COLORS.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1.4, marginTop: 8, marginBottom: 8 },
+  sheetMuted: { color: COLORS.muted, fontSize: 9 },
+  ratingLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  ratingLineScore: { color: COLORS.text, fontSize: 10, fontWeight: '800' },
+  detailsButton: { marginTop: 12, backgroundColor: COLORS.accent, borderRadius: 11, paddingVertical: 11, alignItems: 'center' },
+  detailsButtonText: { color: COLORS.background, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 },
   soundDot: { width: 13, height: 13, borderRadius: 7 },
   selectedInfo: { flex: 1 },
   selectedName: { color: COLORS.text, fontSize: 14, fontWeight: '800' },
