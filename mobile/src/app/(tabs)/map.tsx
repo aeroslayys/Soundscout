@@ -130,6 +130,8 @@ export default function MapScreen() {
   const [quietNearMe, setQuietNearMe] = useState(false);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const [ratingExpanded, setRatingExpanded] = useState(false);
   const [ratingScore, setRatingScore] = useState(4);
   const [ratingMeasuredDb, setRatingMeasuredDb] = useState<number | null>(null);
@@ -164,10 +166,14 @@ export default function MapScreen() {
     fetchVenues();
   }, [fetchVenues]);
 
-  const filteredVenues = useMemo(
-    () => category === 'all' ? venues : venues.filter((venue) => venue.category === category),
-    [category, venues]
-  );
+  const filteredVenues = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
+    return venues.filter((venue) => {
+      const matchesCategory = category === 'all' || venue.category === category;
+      const matchesSearch = !normalizedQuery || venue.name.toLocaleLowerCase().includes(normalizedQuery);
+      return matchesCategory && matchesSearch;
+    });
+  }, [category, venues, searchQuery]);
 
   const visibleVenues = useMemo(() => {
     if (!quietNearMe || !userLocation) return filteredVenues;
@@ -278,12 +284,39 @@ export default function MapScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
-      <View style={[styles.brandHeader, { top: insets.top + 10 }]} pointerEvents="none">
+      <Pressable
+        style={[styles.brandHeader, { top: insets.top + 10 }]}
+        onPress={() => setSearchVisible((value) => !value)}
+        accessibilityRole="button"
+        accessibilityLabel={searchVisible ? 'Close venue search' : 'Search venues'}
+      >
         <View style={styles.brandMark}>
           <Text style={styles.brandMarkText}>S</Text>
         </View>
         <Text style={styles.brandName}>SoundScout</Text>
-      </View>
+        <Text style={styles.brandSearchHint}>{searchVisible ? '×' : '⌕'}</Text>
+      </Pressable>
+      {searchVisible ? (
+        <View style={[styles.searchPanel, { top: insets.top + 58 }]}>
+          <TextInput
+            value={searchQuery}
+            onChangeText={(value) => { setSearchQuery(value); setSelected(null); }}
+            placeholder="Search venues by name…"
+            placeholderTextColor={COLORS.muted}
+            style={styles.searchInput}
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="search"
+            accessibilityLabel="Search venues by name"
+          />
+          {searchQuery.length > 0 ? (
+            <Pressable onPress={() => setSearchQuery('')} hitSlop={8} style={styles.searchClear}>
+              <Text style={styles.searchClearText}>×</Text>
+            </Pressable>
+          ) : null}
+          <Text style={styles.searchResultCount}>{filteredVenues.length} matching {filteredVenues.length === 1 ? 'venue' : 'venues'}</Text>
+        </View>
+      ) : null}
       <MapView
         ref={mapRef}
         style={StyleSheet.absoluteFill}
@@ -535,6 +568,16 @@ const styles = StyleSheet.create({
   },
   brandMarkText: { color: COLORS.background, fontSize: 17, fontWeight: '900' },
   brandName: { color: COLORS.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.2 },
+  brandSearchHint: { color: COLORS.accent, fontSize: 19, fontWeight: '800', marginLeft: 2 },
+  searchPanel: {
+    position: 'absolute', left: 14, zIndex: 10, width: 270,
+    backgroundColor: COLORS.background + 'F2', borderColor: COLORS.border,
+    borderWidth: 1, borderRadius: 14, paddingHorizontal: 11, paddingTop: 7, paddingBottom: 8,
+  },
+  searchInput: { color: COLORS.text, fontSize: 13, paddingVertical: 7, paddingRight: 25 },
+  searchClear: { position: 'absolute', right: 10, top: 10, width: 22, height: 22, alignItems: 'center', justifyContent: 'center' },
+  searchClearText: { color: COLORS.muted, fontSize: 19, fontWeight: '700' },
+  searchResultCount: { color: COLORS.muted, fontSize: 9, marginTop: 2 },
   filterRail: {
     position: 'absolute',
     top: '34%',
