@@ -436,13 +436,11 @@ export default function MapScreen() {
         <Pressable style={styles.errorPill} onPress={fetchVenues}>
           <Text style={styles.errorText}>Couldn't load venues · Tap to retry</Text>
         </Pressable>
-      ) : (
-        {!selected ? (
-          <View style={styles.countPill}>
-            <Text style={styles.countText}>{filteredVenues.length} PLACES ON MAP</Text>
-          </View>
-        ) : null}
-      )}
+      ) : !selected ? (
+        <View style={styles.countPill}>
+          <Text style={styles.countText}>{filteredVenues.length} PLACES ON MAP</Text>
+        </View>
+      ) : null}
     </SafeAreaView>
   );
 }
