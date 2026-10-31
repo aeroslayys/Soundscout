@@ -2785,15 +2785,20 @@ map.on("click", function(e){
   var audioField = document.createElement("div");
   audioField.className = "field";
   audioField.id = "audio-clip-field";
+  audioField.style.background = "var(--surface-soft)";
+  audioField.style.border = "1px solid var(--border-strong)";
+  audioField.style.borderRadius = "12px";
+  audioField.style.padding = "14px";
+  audioField.style.marginBottom = "16px";
 
   var audioLabel = document.createElement("label");
-  audioLabel.textContent = "Optional audio check";
+  audioLabel.textContent = "🎙 Get an audio-based reading (optional)";
   audioLabel.style.display = "block";
   audioLabel.style.marginBottom = "6px";
   audioField.appendChild(audioLabel);
 
   var audioHint = document.createElement("p");
-  audioHint.textContent = "You can record or upload a 5–10s clip to get an audio-based suggestion. No clip? That's completely fine — just choose your quietness rating below and submit.";
+  audioHint.textContent = "Record a short clip for an audio-based suggestion, or skip this and choose your quietness rating below.";
   audioHint.style.fontSize = "11.5px";
   audioHint.style.lineHeight = "1.5";
   audioHint.style.color = "var(--muted)";
@@ -2809,15 +2814,15 @@ map.on("click", function(e){
   var recordBtn = document.createElement("button");
   recordBtn.type = "button";
   recordBtn.id = "record-btn";
-  recordBtn.textContent = "● Record clip";
-  recordBtn.style.padding = "8px 14px";
+  recordBtn.textContent = "● Start recording";
+  recordBtn.style.padding = "11px 17px";
   recordBtn.style.fontFamily = "'Inter', sans-serif";
-  recordBtn.style.fontSize = "13px";
-  recordBtn.style.fontWeight = "600";
-  recordBtn.style.color = "#D9695A";
-  recordBtn.style.background = "#ffffff";
-  recordBtn.style.border = "1.5px solid #D9695A";
-  recordBtn.style.borderRadius = "8px";
+  recordBtn.style.fontSize = "13.5px";
+  recordBtn.style.fontWeight = "700";
+  recordBtn.style.color = "#FFFFFF";
+  recordBtn.style.background = "var(--quiet-deep)";
+  recordBtn.style.border = "1.5px solid var(--quiet-deep)";
+  recordBtn.style.borderRadius = "9px";
   recordBtn.style.cursor = "pointer";
 
   var recordTimerLabel = document.createElement("span");
