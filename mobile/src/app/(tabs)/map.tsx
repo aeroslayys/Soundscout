@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 import MapView, { Circle, Heatmap, Marker, type Region } from 'react-native-maps';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/auth';
 import AudioCapture from '@/components/audio-capture';
@@ -116,6 +116,7 @@ function clusterVenues(venues: Venue[], region: Region): VenueCluster[] {
 
 export default function MapScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { token: authToken } = useAuth();
   const mapRef = useRef<MapView>(null);
   const [region, setRegion] = useState<Region>(INITIAL_REGION);
@@ -236,7 +237,7 @@ export default function MapScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
-      <View style={styles.brandHeader} pointerEvents="none">
+      <View style={[styles.brandHeader, { top: insets.top + 10 }]} pointerEvents="none">
         <View style={styles.brandMark}>
           <Text style={styles.brandMarkText}>S</Text>
         </View>
@@ -456,7 +457,7 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
   brandHeader: {
     position: 'absolute',
-    top: 12,
+    top: 10,
     left: 14,
     zIndex: 10,
     flexDirection: 'row',
