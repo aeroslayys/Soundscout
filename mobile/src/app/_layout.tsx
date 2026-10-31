@@ -35,14 +35,4 @@ function AppNavigation() {
   );
 }
 
-export default function RootLayout() {
-  return (
-    <AuthProvider>
-      <ThemeProvider>
-      <ExpoThemeProvider value={resolved === 'dark' ? DarkTheme : DefaultTheme}>
-        <AppNavigation />
-      </ExpoThemeProvider>
-      </ThemeProvider>
-    </AuthProvider>
-  );
-}
+function ThemedNavigation() {\n  const { resolved } = useAppTheme();\n  return (\n    <ExpoThemeProvider value={resolved === 'dark' ? DarkTheme : DefaultTheme}>\n      <AppNavigation />\n    </ExpoThemeProvider>\n  );\n}\n\nexport default function RootLayout() {\n  return (\n    <AuthProvider>\n      <ThemeProvider>\n        <ThemedNavigation />\n      </ThemeProvider>\n    </AuthProvider>\n  );\n}
