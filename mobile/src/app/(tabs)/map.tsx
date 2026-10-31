@@ -512,7 +512,16 @@ export default function MapScreen() {
           </Pressable>
           {ratingExpanded ? (
             <View style={styles.ratingForm}>
-              <Text style={styles.formTitle}>HOW QUIET IS THIS PLACE?</Text>
+              <View style={styles.audioPrompt}>
+                <Text style={styles.audioPromptTitle}>RECORD AMBIENT SOUND</Text>
+                <Text style={styles.formHint}>Recommended · Record 5–10 seconds for an audio-based suggestion. You can skip this and rate manually.</Text>
+                <AudioCapture onAnalyzed={(db, suggested) => {
+                  setRatingMeasuredDb(db);
+                  setRatingHasAudio(true);
+                  setRatingScore(suggested);
+                }} />
+              </View>
+              <Text style={[styles.formTitle, { marginTop: 16 }]}>HOW QUIET IS THIS PLACE?</Text>
               <Text style={styles.formHint}>1 = Loud · 2 = Lively · 3 = Moderate · 4 = Calm · 5 = Silent</Text>
               <View style={styles.scoreChoices}>
                 {[1, 2, 3, 4, 5].map((score) => (
@@ -525,12 +534,6 @@ export default function MapScreen() {
                   </Pressable>
                 ))}
               </View>
-              <Text style={styles.formHint}>Optional: record 5–10 seconds of ambient sound. The backend analyzes average loudness; the recording itself is not saved.</Text>
-              <AudioCapture onAnalyzed={(db, suggested) => {
-                setRatingMeasuredDb(db);
-                setRatingHasAudio(true);
-                setRatingScore(suggested);
-              }} />
               {ratingMeasuredDb !== null ? <Text style={styles.formHint}>Measured {ratingMeasuredDb.toFixed(1)} dBFS · audio analysis complete</Text> : null}
               <Pressable style={styles.submitButton} disabled={ratingBusy} onPress={submitVenueRating}>
                 <Text style={styles.submitButtonText}>{ratingBusy ? 'SUBMITTING…' : 'SUBMIT RATING'}</Text>
@@ -698,6 +701,8 @@ const styles = StyleSheet.create({
   detailsButton: { marginTop: 12, backgroundColor: COLORS.accent, borderRadius: 11, paddingVertical: 11, alignItems: 'center' },
   detailsButtonText: { color: COLORS.background, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 },
   ratingForm: { marginTop: 10, padding: 12, borderRadius: 12, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
+  audioPrompt: { padding: 11, borderRadius: 11, backgroundColor: '#222D1D', borderWidth: 1, borderColor: COLORS.accent + '66' },
+  audioPromptTitle: { color: COLORS.accent, fontSize: 10, fontWeight: '900', letterSpacing: 1 },
   formTitle: { color: COLORS.text, fontSize: 10, fontWeight: '900', letterSpacing: 1.1 },
   formHint: { color: COLORS.muted, fontSize: 10, marginTop: 5, marginBottom: 10 },
   formInput: { color: COLORS.text, backgroundColor: COLORS.background, borderColor: COLORS.border, borderWidth: 1, borderRadius: 9, paddingHorizontal: 11, paddingVertical: 10, fontSize: 12, marginBottom: 8 },
