@@ -414,7 +414,7 @@ export default function MapScreen() {
               {ratingMeasuredDb !== null ? <Text style={styles.formHint}>Measured {ratingMeasuredDb.toFixed(1)} dBFS · audio analysis complete</Text> : null}
               <Pressable style={styles.submitButton} disabled={ratingBusy} onPress={submitVenueRating}>
                 <Text style={styles.submitButtonText}>{ratingBusy ? 'SUBMITTING…' : 'SUBMIT RATING'}</Text>
-              </Pressable>}
+              </Pressable>
             </View>
           ) : null}
           <Pressable
