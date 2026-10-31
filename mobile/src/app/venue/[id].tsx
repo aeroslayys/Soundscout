@@ -164,13 +164,6 @@ export default function VenueDetailsScreen() {
               </Text>
             </View>
 
-            <View style={styles.infoCard}>
-              <Text style={styles.infoTitle}>Location coordinates</Text>
-              <Text style={styles.infoValue}>
-                {venue.lat}, {venue.lng}
-              </Text>
-            </View>
-
             <Text style={styles.sectionTitle}>Sound by time of day</Text>
             <View style={styles.chartCard}>
               <Text style={styles.chartDescription}>Average community quietness rating for each time period (1 = loud, 5 = silent).</Text>
