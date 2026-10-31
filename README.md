@@ -1,13 +1,17 @@
 # SoundScout
 
-SoundScout is a map-based web app for discovering places by **how they sound**.
+SoundScout is a map-based platform for discovering places by **how they sound**.
 
-Instead of relying only on photos or generic venue reviews, SoundScout lets people log quietness ratings, optionally analyze a short ambient recording, compare sound levels by time of day, and find calmer places nearby.
+Instead of relying only on photos or generic venue reviews, SoundScout helps people understand a venue's sound environment before visiting. Users can contribute quietness ratings, optionally analyze a short ambient recording, compare sound levels by time of day, and find calmer places nearby.
+
+The project includes a browser-based web application and a React Native mobile application built with Expo.
 
 ## Features
 
-- Interactive Leaflet map with venue markers
-- Quietness ratings on a 1–5 scale
+### Venue discovery and sound data
+
+- Interactive map with venue markers (Leaflet on web; native map integration on Android)
+- Quietness ratings on a 1–5 scale:
   - 1 = Loud
   - 2 = Lively
   - 3 = Moderate
@@ -20,9 +24,12 @@ Instead of relying only on photos or generic venue reviews, SoundScout lets peop
 - Recent sound reports
 - Sound heatmap
 - **Quiet Near Me** filtering
-- Browser geolocation with an accuracy indicator
+- Browser/device location support
 - Venue search through OpenStreetMap Nominatim
 - Accessibility and gender-neutral toilet tags
+
+### Accounts and moderation
+
 - Passwordless email OTP authentication
 - User profiles
 - Admin operations dashboard with searchable venues, ratings, users, and audit history
@@ -31,7 +38,24 @@ Instead of relying only on photos or generic venue reviews, SoundScout lets peop
 - Community flags and moderation queue
 - User suspension controls enforced by the backend
 - Light and dark themes
-- Responsive mobile layout
+- Responsive web layout
+
+### Mobile application
+
+The mobile client lives in `mobile/` and uses **React Native and Expo**.
+
+- Expo Router-based application structure
+- Native Android application with package ID `com.soundscout.mobile`
+- Native map support through `react-native-maps`
+- Location and microphone/audio permissions
+- Expo Audio integration for recording-related functionality
+- Shared SoundScout backend/API
+- Android release APK build through Gradle
+- EAS Build configuration for cloud iOS builds
+
+The Android native project is checked in so its Gradle configuration, manifest settings, and native resources are versioned with the app. Generated build output and machine-specific files should not be committed.
+
+An iOS EAS build has not yet been published. Building for iOS distribution requires Apple signing credentials and an Apple Developer Program membership.
 
 ## Audio privacy
 
@@ -43,14 +67,21 @@ A clip is temporarily uploaded to the backend, analyzed with FFmpeg, and deleted
 
 ## Tech stack
 
-### Frontend
+### Web frontend
 
 - HTML
 - CSS
 - Vanilla JavaScript
-- Leaflet
-- Leaflet.heat
+- Leaflet and Leaflet.heat
 - OpenStreetMap
+
+### Mobile frontend
+
+- React Native
+- Expo
+- Expo Router
+- react-native-maps
+- Expo Audio
 
 ### Backend
 
@@ -64,26 +95,33 @@ A clip is temporarily uploaded to the backend, analyzed with FFmpeg, and deleted
 - Multer
 - FFmpeg
 
+### Deployment
+
+- Docker
+- Nginx
+- Tailscale Funnel (self-hosted public HTTPS access)
+
 ## Architecture
 
 ```text
-Browser / Phone
-      |
-      v
-SoundScout frontend
-      |
-      | HTTPS / REST
-      v
-Node.js + Express
-      |
-      +--> PostgreSQL + PostGIS
-      |
-      +--> FFmpeg
-      |     temporary audio analysis
-      |     clip deleted after analysis
-      |
-      +--> Mailtrap
-            OTP email delivery
+Web browser                 iOS / Android app
+     |                             |
+     v                             v
+Web frontend                 React Native + Expo
+     |                             |
+     +-------------+---------------+
+                   |
+                   | HTTPS / REST
+                   v
+             Node.js + Express
+                   |
+          +--------+--------+
+          |        |        |
+          v        v        v
+     PostgreSQL  FFmpeg   Mail service
+      + PostGIS  temporary   OTP delivery
+                 audio
+                 analysis
 ```
 
 The project can be self-hosted and exposed securely over HTTPS using a service such as **Tailscale Funnel**.
@@ -96,11 +134,15 @@ Soundscout/
 ├── login.css
 ├── login.js
 ├── home/
-│   ├── home.html
-│   ├── home.css
-│   └── home.js
 ├── profile/
 ├── admin/
+├── mobile/
+│   ├── app/
+│   ├── assets/
+│   ├── android/
+│   ├── app.json
+│   ├── eas.json
+│   └── package.json
 └── Backend/
     ├── package.json
     └── src/
@@ -108,17 +150,13 @@ Soundscout/
         ├── db.js
         ├── mailer.js
         ├── middleware/
-        └── routes/
-            ├── auth.js
-            ├── audio.js
-            ├── venues.js
-            ├── users.js
-            └── admin.js
+        ├── routes/
+        └── migrations/
 ```
 
 ## Requirements
 
-Before running the backend, install:
+### Backend
 
 - Node.js 18 or newer
 - PostgreSQL
@@ -126,6 +164,15 @@ Before running the backend, install:
 - FFmpeg
 
 A PostgreSQL database with the SoundScout tables is also required. The current application expects tables including users, OTP codes, venues, and ratings.
+
+### Mobile development
+
+- Node.js and npm
+- Android SDK and a compatible JDK for local Android builds
+- Expo dependencies installed from `mobile/package.json`
+- An Android device or emulator for testing
+
+iOS native builds require macOS/Xcode when building locally, or EAS Build with Apple signing credentials when building in the cloud.
 
 ## Backend setup
 
@@ -209,6 +256,63 @@ Health check:
 GET /health
 ```
 
+## Mobile setup
+
+From the repository root:
+
+```bash
+cd mobile
+npm install
+```
+
+Start the Expo development server:
+
+```bash
+npx expo start
+```
+
+### Android release APK
+
+The native Android project is in `mobile/android/`. To build a release APK locally:
+
+```bash
+cd mobile/android
+./gradlew assembleRelease
+```
+
+The APK is generated at:
+
+```text
+app/build/outputs/apk/release/app-release.apk
+```
+
+#### Google Maps API key
+
+For local Android builds, place the Google Maps key in `mobile/android/local.properties`:
+
+```properties
+GOOGLE_MAPS_API_KEY=your_google_maps_api_key
+```
+
+The Android Gradle configuration passes this value to the manifest through a placeholder. Do not commit `local.properties` or hardcode a real key in the manifest. Restrict the key in Google Cloud Console to the Android application ID and signing certificate fingerprints used for the relevant builds, and enable only the APIs the app needs.
+
+### EAS Build
+
+The mobile project includes `eas.json` for cloud builds. After installing or invoking the EAS CLI and signing in:
+
+```bash
+cd mobile
+npx eas-cli build --platform android --profile production
+```
+
+For iOS cloud builds:
+
+```bash
+npx eas-cli build --platform ios --profile production
+```
+
+iOS distribution requires Apple signing credentials. An EAS configuration alone does not mean an iOS build has been published.
+
 ## Main API areas
 
 ```text
@@ -255,7 +359,7 @@ Enter email
 Request OTP
     |
     v
-Mailtrap sends verification code
+Mail service sends verification code
     |
     v
 Verify code
@@ -268,7 +372,7 @@ JWTs are used by the frontend for authenticated API requests.
 
 ## Deployment
 
-The application can be hosted on a Linux machine with:
+The backend can be hosted on a Linux machine with:
 
 - Node.js / Express
 - PostgreSQL + PostGIS
@@ -290,18 +394,20 @@ The web and backend containers must share a Docker network, and the backend serv
 
 ## Security notes
 
-- Keep `JWT_SECRET`, database credentials, and Mailtrap credentials outside source control.
+- Keep `JWT_SECRET`, database credentials, mail credentials, and API keys out of source control.
+- Restrict Google Maps API keys by application and signing certificate; a key embedded in a mobile app can be extracted from the app package.
 - Do not expose PostgreSQL directly to the public internet.
 - Use HTTPS in production.
 - Audio clips should remain temporary and should not be persisted.
 - OTP codes are hashed before being stored.
 - OTPs expire and are marked as consumed after successful verification.
+- Review the contents of release APKs before publishing them. Do not include private endpoints, credentials, or development-only configuration.
 
 ## Status
 
 SoundScout is under active development.
 
-Current focus areas include improving the venue sound-data experience, mobile usability, deployment, and production email delivery.
+The web application, backend, admin/moderation features, and Android mobile build are part of the current project. Mobile polish, release hardening, iOS signing/distribution, and further improvements to venue sound-data coverage remain ongoing work.
 
 ## Author
 
