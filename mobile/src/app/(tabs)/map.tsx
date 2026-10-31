@@ -13,6 +13,7 @@ import {
 import MapView, { Circle, Heatmap, Marker, type Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/context/auth';
 
 const API_URL = 'http://192.168.101.73:8082';
 
@@ -113,6 +114,7 @@ function clusterVenues(venues: Venue[], region: Region): VenueCluster[] {
 
 export default function MapScreen() {
   const router = useRouter();
+  const { token: authToken } = useAuth();
   const mapRef = useRef<MapView>(null);
   const [region, setRegion] = useState<Region>(INITIAL_REGION);
   const [venues, setVenues] = useState<Venue[]>([]);
@@ -125,7 +127,6 @@ export default function MapScreen() {
   const [ratingExpanded, setRatingExpanded] = useState(false);
   const [ratingScore, setRatingScore] = useState(4);
   const [ratingBusy, setRatingBusy] = useState(false);
-  const [authToken, setAuthToken] = useState('');
   const [authEmail, setAuthEmail] = useState('');
   const [newAccount, setNewAccount] = useState(false);
   const [signupName, setSignupName] = useState('');
@@ -231,7 +232,7 @@ export default function MapScreen() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Verification failed.');
-      setAuthToken(data.token);
+      // Authentication is managed by the app-wide auth provider.
       setAuthCode('');
       setOtpRequested(false);
       Alert.alert('Signed in', 'You can now submit your venue rating.');
