@@ -4,6 +4,7 @@ import {
   Platform,
   Pressable,
   StatusBar,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
