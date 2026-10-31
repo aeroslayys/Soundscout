@@ -1,19 +1,31 @@
-import { DarkTheme, DefaultTheme, ThemeProvider, Stack } from 'expo-router';
+import { DarkTheme, DefaultTheme, ThemeProvider, Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
+import { useEffect } from 'react';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/context/auth';
-import AuthScreen from './auth';
 
 SplashScreen.preventAutoHideAsync();
 
 function AppNavigation() {
   const { token } = useAuth();
-  if (!token) return <AuthScreen />;
+  const segments = useSegments();
+  const router = useRouter();
+
+  useEffect(() => {
+    const inAuthScreen = segments[0] === 'auth';
+    if (!token && !inAuthScreen) {
+      router.replace('/auth' as never);
+    } else if (token && inAuthScreen) {
+      router.replace('/(tabs)' as never);
+    }
+  }, [token, segments, router]);
+
   return (
     <>
       <AnimatedSplashOverlay />
       <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="auth" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="venue/[id]" />
       </Stack>
