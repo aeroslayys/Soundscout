@@ -127,6 +127,10 @@ export default function MapScreen() {
   const [ratingBusy, setRatingBusy] = useState(false);
   const [authToken, setAuthToken] = useState('');
   const [authEmail, setAuthEmail] = useState('');
+  const [newAccount, setNewAccount] = useState(false);
+  const [signupName, setSignupName] = useState('');
+  const [signupAge, setSignupAge] = useState('');
+  const [signupSensitivity, setSignupSensitivity] = useState('3');
   const [authCode, setAuthCode] = useState('');
   const [otpRequested, setOtpRequested] = useState(false);
   const [authBusy, setAuthBusy] = useState(false);
@@ -199,6 +203,7 @@ export default function MapScreen() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Could not send verification code.');
+      setNewAccount(Boolean(data.isNewUser));
       setOtpRequested(true);
       Alert.alert('Check your email', 'We sent a verification code to your email address.');
     } catch (err) {
@@ -218,7 +223,11 @@ export default function MapScreen() {
       const response = await fetch(`${API_URL}/api/auth/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: authEmail.trim(), code: authCode.trim() }),
+        body: JSON.stringify({
+          email: authEmail.trim(),
+          code: authCode.trim(),
+          ...(newAccount ? { name: signupName.trim(), age: Number(signupAge), sensitivity: Number(signupSensitivity) } : {}),
+        }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Verification failed.');
@@ -445,6 +454,33 @@ export default function MapScreen() {
                     autoCapitalize="none"
                     style={styles.formInput}
                   />
+                  {otpRequested && newAccount ? (
+                    <>
+                      <TextInput
+                        value={signupName}
+                        onChangeText={setSignupName}
+                        placeholder="Your name"
+                        placeholderTextColor={COLORS.muted}
+                        style={styles.formInput}
+                      />
+                      <TextInput
+                        value={signupAge}
+                        onChangeText={setSignupAge}
+                        placeholder="Age"
+                        placeholderTextColor={COLORS.muted}
+                        keyboardType="number-pad"
+                        style={styles.formInput}
+                      />
+                      <TextInput
+                        value={signupSensitivity}
+                        onChangeText={setSignupSensitivity}
+                        placeholder="Sound sensitivity (1–5)"
+                        placeholderTextColor={COLORS.muted}
+                        keyboardType="number-pad"
+                        style={styles.formInput}
+                      />
+                    </>
+                  ) : null}
                   {otpRequested ? (
                     <TextInput
                       value={authCode}
