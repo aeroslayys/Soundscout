@@ -17,6 +17,7 @@ export default function AddVenueScreen() {
   const [access,setAccess] = useState(false);
   const [toilet,setToilet] = useState(false);
   const [coordinate,setCoordinate] = useState({ latitude:START.latitude, longitude:START.longitude });
+  const [locationConfirmed,setLocationConfirmed] = useState(false);
   const [region,setRegion] = useState<Region>(START);
   const [query,setQuery] = useState('');
   const [suggestions,setSuggestions] = useState<any[]>([]);
@@ -77,6 +78,7 @@ export default function AddVenueScreen() {
   const submit = async () => {
     if (!token) return Alert.alert('Sign in required','Please sign in before adding a venue.');
     if (!name.trim()) return Alert.alert('Venue name required','Enter the venue name.');
+    if (!locationConfirmed) return Alert.alert('Location required','Search for the venue, then tap the map or drag the pin to confirm its exact location.');
     if (measuredDb === null && score < 1) return;
     setSubmitting(true);
     try {
@@ -114,11 +116,11 @@ export default function AddVenueScreen() {
         <TextInput value={query} onChangeText={setQuery} onSubmitEditing={searchLocation} placeholder="Search address or venue" placeholderTextColor={C.muted} style={[s.input,{flex:1,marginTop:0}]} />
         <Pressable style={s.searchButton} onPress={searchLocation} disabled={searching}>{searching?<ActivityIndicator color={C.bg}/>:<Text style={s.searchText}>SEARCH</Text>}</Pressable>
       </View>
-      {suggestions.map((item,index)=><Pressable key={String(index)} style={s.suggestion} onPress={()=>{const next={latitude:Number(item.lat),longitude:Number(item.lng)};setCoordinate(next);const nextRegion={...next,latitudeDelta:0.004,longitudeDelta:0.004};setRegion(nextRegion);setSuggestions([]);setQuery(item.display_name);}}><Text style={s.suggestionText}>{item.display_name}</Text></Pressable>)}
+      {suggestions.map((item,index)=><Pressable key={String(index)} style={s.suggestion} onPress={()=>{const next={latitude:Number(item.lat),longitude:Number(item.lng)};setCoordinate(next);setLocationConfirmed(true);const nextRegion={...next,latitudeDelta:0.004,longitudeDelta:0.004};setRegion(nextRegion);setSuggestions([]);setQuery(item.display_name);}}><Text style={s.suggestionText}>{item.display_name}</Text></Pressable>)}
       <Text style={s.hint}>Drag the pin to the entrance or tap the map to fine-tune its position.</Text>
       <View style={s.mapWrap}>
-        <MapView style={s.map} region={region} onRegionChangeComplete={setRegion} onPress={e=>setCoordinate(e.nativeEvent.coordinate)} mapType="standard">
-          <Marker coordinate={coordinate} draggable onDragEnd={e=>setCoordinate(e.nativeEvent.coordinate)} title="Venue location" description="Drag to adjust exact position" />
+        <MapView style={s.map} region={region} onRegionChangeComplete={setRegion} onPress={e=>{setCoordinate(e.nativeEvent.coordinate);setLocationConfirmed(true);}} mapType="standard">
+          <Marker coordinate={coordinate} draggable onDragEnd={e=>{setCoordinate(e.nativeEvent.coordinate);setLocationConfirmed(true);}} title="Venue location" description="Drag to adjust exact position" />
         </MapView>
       </View>
       <Text style={s.coords}>{coordinate.latitude.toFixed(6)}, {coordinate.longitude.toFixed(6)}</Text>
