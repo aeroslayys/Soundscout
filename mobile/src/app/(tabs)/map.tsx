@@ -130,6 +130,8 @@ export default function MapScreen() {
   const [quietNearMe, setQuietNearMe] = useState(false);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [accessOnly, setAccessOnly] = useState(false);
+  const [toiletOnly, setToiletOnly] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [ratingExpanded, setRatingExpanded] = useState(false);
@@ -171,9 +173,11 @@ export default function MapScreen() {
     return venues.filter((venue) => {
       const matchesCategory = category === 'all' || venue.category === category;
       const matchesSearch = !normalizedQuery || venue.name.toLocaleLowerCase().includes(normalizedQuery);
-      return matchesCategory && matchesSearch;
+      const matchesAccess = !accessOnly || venue.access === true;
+      const matchesToilet = !toiletOnly || venue.toilet === true;
+      return matchesCategory && matchesSearch && matchesAccess && matchesToilet;
     });
-  }, [category, venues, searchQuery]);
+  }, [accessOnly, category, toiletOnly, venues, searchQuery]);
 
   const visibleVenues = useMemo(() => {
     if (!quietNearMe || !userLocation) return filteredVenues;
@@ -403,6 +407,26 @@ export default function MapScreen() {
             >
               <Text style={[styles.actionText, quietNearMe && styles.actionTextActive]}>
                 {quietNearMe ? 'Quiet nearby on' : 'Quiet near me'}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.actionButton, accessOnly && styles.actionButtonActive]}
+              onPress={() => setAccessOnly((value) => !value)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: accessOnly }}
+            >
+              <Text style={[styles.actionText, accessOnly && styles.actionTextActive]}>
+                {accessOnly ? '✓ Step-free access' : 'Step-free access'}
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[styles.actionButton, toiletOnly && styles.actionButtonActive]}
+              onPress={() => setToiletOnly((value) => !value)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: toiletOnly }}
+            >
+              <Text style={[styles.actionText, toiletOnly && styles.actionTextActive]}>
+                {toiletOnly ? '✓ Gender-neutral toilet' : 'Gender-neutral toilet'}
               </Text>
             </Pressable>
             {categories.map((item) => (
