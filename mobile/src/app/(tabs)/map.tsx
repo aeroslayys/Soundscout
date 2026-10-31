@@ -521,7 +521,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 17,
     paddingTop: 9,
     paddingBottom: 15,
-    maxHeight: '48%',
+    maxHeight: '70%',
   },
   sheetHandle: { alignSelf: 'center', width: 38, height: 4, borderRadius: 3, backgroundColor: COLORS.muted, marginBottom: 12 },
   sheetHeading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
