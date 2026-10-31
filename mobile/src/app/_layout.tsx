@@ -13,7 +13,8 @@ function AppNavigation() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!ready) return;\n    const inAuthScreen = segments[0] === 'auth';
+    if (!ready) return;
+    const inAuthScreen = segments[0] === 'auth';
     if (!token && !inAuthScreen) {
       router.replace('/auth' as never);
     } else if (token && inAuthScreen) {
