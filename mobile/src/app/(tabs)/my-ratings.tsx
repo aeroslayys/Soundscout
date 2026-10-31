@@ -190,7 +190,7 @@ export default function MyRatingsScreen() {
     ? (ratings.reduce((sum, item) => sum + Number(item.score || 0), 0) / ratings.length).toFixed(1)
     : '—';
   const uniqueVenues = new Set(ratings.map((item) => item.venueName)).size;
-  const initials = (user?.name || user?.email || '?').trim().split(/\\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join('').toUpperCase() || '?';
+  const initials = (user?.name || user?.email || '?').trim().split(/\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join('').toUpperCase() || '?';
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: C.bg }]}>
