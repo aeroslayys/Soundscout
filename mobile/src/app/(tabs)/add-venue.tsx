@@ -1,17 +1,19 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StatusBar, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AudioCapture from '@/components/audio-capture';
 import { useAuth } from '@/context/auth';
+import { palettes, useAppTheme } from '@/context/theme';
 
 const API_URL = 'http://192.168.101.73:8082';
-const C = { bg:'#101114', surface:'#1B1D22', text:'#F4F4F5', muted:'#92959F', accent:'#B8F36B', border:'#30323A', danger:'#FF7474' };
 const START: Region = { latitude:12.0022, longitude:79.8100, latitudeDelta:0.018, longitudeDelta:0.018 };
 const CATEGORIES = ['cafe','restaurant','library','gym','coworking'];
 
 export default function AddVenueScreen() {
   const { token } = useAuth();
+  const { colors: C, resolved } = useAppTheme();
+  const s = useMemo(() => createStyles(C), [C]);
   const [name,setName] = useState('');
   const [category,setCategory] = useState('cafe');
   const [access,setAccess] = useState(false);
@@ -66,7 +68,7 @@ export default function AddVenueScreen() {
   };
 
   return <SafeAreaView style={s.safe}>
-    <StatusBar barStyle="light-content" />
+    <StatusBar barStyle={resolved === "dark" ? "light-content" : "dark-content"} backgroundColor={C.bg} />
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
       <Text style={s.eyebrow}>CONTRIBUTE TO SOUNDSCOUT</Text>
       <Text style={s.title}>Add a venue</Text>
@@ -112,7 +114,7 @@ export default function AddVenueScreen() {
   </SafeAreaView>;
 }
 
-const s=StyleSheet.create({
+const createStyles = (C: typeof palettes.dark) => StyleSheet.create({
  safe:{flex:1,backgroundColor:C.bg},content:{padding:20,paddingBottom:50},eyebrow:{color:C.accent,fontSize:10,fontWeight:'900',letterSpacing:2,marginTop:12},title:{color:C.text,fontSize:31,fontWeight:'900',marginTop:9},subtitle:{color:C.muted,fontSize:13,lineHeight:20,marginTop:7,marginBottom:22},
  label:{color:C.accent,fontSize:10,fontWeight:'900',letterSpacing:1.4,marginTop:22,marginBottom:9},input:{color:C.text,backgroundColor:C.surface,borderColor:C.border,borderWidth:1,borderRadius:10,padding:13,marginTop:0,fontSize:13},chips:{flexDirection:'row',flexWrap:'wrap',gap:7},chip:{borderWidth:1,borderColor:C.border,borderRadius:9,paddingHorizontal:10,paddingVertical:9},chipActive:{backgroundColor:C.accent,borderColor:C.accent},chipText:{color:C.muted,fontSize:9,fontWeight:'900'},chipTextActive:{color:C.bg},searchRow:{flexDirection:'row',gap:8,alignItems:'center'},searchButton:{backgroundColor:C.accent,borderRadius:10,paddingHorizontal:13,paddingVertical:14},searchText:{color:C.bg,fontSize:10,fontWeight:'900'},suggestion:{padding:10,backgroundColor:C.surface,borderBottomWidth:1,borderColor:C.border},suggestionText:{color:C.text,fontSize:11},hint:{color:C.muted,fontSize:10,lineHeight:16,marginTop:7},mapWrap:{height:260,overflow:'hidden',borderRadius:14,borderWidth:1,borderColor:C.border,marginTop:10},map:{flex:1},coords:{color:C.muted,fontSize:10,fontVariant:['tabular-nums'],marginTop:8},toggleRow:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',paddingVertical:12,borderBottomWidth:1,borderColor:C.border},toggleCopy:{flex:1},toggleTitle:{color:C.text,fontSize:12,fontWeight:'700'},scores:{flexDirection:'row',gap:8,marginTop:12},score:{flex:1,height:43,alignItems:'center',justifyContent:'center',backgroundColor:C.surface,borderRadius:10,borderWidth:1,borderColor:C.border},scoreActive:{backgroundColor:C.accent,borderColor:C.accent},scoreText:{color:C.text,fontSize:15,fontWeight:'900'},scoreTextActive:{color:C.bg},recordButton:{backgroundColor:C.surface,borderWidth:1,borderColor:C.accent,borderRadius:10,padding:14,alignItems:'center',marginTop:12},recording:{backgroundColor:'#3A2020',borderColor:C.danger},recordText:{color:C.accent,fontSize:11,fontWeight:'900',letterSpacing:1},measurement:{color:C.accent,fontSize:11,fontWeight:'800',marginTop:10},status:{color:C.muted,fontSize:10,lineHeight:16,marginTop:8},submit:{backgroundColor:C.accent,borderRadius:11,padding:16,alignItems:'center',marginTop:26},submitText:{color:C.bg,fontSize:10,fontWeight:'900',letterSpacing:.7},footer:{color:C.muted,fontSize:10,lineHeight:16,textAlign:'center',marginTop:12}
 });
