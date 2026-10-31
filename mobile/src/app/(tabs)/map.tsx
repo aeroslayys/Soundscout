@@ -342,7 +342,11 @@ export default function MapScreen() {
       </View>
 
       {selected ? (
-        <View style={styles.selectedSheet}>
+        <ScrollView
+          style={styles.selectedSheet}
+          contentContainerStyle={styles.selectedSheetContent}
+          showsVerticalScrollIndicator={false}
+        >
           <View style={styles.sheetHandle} />
           <View style={styles.sheetHeading}>
             <View style={[styles.soundDot, { backgroundColor: soundColor(averageRating(selected.ratings)) }]} />
@@ -420,7 +424,7 @@ export default function MapScreen() {
           >
             <Text style={styles.secondaryDetailsText}>VIEW FULL VENUE DETAILS →</Text>
           </Pressable>
-        </View>
+        </ScrollView>
       ) : null}
 
       {loading ? (
@@ -433,9 +437,11 @@ export default function MapScreen() {
           <Text style={styles.errorText}>Couldn't load venues · Tap to retry</Text>
         </Pressable>
       ) : (
-        <View style={styles.countPill}>
-          {!selected ? <Text style={styles.countText}>{filteredVenues.length} PLACES ON MAP</Text> : null}
-        </View>
+        {!selected ? (
+          <View style={styles.countPill}>
+            <Text style={styles.countText}>{filteredVenues.length} PLACES ON MAP</Text>
+          </View>
+        ) : null}
       )}
     </SafeAreaView>
   );
@@ -515,19 +521,22 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 22,
+    maxHeight: '70%',
+    overflow: 'hidden',
+  },
+  selectedSheetContent: {
     paddingHorizontal: 17,
     paddingTop: 9,
     paddingBottom: 15,
-    maxHeight: '70%',
   },
   sheetHandle: { alignSelf: 'center', width: 38, height: 4, borderRadius: 3, backgroundColor: COLORS.muted, marginBottom: 12 },
   sheetHeading: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   closeSheet: { color: COLORS.muted, fontSize: 18, paddingHorizontal: 4 },
-  scoreRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 12, marginBottom: 12 },
+  scoreRow: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 10, marginTop: 12, marginBottom: 12 },
   scoreValue: { color: COLORS.accent, fontSize: 30, fontWeight: '900' },
-  scoreCaption: { flex: 1 },
+  scoreCaption: { flex: 1, minWidth: 105, flexShrink: 1 },
   scoreLabel: { color: COLORS.text, fontSize: 12, fontWeight: '800' },
-  facilityPills: { alignItems: 'flex-end', gap: 4 },
+  facilityPills: { width: '100%', flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-start', gap: 12, marginTop: 2 },
   facilityText: { color: COLORS.muted, fontSize: 9, fontWeight: '700' },
   sheetSection: { color: COLORS.accent, fontSize: 9, fontWeight: '900', letterSpacing: 1.4, marginTop: 8, marginBottom: 8 },
   sheetMuted: { color: COLORS.muted, fontSize: 9 },
