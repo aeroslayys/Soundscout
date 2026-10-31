@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -179,6 +179,8 @@ export default function MyRatingsScreen() {
     setOtpSent(false);
     setError('');
   };
+
+  useEffect(() => { if (token) loadAccountData(token); }, [token, loadAccountData]);
 
   const average = ratings.length
     ? (ratings.reduce((sum, item) => sum + Number(item.score || 0), 0) / ratings.length).toFixed(1)
