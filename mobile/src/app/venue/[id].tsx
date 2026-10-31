@@ -135,7 +135,7 @@ export default function VenueDetailsScreen() {
             </View>
 
             <View style={styles.infoCard}>
-              <Text style={styles.infoTitle}>Restroom</Text>
+              <Text style={styles.infoTitle}>Gender-neutral washroom</Text>
               <Text style={styles.infoValue}>
                 {venue.toilet ? '✓ Available' : 'Not available'}
               </Text>
