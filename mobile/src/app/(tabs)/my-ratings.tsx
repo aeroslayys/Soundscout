@@ -81,7 +81,7 @@ export default function MyRatingsScreen() {
   const [sensitivity, setSensitivity] = useState('3');
   const [isNewUser, setIsNewUser] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
-  const { token, signOut: clearAuth } = useAuth();
+  const { token, user, setToken, signOut: clearAuth } = useAuth();
   const [busy, setBusy] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState('');
@@ -166,6 +166,7 @@ export default function MyRatingsScreen() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Verification failed.');
       if (!data.token) throw new Error('The server did not return a sign-in token.');
+      await setToken(data.token, data.user);
       await loadAccountData(data.token);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not sign in.');
@@ -188,6 +189,8 @@ export default function MyRatingsScreen() {
   const average = ratings.length
     ? (ratings.reduce((sum, item) => sum + Number(item.score || 0), 0) / ratings.length).toFixed(1)
     : '—';
+  const uniqueVenues = new Set(ratings.map((item) => item.venueName)).size;
+  const initials = (user?.name || user?.email || '?').trim().split(/\\s+/).filter(Boolean).map((part) => part[0]).slice(0, 2).join('').toUpperCase() || '?';
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: C.bg }]}>
@@ -203,6 +206,19 @@ export default function MyRatingsScreen() {
             {(['system','light','dark'] as ThemeMode[]).map(option => <Pressable key={option} onPress={() => setMode(option)} style={{ paddingHorizontal:9, paddingVertical:8, borderRadius:8, backgroundColor:mode===option?C.accent:C.surfaceLight }}><Text style={{ color:mode===option?C.bg:C.text, fontSize:9, fontWeight:'800', textTransform:'capitalize' }}>{option}</Text></Pressable>)}
           </View>
         </View>
+        {token ? (
+          <View style={styles.profileCard}>
+            <View style={styles.avatar}><Text style={styles.avatarText}>{initials}</Text></View>
+            <View style={styles.profileDetails}>
+              <Text style={styles.profileName}>{user?.name || 'SoundScout member'}</Text>
+              <Text style={styles.profileEmail}>{user?.email || 'Email unavailable'}</Text>
+              <View style={styles.profileMetaRow}>
+                <Text style={styles.profileMeta}>Age {user?.age ?? '—'}</Text>
+                <Text style={styles.profileMeta}>Sensitivity {user?.sensitivity != null ? `${user.sensitivity}/5` : '—'}</Text>
+              </View>
+            </View>
+          </View>
+        ) : null}
         <View style={styles.headerRow}>
           <View style={styles.headerCopy}>
             <Text style={styles.title}>My Ratings</Text>
@@ -264,8 +280,14 @@ export default function MyRatingsScreen() {
               </View>
               <View style={styles.statCard}>
                 <Text style={styles.statValue}>{average}</Text>
-                <Text style={styles.statLabel}>AVG SCORE</Text>
+                <Text style={styles.statLabel}>AVG QUIETNESS GIVEN</Text>
               </View>
+              <View style={styles.statCard}>
+                <Text style={styles.statValue}>{uniqueVenues}</Text>
+                <Text style={styles.statLabel}>VENUES RATED</Text>
+              </View>
+            </View>
+            <View style={styles.statsRow}>
               <View style={styles.statCard}>
                 <Text style={styles.statValue}>{venues.length}</Text>
                 <Text style={styles.statLabel}>VENUES ADDED</Text>
@@ -335,6 +357,14 @@ const createStyles = (C: typeof palettes.dark) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   content: { padding: 20, paddingBottom: 48 },
   eyebrow: { color: C.accent, fontSize: 10, fontWeight: '900', letterSpacing: 2, marginTop: 14 },
+  profileCard: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: C.surface, borderWidth: 1, borderColor: C.border, borderRadius: 16, padding: 16, marginTop: 18 },
+  avatar: { width: 54, height: 54, borderRadius: 27, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' },
+  avatarText: { color: C.bg, fontSize: 18, fontWeight: '900' },
+  profileDetails: { flex: 1 },
+  profileName: { color: C.text, fontSize: 16, fontWeight: '900' },
+  profileEmail: { color: C.muted, fontSize: 11, marginTop: 3 },
+  profileMetaRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  profileMeta: { color: C.muted, backgroundColor: C.surfaceLight, borderRadius: 7, paddingHorizontal: 8, paddingVertical: 4, fontSize: 9, overflow: 'hidden' },
   headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: 8 },
   headerCopy: { flex: 1 },
   title: { color: C.text, fontSize: 31, fontWeight: '900' },
