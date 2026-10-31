@@ -434,7 +434,7 @@ export default function MapScreen() {
         </Pressable>
       ) : (
         <View style={styles.countPill}>
-          <Text style={styles.countText}>{filteredVenues.length} PLACES ON MAP</Text>
+          {!selected ? <Text style={styles.countText}>{filteredVenues.length} PLACES ON MAP</Text> : null}
         </View>
       )}
     </SafeAreaView>
