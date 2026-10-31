@@ -2787,10 +2787,18 @@ map.on("click", function(e){
   audioField.id = "audio-clip-field";
 
   var audioLabel = document.createElement("label");
-  audioLabel.textContent = "Record or upload a 5–10s clip";
+  audioLabel.textContent = "Optional audio check";
   audioLabel.style.display = "block";
   audioLabel.style.marginBottom = "6px";
   audioField.appendChild(audioLabel);
+
+  var audioHint = document.createElement("p");
+  audioHint.textContent = "You can record or upload a 5–10s clip to get an audio-based suggestion. No clip? That's completely fine — just choose your quietness rating below and submit.";
+  audioHint.style.fontSize = "11.5px";
+  audioHint.style.lineHeight = "1.5";
+  audioHint.style.color = "var(--muted)";
+  audioHint.style.margin = "0 0 9px 0";
+  audioField.appendChild(audioHint);
 
   var audioControlsRow = document.createElement("div");
   audioControlsRow.style.display = "flex";
@@ -3153,7 +3161,7 @@ locationSelectedDisplay.style.color = "#5B6472";
       if(!requireLogin("rate a venue")) return;
       var v = venues.find(function(x){ return x.id === venueId; });
       document.getElementById("modal-title").textContent = "Rate " + v.name;
-      document.getElementById("modal-sub").textContent = "Add your own quietness reading for this place.";
+      document.getElementById("modal-sub").textContent = "Rate how quiet this place feels. Audio recording is optional — you can submit a manual rating on its own.";
       newFields.style.display = "none";
       document.getElementById("venue-access").checked = v.access;
       document.getElementById("venue-toilet").checked = v.toilet;
