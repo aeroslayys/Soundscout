@@ -6,6 +6,8 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TextInput,
+  Alert,
   View,
 } from 'react-native';
 import MapView, { Circle, Heatmap, Marker, type Region } from 'react-native-maps';
@@ -120,6 +122,14 @@ export default function MapScreen() {
   const [heatmapEnabled, setHeatmapEnabled] = useState(false);
   const [category, setCategory] = useState('all');
   const [filtersExpanded, setFiltersExpanded] = useState(false);
+  const [ratingExpanded, setRatingExpanded] = useState(false);
+  const [ratingScore, setRatingScore] = useState(4);
+  const [ratingBusy, setRatingBusy] = useState(false);
+  const [authToken, setAuthToken] = useState('');
+  const [authEmail, setAuthEmail] = useState('');
+  const [authCode, setAuthCode] = useState('');
+  const [otpRequested, setOtpRequested] = useState(false);
+  const [authBusy, setAuthBusy] = useState(false);
 
   const fetchVenues = useCallback(async () => {
     try {
@@ -172,6 +182,92 @@ export default function MapScreen() {
       latitudeDelta: Math.max(region.latitudeDelta / 2, 0.002),
       longitudeDelta: Math.max(region.longitudeDelta / 2, 0.002),
     }, 350);
+  };
+
+
+  const requestRatingOtp = async () => {
+    if (!authEmail.trim()) {
+      Alert.alert('Email required', 'Enter your SoundScout account email.');
+      return;
+    }
+    setAuthBusy(true);
+    try {
+      const response = await fetch(`${API_URL}/api/auth/request-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: authEmail.trim() }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not send verification code.');
+      setOtpRequested(true);
+      Alert.alert('Check your email', 'We sent a verification code to your email address.');
+    } catch (err) {
+      Alert.alert('Sign in failed', err instanceof Error ? err.message : 'Please try again.');
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
+  const verifyRatingOtp = async () => {
+    if (!authCode.trim()) {
+      Alert.alert('Code required', 'Enter the verification code sent to your email.');
+      return;
+    }
+    setAuthBusy(true);
+    try {
+      const response = await fetch(`${API_URL}/api/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: authEmail.trim(), code: authCode.trim() }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Verification failed.');
+      setAuthToken(data.token);
+      setAuthCode('');
+      setOtpRequested(false);
+      Alert.alert('Signed in', 'You can now submit your venue rating.');
+    } catch (err) {
+      Alert.alert('Verification failed', err instanceof Error ? err.message : 'Please try again.');
+    } finally {
+      setAuthBusy(false);
+    }
+  };
+
+  const submitVenueRating = async () => {
+    if (!selected) return;
+    if (!authToken) {
+      setRatingExpanded(true);
+      return;
+    }
+    setRatingBusy(true);
+    try {
+      const response = await fetch(`${API_URL}/api/venues/${selected.id}/ratings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify({ score: ratingScore }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Could not save rating.');
+      const refreshed = await fetch(`${API_URL}/api/venues`);
+      if (refreshed.ok) {
+        const list: Venue[] = await refreshed.json();
+        const valid = list.filter((venue) =>
+          Number.isFinite(Number(venue.lat)) && Number.isFinite(Number(venue.lng))
+        );
+        setVenues(valid);
+        const updated = valid.find((venue) => venue.id === selected.id);
+        if (updated) setSelected(updated);
+      }
+      setRatingExpanded(false);
+      Alert.alert('Rating submitted', 'Your quietness rating has been added.');
+    } catch (err) {
+      Alert.alert('Could not submit rating', err instanceof Error ? err.message : 'Please try again.');
+    } finally {
+      setRatingBusy(false);
+    }
   };
 
   const categories = ['all', 'cafe', 'restaurant', 'library', 'gym', 'coworking'];
@@ -330,9 +426,66 @@ export default function MapScreen() {
             )) : <Text style={styles.sheetMuted}>No ratings yet. Be the first to share an update.</Text>}
           <Pressable
             style={styles.detailsButton}
+            onPress={() => setRatingExpanded((value) => !value)}
+          >
+            <Text style={styles.detailsButtonText}>{ratingExpanded ? 'CLOSE RATING FORM' : '＋ RATE THIS PLACE'}</Text>
+          </Pressable>
+          {ratingExpanded ? (
+            <View style={styles.ratingForm}>
+              {!authToken ? (
+                <>
+                  <Text style={styles.formTitle}>SIGN IN TO SUBMIT</Text>
+                  <Text style={styles.formHint}>Use your SoundScout email. We'll send you a one-time code.</Text>
+                  <TextInput
+                    value={authEmail}
+                    onChangeText={setAuthEmail}
+                    placeholder="Email address"
+                    placeholderTextColor={COLORS.muted}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    style={styles.formInput}
+                  />
+                  {otpRequested ? (
+                    <TextInput
+                      value={authCode}
+                      onChangeText={setAuthCode}
+                      placeholder="6-digit verification code"
+                      placeholderTextColor={COLORS.muted}
+                      keyboardType="number-pad"
+                      style={styles.formInput}
+                    />
+                  ) : null}
+                  <Pressable style={styles.submitButton} disabled={authBusy} onPress={otpRequested ? verifyRatingOtp : requestRatingOtp}>
+                    <Text style={styles.submitButtonText}>{authBusy ? 'PLEASE WAIT…' : otpRequested ? 'VERIFY & SIGN IN' : 'SEND CODE'}</Text>
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.formTitle}>HOW QUIET IS THIS PLACE?</Text>
+                  <Text style={styles.formHint}>1 = Loud · 5 = Silent</Text>
+                  <View style={styles.scoreChoices}>
+                    {[1, 2, 3, 4, 5].map((score) => (
+                      <Pressable
+                        key={score}
+                        onPress={() => setRatingScore(score)}
+                        style={[styles.scoreChoice, ratingScore === score && styles.scoreChoiceActive]}
+                      >
+                        <Text style={[styles.scoreChoiceText, ratingScore === score && styles.scoreChoiceTextActive]}>{score}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                  <Pressable style={styles.submitButton} disabled={ratingBusy} onPress={submitVenueRating}>
+                    <Text style={styles.submitButtonText}>{ratingBusy ? 'SUBMITTING…' : 'SUBMIT RATING'}</Text>
+                  </Pressable>
+                </>
+              )}
+            </View>
+          ) : null}
+          <Pressable
+            style={styles.secondaryDetailsButton}
             onPress={() => router.push({ pathname: '/venue/[id]', params: { id: selected.id } })}
           >
-            <Text style={styles.detailsButtonText}>VIEW RATINGS & RATE THIS PLACE  →</Text>
+            <Text style={styles.secondaryDetailsText}>VIEW FULL VENUE DETAILS →</Text>
           </Pressable>
         </View>
       ) : null}
@@ -449,6 +602,19 @@ const styles = StyleSheet.create({
   ratingLineScore: { color: COLORS.text, fontSize: 10, fontWeight: '800' },
   detailsButton: { marginTop: 12, backgroundColor: COLORS.accent, borderRadius: 11, paddingVertical: 11, alignItems: 'center' },
   detailsButtonText: { color: COLORS.background, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 },
+  ratingForm: { marginTop: 10, padding: 12, borderRadius: 12, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
+  formTitle: { color: COLORS.text, fontSize: 10, fontWeight: '900', letterSpacing: 1.1 },
+  formHint: { color: COLORS.muted, fontSize: 10, marginTop: 5, marginBottom: 10 },
+  formInput: { color: COLORS.text, backgroundColor: COLORS.background, borderColor: COLORS.border, borderWidth: 1, borderRadius: 9, paddingHorizontal: 11, paddingVertical: 10, fontSize: 12, marginBottom: 8 },
+  scoreChoices: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  scoreChoice: { flex: 1, height: 38, borderRadius: 9, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.background },
+  scoreChoiceActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
+  scoreChoiceText: { color: COLORS.text, fontSize: 14, fontWeight: '900' },
+  scoreChoiceTextActive: { color: COLORS.background },
+  submitButton: { backgroundColor: COLORS.accent, borderRadius: 9, paddingVertical: 11, alignItems: 'center' },
+  submitButtonText: { color: COLORS.background, fontSize: 10, fontWeight: '900', letterSpacing: 0.6 },
+  secondaryDetailsButton: { alignItems: 'center', paddingVertical: 10, marginTop: 3 },
+  secondaryDetailsText: { color: COLORS.muted, fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
   soundDot: { width: 13, height: 13, borderRadius: 7 },
   selectedInfo: { flex: 1 },
   selectedName: { color: COLORS.text, fontSize: 14, fontWeight: '800' },
