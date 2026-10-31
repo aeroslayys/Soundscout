@@ -119,6 +119,7 @@ export default function MapScreen() {
   const [error, setError] = useState('');
   const [heatmapEnabled, setHeatmapEnabled] = useState(false);
   const [category, setCategory] = useState('all');
+  const [filtersExpanded, setFiltersExpanded] = useState(false);
 
   const fetchVenues = useCallback(async () => {
     try {
@@ -247,34 +248,43 @@ export default function MapScreen() {
       </MapView>
 
       <View style={styles.filterRail}>
-        <Text style={styles.filterTitle}>FILTER</Text>
-        {categories.map((item) => (
-          <Pressable
-            key={item}
-            onPress={() => {
-              setCategory(item);
-              setSelected(null);
-            }}
-            style={[styles.categoryChip, category === item && styles.categoryChipActive]}
-          >
-            <Text style={[styles.categoryText, category === item && styles.categoryTextActive]}>
-              {item === 'all' ? 'All' : item === 'cafe' ? 'Cafés' : item[0].toUpperCase() + item.slice(1)}
-            </Text>
-          </Pressable>
-        ))}
-        <View style={styles.railDivider} />
         <Pressable
-          style={[styles.actionButton, heatmapEnabled && styles.actionButtonActive]}
-          onPress={() => setHeatmapEnabled((value) => !value)}
+          style={styles.filterToggle}
+          onPress={() => setFiltersExpanded((value) => !value)}
+          hitSlop={8}
         >
-          <Text style={[styles.actionText, heatmapEnabled && styles.actionTextActive]}>
-            {heatmapEnabled ? 'Heatmap on' : 'Heatmap'}
-          </Text>
+          <Text style={styles.filterToggleText}>{filtersExpanded ? '×' : '☰'}</Text>
         </Pressable>
-        {selected ? (
-          <Pressable style={styles.actionButton} onPress={() => setSelected(null)}>
-            <Text style={styles.actionText}>Clear</Text>
-          </Pressable>
+        {filtersExpanded ? (
+          <View style={styles.filterButtons}>
+            {categories.map((item) => (
+              <Pressable
+                key={item}
+                onPress={() => {
+                  setCategory(item);
+                  setSelected(null);
+                }}
+                style={[styles.categoryChip, category === item && styles.categoryChipActive]}
+              >
+                <Text style={[styles.categoryText, category === item && styles.categoryTextActive]}>
+                  {item === 'all' ? 'All' : item === 'cafe' ? 'Cafés' : item[0].toUpperCase() + item.slice(1)}
+                </Text>
+              </Pressable>
+            ))}
+            <Pressable
+              style={[styles.actionButton, heatmapEnabled && styles.actionButtonActive]}
+              onPress={() => setHeatmapEnabled((value) => !value)}
+            >
+              <Text style={[styles.actionText, heatmapEnabled && styles.actionTextActive]}>
+                {heatmapEnabled ? 'Heatmap on' : 'Heatmap'}
+              </Text>
+            </Pressable>
+            {selected ? (
+              <Pressable style={styles.actionButton} onPress={() => setSelected(null)}>
+                <Text style={styles.actionText}>Clear</Text>
+              </Pressable>
+            ) : null}
+          </View>
         ) : null}
       </View>
 
@@ -349,18 +359,24 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
   filterRail: {
     position: 'absolute',
-    top: 14,
-    right: 10,
+    top: '34%',
+    right: 0,
     alignItems: 'flex-end',
-    gap: 7,
-    padding: 9,
-    borderRadius: 16,
-    backgroundColor: COLORS.background + 'D9',
-    borderColor: COLORS.border,
-    borderWidth: 1,
   },
-  filterTitle: { color: COLORS.muted, fontSize: 8, fontWeight: '900', letterSpacing: 1.5, marginBottom: 1 },
-  railDivider: { height: 1, alignSelf: 'stretch', backgroundColor: COLORS.border, marginVertical: 2 },
+  filterToggle: {
+    width: 42,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderTopLeftRadius: 13,
+    borderBottomLeftRadius: 13,
+    backgroundColor: COLORS.background + 'E8',
+    borderWidth: 1,
+    borderRightWidth: 0,
+    borderColor: COLORS.border,
+  },
+  filterToggleText: { color: COLORS.text, fontSize: 19, fontWeight: '800' },
+  filterButtons: { alignItems: 'flex-end', gap: 7, marginTop: 7 },
   categoryChip: {
     minWidth: 78,
     alignItems: 'center',
