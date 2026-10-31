@@ -2815,13 +2815,16 @@ map.on("click", function(e){
   recordBtn.type = "button";
   recordBtn.id = "record-btn";
   recordBtn.textContent = "● Start recording";
-  recordBtn.style.padding = "11px 17px";
+  recordBtn.style.padding = "13px 20px";
+  recordBtn.style.minWidth = "190px";
   recordBtn.style.fontFamily = "'Inter', sans-serif";
-  recordBtn.style.fontSize = "13.5px";
-  recordBtn.style.fontWeight = "700";
+  recordBtn.style.fontSize = "14px";
+  recordBtn.style.fontWeight = "800";
+  recordBtn.style.letterSpacing = "0.02em";
   recordBtn.style.color = "#FFFFFF";
-  recordBtn.style.background = "var(--quiet-deep)";
-  recordBtn.style.border = "1.5px solid var(--quiet-deep)";
+  recordBtn.style.background = "#4E8F73";
+  recordBtn.style.border = "1.5px solid #4E8F73";
+  recordBtn.style.boxShadow = "0 3px 10px rgba(78,143,115,0.22)";
   recordBtn.style.borderRadius = "9px";
   recordBtn.style.cursor = "pointer";
 
