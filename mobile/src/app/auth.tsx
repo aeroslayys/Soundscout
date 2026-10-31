@@ -39,7 +39,7 @@ export default function AuthScreen() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Verification failed.');
       if (!data.token) throw new Error('Authentication token was not returned.');
-      setToken(data.token);
+      await setToken(data.token, data.user);
     } catch (e) { setError(e instanceof Error ? e.message : 'Sign in failed.'); }
     finally { setBusy(false); }
   };
