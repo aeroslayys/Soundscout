@@ -364,6 +364,14 @@ export default function MapScreen() {
         </Pressable>
         {filtersExpanded ? (
           <View style={styles.filterButtons}>
+            <Pressable
+              style={[styles.actionButton, quietNearMe && styles.actionButtonActive]}
+              onPress={toggleQuietNearMe}
+            >
+              <Text style={[styles.actionText, quietNearMe && styles.actionTextActive]}>
+                {quietNearMe ? 'Quiet nearby on' : 'Quiet near me'}
+              </Text>
+            </Pressable>
             {categories.map((item) => (
               <Pressable
                 key={item}
@@ -378,14 +386,6 @@ export default function MapScreen() {
                 </Text>
               </Pressable>
             ))}
-            <Pressable
-              style={[styles.actionButton, quietNearMe && styles.actionButtonActive]}
-              onPress={toggleQuietNearMe}
-            >
-              <Text style={[styles.actionText, quietNearMe && styles.actionTextActive]}>
-                {quietNearMe ? 'Quiet nearby on' : 'Quiet near me'}
-              </Text>
-            </Pressable>
             <Pressable
               style={[styles.actionButton, heatmapEnabled && styles.actionButtonActive]}
               onPress={() => setHeatmapEnabled((value) => !value)}
