@@ -79,16 +79,30 @@ export default function VenueDetailsScreen() {
 
   const timeBuckets = useMemo(() => {
     const order = ['morning', 'afternoon', 'evening', 'night'];
+    const getPeriod = (rating: Rating) => {
+      const explicit = String(rating.time ?? '').trim().toLowerCase();
+      if (order.includes(explicit)) return explicit;
+      if (rating.timestamp != null) {
+        const date = new Date(Number(rating.timestamp));
+        if (!Number.isNaN(date.getTime())) {
+          const hour = date.getHours();
+          if (hour < 11) return 'morning';
+          if (hour <= 15) return 'afternoon';
+          if (hour <= 20) return 'evening';
+          return 'night';
+        }
+      }
+      return '';
+    };
     return order.map((period) => {
-      const entries = (venue?.ratings ?? []).filter((rating) =>
-        String(rating.time ?? '').toLowerCase() === period
-      );
-      const score = entries.length
-        ? entries.reduce((sum, rating) => sum + Number(rating.score), 0) / entries.length
+      const entries = (venue?.ratings ?? []).filter((rating) => getPeriod(rating) === period);
+      const scoreValues = entries.map((rating) => Number(rating.score)).filter(Number.isFinite);
+      const score = scoreValues.length
+        ? scoreValues.reduce((sum, value) => sum + value, 0) / scoreValues.length
         : null;
-      const dbEntries = entries.filter((rating) => rating.measured_db != null);
-      const db = dbEntries.length
-        ? dbEntries.reduce((sum, rating) => sum + Number(rating.measured_db), 0) / dbEntries.length
+      const dbValues = entries.map((rating) => rating.measured_db).filter((value): value is number => value != null && Number.isFinite(Number(value))).map(Number);
+      const db = dbValues.length
+        ? dbValues.reduce((sum, value) => sum + value, 0) / dbValues.length
         : null;
       return { period, label: period[0].toUpperCase() + period.slice(1), count: entries.length, score, db };
     });
@@ -134,27 +148,6 @@ export default function VenueDetailsScreen() {
               </Text>
             </View>
 
-            <Text style={styles.sectionTitle}>Sound by time of day</Text>
-            <View style={styles.chartCard}>
-              <Text style={styles.chartDescription}>Average community quietness rating for each time period (1 = loud, 5 = silent).</Text>
-              <View style={styles.chart}>
-                {timeBuckets.map((bucket) => (
-                  <View key={bucket.period} style={styles.chartColumn}>
-                    <Text style={styles.chartValue}>{bucket.score === null ? '—' : bucket.score.toFixed(1)}</Text>
-                    <View style={styles.barTrack}>
-                      <View style={[styles.barFill, { height: bucket.score === null ? 0 : Math.max(5, (bucket.score / 5) * 100) + '%' }]} />
-                    </View>
-                    <Text style={styles.chartLabel}>{bucket.label}</Text>
-                    <Text style={styles.chartCount}>{bucket.count} {bucket.count === 1 ? 'rating' : 'ratings'}</Text>
-                    {bucket.db !== null ? <Text style={styles.chartDb}>{bucket.db.toFixed(1)} dBFS</Text> : null}
-                  </View>
-                ))}
-              </View>
-              {!timeBuckets.some((bucket) => bucket.count > 0) ? (
-                <Text style={styles.muted}>No time-of-day data yet. Ratings will appear here as the community contributes.</Text>
-              ) : null}
-            </View>
-
             <Text style={styles.sectionTitle}>Venue facilities</Text>
 
             <View style={styles.infoCard}>
@@ -176,6 +169,27 @@ export default function VenueDetailsScreen() {
               <Text style={styles.infoValue}>
                 {venue.lat}, {venue.lng}
               </Text>
+            </View>
+
+            <Text style={styles.sectionTitle}>Sound by time of day</Text>
+            <View style={styles.chartCard}>
+              <Text style={styles.chartDescription}>Average community quietness rating for each time period (1 = loud, 5 = silent).</Text>
+              <View style={styles.chart}>
+                {timeBuckets.map((bucket) => (
+                  <View key={bucket.period} style={styles.chartColumn}>
+                    <Text style={styles.chartValue}>{bucket.score === null ? '—' : bucket.score.toFixed(1)}</Text>
+                    <View style={styles.barTrack}>
+                      <View style={[styles.barFill, { height: bucket.score === null ? 0 : Math.max(5, (bucket.score / 5) * 100) + '%' }]} />
+                    </View>
+                    <Text style={styles.chartLabel}>{bucket.label}</Text>
+                    <Text style={styles.chartCount}>{bucket.count} {bucket.count === 1 ? 'rating' : 'ratings'}</Text>
+                    {bucket.db !== null ? <Text style={styles.chartDb}>{bucket.db.toFixed(1)} dBFS</Text> : null}
+                  </View>
+                ))}
+              </View>
+              {!timeBuckets.some((bucket) => bucket.count > 0) ? (
+                <Text style={styles.muted}>No time-of-day data yet. Ratings will appear here as the community contributes.</Text>
+              ) : null}
             </View>
 
             <Text style={styles.sectionTitle}>Community ratings</Text>
