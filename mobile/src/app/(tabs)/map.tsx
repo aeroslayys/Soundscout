@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -69,8 +69,47 @@ function soundColor(score: number | null) {
   return '#' + [mix(0), mix(1), mix(2)].map((value) => value.toString(16).padStart(2, '0')).join('');
 }
 
+type VenueCluster = {
+  id: string;
+  venues: Venue[];
+  latitude: number;
+  longitude: number;
+};
+
+function distanceMeters(a: Venue, b: Venue) {
+  const latitude = (Number(a.lat) + Number(b.lat)) / 2;
+  const latitudeDistance = (Number(a.lat) - Number(b.lat)) * 111_320;
+  const longitudeDistance =
+    (Number(a.lng) - Number(b.lng)) * 111_320 * Math.cos((latitude * Math.PI) / 180);
+  return Math.hypot(latitudeDistance, longitudeDistance);
+}
+
+function clusterVenues(venues: Venue[], region: Region): VenueCluster[] {
+  // The clustering radius shrinks as the user zooms in, so individual venues
+  // become selectable naturally at street level.
+  const radius = Math.max(25, Math.min(250, region.longitudeDelta * 111_320 * 0.025));
+  const groups: Venue[][] = [];
+
+  venues.forEach((venue) => {
+    const nearbyGroup = groups.find((group) =>
+      group.some((member) => distanceMeters(venue, member) <= radius)
+    );
+    if (nearbyGroup) nearbyGroup.push(venue);
+    else groups.push([venue]);
+  });
+
+  return groups.map((group) => ({
+    id: group.map((venue) => venue.id).sort().join('-'),
+    venues: group,
+    latitude: group.reduce((sum, venue) => sum + Number(venue.lat), 0) / group.length,
+    longitude: group.reduce((sum, venue) => sum + Number(venue.lng), 0) / group.length,
+  }));
+}
+
 export default function MapScreen() {
   const router = useRouter();
+  const mapRef = useRef<MapView>(null);
+  const [region, setRegion] = useState<Region>(INITIAL_REGION);
   const [venues, setVenues] = useState<Venue[]>([]);
   const [selected, setSelected] = useState<Venue | null>(null);
   const [loading, setLoading] = useState(true);
@@ -116,12 +155,28 @@ export default function MapScreen() {
     [filteredVenues]
   );
 
+  const clusters = useMemo(
+    () => clusterVenues(filteredVenues, region),
+    [filteredVenues, region]
+  );
+
+  const zoomIntoCluster = (cluster: VenueCluster) => {
+    setSelected(null);
+    mapRef.current?.animateToRegion({
+      latitude: cluster.latitude,
+      longitude: cluster.longitude,
+      latitudeDelta: Math.max(region.latitudeDelta / 2, 0.002),
+      longitudeDelta: Math.max(region.longitudeDelta / 2, 0.002),
+    }, 350);
+  };
+
   const categories = ['all', 'cafe', 'restaurant', 'library', 'gym', 'coworking'];
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" />
       <MapView
+        ref={mapRef}
         style={StyleSheet.absoluteFill}
         initialRegion={INITIAL_REGION}
         mapType="standard"
@@ -129,6 +184,7 @@ export default function MapScreen() {
         showsScale
         toolbarEnabled={false}
         onPress={() => setSelected(null)}
+        onRegionChangeComplete={setRegion}
       >
         {heatmapEnabled && heatPoints.length > 0 && Platform.OS === 'android' ? (
           <Heatmap
@@ -155,17 +211,34 @@ export default function MapScreen() {
           );
         }) : null}
 
-        {filteredVenues.map((venue) => {
-          const score = averageRating(venue.ratings);
+        {clusters.map((cluster) => {
+          if (cluster.venues.length === 1) {
+            const venue = cluster.venues[0];
+            const score = averageRating(venue.ratings);
+            return (
+              <Marker
+                key={venue.id}
+                coordinate={{ latitude: Number(venue.lat), longitude: Number(venue.lng) }}
+                title={venue.name}
+                description={score === null ? 'Not rated yet' : `${score.toFixed(1)} / 5 · ${venue.category}`}
+                pinColor={soundColor(score)}
+                onPress={() => setSelected(venue)}
+              />
+            );
+          }
+
           return (
             <Marker
-              key={venue.id}
-              coordinate={{ latitude: Number(venue.lat), longitude: Number(venue.lng) }}
-              title={venue.name}
-              description={score === null ? 'Not rated yet' : `${score.toFixed(1)} / 5 · ${venue.category}`}
-              pinColor={soundColor(score)}
-              onPress={() => setSelected(venue)}
-            />
+              key={cluster.id}
+              coordinate={{ latitude: cluster.latitude, longitude: cluster.longitude }}
+              onPress={() => zoomIntoCluster(cluster)}
+              tracksViewChanges={false}
+              anchor={{ x: 0.5, y: 0.5 }}
+            >
+              <View style={styles.clusterMarker}>
+                <Text style={styles.clusterCount}>{cluster.venues.length}</Text>
+              </View>
+            </Marker>
           );
         })}
       </MapView>
@@ -284,6 +357,23 @@ const styles = StyleSheet.create({
   actionButtonActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
   actionText: { color: COLORS.text, fontSize: 10, fontWeight: '800' },
   actionTextActive: { color: COLORS.background },
+  clusterMarker: {
+    minWidth: 38,
+    height: 38,
+    paddingHorizontal: 9,
+    borderRadius: 20,
+    backgroundColor: COLORS.accent,
+    borderColor: '#FFFFFF',
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 5,
+  },
+  clusterCount: { color: COLORS.background, fontSize: 13, fontWeight: '900' },
   selectedCard: {
     position: 'absolute',
     bottom: 26,
