@@ -14,6 +14,7 @@ import MapView, { Circle, Heatmap, Marker, type Region } from 'react-native-maps
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/auth';
+import AudioCapture from '@/components/audio-capture';
 
 const API_URL = 'http://192.168.101.73:8082';
 
@@ -126,6 +127,8 @@ export default function MapScreen() {
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [ratingExpanded, setRatingExpanded] = useState(false);
   const [ratingScore, setRatingScore] = useState(4);
+  const [ratingMeasuredDb, setRatingMeasuredDb] = useState<number | null>(null);
+  const [ratingHasAudio, setRatingHasAudio] = useState(false);
   const [ratingBusy, setRatingBusy] = useState(false);
   const [authEmail, setAuthEmail] = useState('');
   const [newAccount, setNewAccount] = useState(false);
@@ -190,59 +193,6 @@ export default function MapScreen() {
   };
 
 
-  const requestRatingOtp = async () => {
-    if (!authEmail.trim()) {
-      Alert.alert('Email required', 'Enter your SoundScout account email.');
-      return;
-    }
-    setAuthBusy(true);
-    try {
-      const response = await fetch(`${API_URL}/api/auth/request-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: authEmail.trim() }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Could not send verification code.');
-      setNewAccount(Boolean(data.isNewUser));
-      setOtpRequested(true);
-      Alert.alert('Check your email', 'We sent a verification code to your email address.');
-    } catch (err) {
-      Alert.alert('Sign in failed', err instanceof Error ? err.message : 'Please try again.');
-    } finally {
-      setAuthBusy(false);
-    }
-  };
-
-  const verifyRatingOtp = async () => {
-    if (!authCode.trim()) {
-      Alert.alert('Code required', 'Enter the verification code sent to your email.');
-      return;
-    }
-    setAuthBusy(true);
-    try {
-      const response = await fetch(`${API_URL}/api/auth/verify-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: authEmail.trim(),
-          code: authCode.trim(),
-          ...(newAccount ? { name: signupName.trim(), age: Number(signupAge), sensitivity: Number(signupSensitivity) } : {}),
-        }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || 'Verification failed.');
-      // Authentication is managed by the app-wide auth provider.
-      setAuthCode('');
-      setOtpRequested(false);
-      Alert.alert('Signed in', 'You can now submit your venue rating.');
-    } catch (err) {
-      Alert.alert('Verification failed', err instanceof Error ? err.message : 'Please try again.');
-    } finally {
-      setAuthBusy(false);
-    }
-  };
-
   const submitVenueRating = async () => {
     if (!selected) return;
     if (!authToken) {
@@ -257,7 +207,7 @@ export default function MapScreen() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ score: ratingScore }),
+        body: JSON.stringify({ score: ratingScore, measured_db: ratingMeasuredDb, had_audio_clip: ratingHasAudio }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Could not save rating.');
@@ -436,86 +386,35 @@ export default function MapScreen() {
             )) : <Text style={styles.sheetMuted}>No ratings yet. Be the first to share an update.</Text>}
           <Pressable
             style={styles.detailsButton}
-            onPress={() => setRatingExpanded((value) => !value)}
+            onPress={() => { setRatingExpanded((value) => !value); setRatingMeasuredDb(null); setRatingHasAudio(false); setRatingScore(4); }}
           >
             <Text style={styles.detailsButtonText}>{ratingExpanded ? 'CLOSE RATING FORM' : '＋ RATE THIS PLACE'}</Text>
           </Pressable>
           {ratingExpanded ? (
             <View style={styles.ratingForm}>
-              {!authToken ? (
-                <>
-                  <Text style={styles.formTitle}>SIGN IN TO SUBMIT</Text>
-                  <Text style={styles.formHint}>Use your SoundScout email. We'll send you a one-time code.</Text>
-                  <TextInput
-                    value={authEmail}
-                    onChangeText={setAuthEmail}
-                    placeholder="Email address"
-                    placeholderTextColor={COLORS.muted}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    style={styles.formInput}
-                  />
-                  {otpRequested && newAccount ? (
-                    <>
-                      <TextInput
-                        value={signupName}
-                        onChangeText={setSignupName}
-                        placeholder="Your name"
-                        placeholderTextColor={COLORS.muted}
-                        style={styles.formInput}
-                      />
-                      <TextInput
-                        value={signupAge}
-                        onChangeText={setSignupAge}
-                        placeholder="Age"
-                        placeholderTextColor={COLORS.muted}
-                        keyboardType="number-pad"
-                        style={styles.formInput}
-                      />
-                      <TextInput
-                        value={signupSensitivity}
-                        onChangeText={setSignupSensitivity}
-                        placeholder="Sound sensitivity (1–5)"
-                        placeholderTextColor={COLORS.muted}
-                        keyboardType="number-pad"
-                        style={styles.formInput}
-                      />
-                    </>
-                  ) : null}
-                  {otpRequested ? (
-                    <TextInput
-                      value={authCode}
-                      onChangeText={setAuthCode}
-                      placeholder="6-digit verification code"
-                      placeholderTextColor={COLORS.muted}
-                      keyboardType="number-pad"
-                      style={styles.formInput}
-                    />
-                  ) : null}
-                  <Pressable style={styles.submitButton} disabled={authBusy} onPress={otpRequested ? verifyRatingOtp : requestRatingOtp}>
-                    <Text style={styles.submitButtonText}>{authBusy ? 'PLEASE WAIT…' : otpRequested ? 'VERIFY & SIGN IN' : 'SEND CODE'}</Text>
+              <Text style={styles.formTitle}>HOW QUIET IS THIS PLACE?</Text>
+              <Text style={styles.formHint}>1 = Loud · 2 = Lively · 3 = Moderate · 4 = Calm · 5 = Silent</Text>
+              <View style={styles.scoreChoices}>
+                {[1, 2, 3, 4, 5].map((score) => (
+                  <Pressable
+                    key={score}
+                    onPress={() => setRatingScore(score)}
+                    style={[styles.scoreChoice, ratingScore === score && styles.scoreChoiceActive]}
+                  >
+                    <Text style={[styles.scoreChoiceText, ratingScore === score && styles.scoreChoiceTextActive]}>{score}</Text>
                   </Pressable>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.formTitle}>HOW QUIET IS THIS PLACE?</Text>
-                  <Text style={styles.formHint}>1 = Loud · 5 = Silent</Text>
-                  <View style={styles.scoreChoices}>
-                    {[1, 2, 3, 4, 5].map((score) => (
-                      <Pressable
-                        key={score}
-                        onPress={() => setRatingScore(score)}
-                        style={[styles.scoreChoice, ratingScore === score && styles.scoreChoiceActive]}
-                      >
-                        <Text style={[styles.scoreChoiceText, ratingScore === score && styles.scoreChoiceTextActive]}>{score}</Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                  <Pressable style={styles.submitButton} disabled={ratingBusy} onPress={submitVenueRating}>
-                    <Text style={styles.submitButtonText}>{ratingBusy ? 'SUBMITTING…' : 'SUBMIT RATING'}</Text>
-                  </Pressable>
-                </>
-              )}
+                ))}
+              </View>
+              <Text style={styles.formHint}>Optional: record 5–10 seconds of ambient sound. The backend analyzes average loudness; the recording itself is not saved.</Text>
+              <AudioCapture onAnalyzed={(db, suggested) => {
+                setRatingMeasuredDb(db);
+                setRatingHasAudio(true);
+                setRatingScore(suggested);
+              }} />
+              {ratingMeasuredDb !== null ? <Text style={styles.formHint}>Measured {ratingMeasuredDb.toFixed(1)} dBFS · audio analysis complete</Text> : null}
+              <Pressable style={styles.submitButton} disabled={ratingBusy} onPress={submitVenueRating}>
+                <Text style={styles.submitButtonText}>{ratingBusy ? 'SUBMITTING…' : 'SUBMIT RATING'}</Text>
+              </Pressable>}
             </View>
           ) : null}
           <Pressable
