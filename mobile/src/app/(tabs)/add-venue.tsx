@@ -68,7 +68,7 @@ export default function AddVenueScreen() {
   };
 
   return <SafeAreaView style={s.safe}>
-    <StatusBar barStyle={resolved === "dark" ? "light-content" : "dark-content"} backgroundColor={C.bg} />
+    <StatusBar barStyle={resolved === "dark" ? "light-content" : "dark-content"} />
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={s.content}>
       <Text style={s.eyebrow}>CONTRIBUTE TO SOUNDSCOUT</Text>
       <Text style={s.title}>Add a venue</Text>
