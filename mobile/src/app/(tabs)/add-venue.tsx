@@ -94,7 +94,7 @@ export default function AddVenueScreen() {
 
       <Text style={s.label}>FACILITIES</Text>
       <View style={s.toggleRow}><View style={s.toggleCopy}><Text style={s.toggleTitle}>Wheelchair / step-free access</Text><Text style={s.hint}>Venue has accessible entry</Text></View><Switch value={access} onValueChange={setAccess} trackColor={{true:C.accent,false:C.border}} /></View>
-      <View style={s.toggleRow}><View style={s.toggleCopy}><Text style={s.toggleTitle}>Restroom available</Text><Text style={s.hint}>Venue has a restroom</Text></View><Switch value={toilet} onValueChange={setToilet} trackColor={{true:C.accent,false:C.border}} /></View>
+      <View style={s.toggleRow}><View style={s.toggleCopy}><Text style={s.toggleTitle}>Gender-neutral washroom</Text><Text style={s.hint}>Venue has a gender-neutral washroom</Text></View><Switch value={toilet} onValueChange={setToilet} trackColor={{true:C.accent,false:C.border}} /></View>
 
       <Text style={s.label}>INITIAL QUIETNESS RATING</Text>
       <Text style={s.hint}>1 = Loud · 2 = Lively · 3 = Moderate · 4 = Calm · 5 = Silent</Text>
