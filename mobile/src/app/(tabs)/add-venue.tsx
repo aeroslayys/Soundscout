@@ -28,8 +28,6 @@ export default function AddVenueScreen() {
   const [audioBusy,setAudioBusy] = useState(false);
   const [submitting,setSubmitting] = useState(false);
   const [status,setStatus] = useState('');
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  const recorderState = useAudioRecorderState(recorder);
 
   const searchLocation = async () => {
     if (query.trim().length < 3) return;
