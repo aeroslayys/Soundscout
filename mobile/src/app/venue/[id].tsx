@@ -91,9 +91,12 @@ export default function VenueDetailsScreen() {
 
       <ScrollView contentContainerStyle={styles.container}>
         <Pressable
-        onPress={() => router.replace('/')}
-        style={styles.backButton}
-        ></Pressable>
+          onPress={() => router.replace('/')}
+          style={styles.backButton}
+          hitSlop={8}
+        >
+          <Text style={styles.backText}>‹  BACK TO MAP</Text>
+        </Pressable>
 
         {loading ? (
           <View style={styles.message}>
@@ -188,13 +191,15 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   container: {
-    padding: 22,
-    paddingBottom: 60,
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 40,
   },
   backButton: {
     alignSelf: 'flex-start',
-    paddingVertical: 12,
-    marginBottom: 30,
+    paddingVertical: 10,
+    paddingHorizontal: 2,
+    marginBottom: 22,
   },
   backText: {
     color: COLORS.accent,
