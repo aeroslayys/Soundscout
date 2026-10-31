@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
+  PermissionsAndroid,
   Pressable,
   StatusBar,
   ScrollView,
@@ -126,6 +127,8 @@ export default function MapScreen() {
   const [error, setError] = useState('');
   const [heatmapEnabled, setHeatmapEnabled] = useState(false);
   const [category, setCategory] = useState('all');
+  const [quietNearMe, setQuietNearMe] = useState(false);
+  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [ratingExpanded, setRatingExpanded] = useState(false);
   const [ratingScore, setRatingScore] = useState(4);
@@ -166,8 +169,46 @@ export default function MapScreen() {
     [category, venues]
   );
 
+  const visibleVenues = useMemo(() => {
+    if (!quietNearMe || !userLocation) return filteredVenues;
+    const distance = (venue: Venue) => {
+      const lat1 = userLocation.latitude * Math.PI / 180;
+      const lat2 = Number(venue.lat) * Math.PI / 180;
+      const dLat = (Number(venue.lat) - userLocation.latitude) * Math.PI / 180;
+      const dLng = (Number(venue.lng) - userLocation.longitude) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+      return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    };
+    return filteredVenues
+      .filter((venue) => {
+        const score = averageRating(venue.ratings);
+        return score !== null && score >= 4 && distance(venue) <= 3000;
+      })
+      .sort((a, b) => (averageRating(b.ratings) ?? 0) - (averageRating(a.ratings) ?? 0));
+  }, [filteredVenues, quietNearMe, userLocation]);
+
+  const toggleQuietNearMe = async () => {
+    if (quietNearMe) {
+      setQuietNearMe(false);
+      return;
+    }
+    if (Platform.OS === 'android') {
+      const permission = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION, {
+        title: 'Allow SoundScout to use your location',
+        message: 'Your location is used to find quiet venues within 3 km. It is not stored.',
+        buttonPositive: 'Allow',
+        buttonNegative: 'Not now',
+      });
+      if (permission !== PermissionsAndroid.RESULTS.GRANTED) {
+        Alert.alert('Location permission needed', 'Allow location access to find quiet venues near you.');
+        return;
+      }
+    }
+    setQuietNearMe(true);
+  };
+
   const heatPoints = useMemo(
-    () => filteredVenues.flatMap((venue) => {
+    () => visibleVenues.flatMap((venue) => {
       const score = averageRating(venue.ratings);
       if (score === null) return [];
       return [{
@@ -176,12 +217,12 @@ export default function MapScreen() {
         weight: Math.max(0.2, Math.min(1, (6 - score) / 5)),
       }];
     }),
-    [filteredVenues]
+    [visibleVenues]
   );
 
   const clusters = useMemo(
-    () => clusterVenues(filteredVenues, region),
-    [filteredVenues, region]
+    () => clusterVenues(visibleVenues, region),
+    [visibleVenues, region]
   );
 
   const zoomIntoCluster = (cluster: VenueCluster) => {
@@ -248,6 +289,11 @@ export default function MapScreen() {
         style={StyleSheet.absoluteFill}
         initialRegion={INITIAL_REGION}
         mapType="standard"
+        showsUserLocation={quietNearMe}
+        onUserLocationChange={(event) => {
+          const coordinate = event.nativeEvent.coordinate;
+          if (coordinate) setUserLocation({ latitude: coordinate.latitude, longitude: coordinate.longitude });
+        }}
         showsCompass
         showsScale
         toolbarEnabled={false}
@@ -332,6 +378,14 @@ export default function MapScreen() {
                 </Text>
               </Pressable>
             ))}
+            <Pressable
+              style={[styles.actionButton, quietNearMe && styles.actionButtonActive]}
+              onPress={toggleQuietNearMe}
+            >
+              <Text style={[styles.actionText, quietNearMe && styles.actionTextActive]}>
+                {quietNearMe ? 'Quiet nearby on' : 'Quiet near me'}
+              </Text>
+            </Pressable>
             <Pressable
               style={[styles.actionButton, heatmapEnabled && styles.actionButtonActive]}
               onPress={() => setHeatmapEnabled((value) => !value)}
@@ -446,7 +500,7 @@ export default function MapScreen() {
         </Pressable>
       ) : !selected ? (
         <View style={styles.countPill}>
-          <Text style={styles.countText}>{filteredVenues.length} PLACES ON MAP</Text>
+          <Text style={styles.countText}>{quietNearMe ? visibleVenues.length + ' QUIET PLACES WITHIN 3 KM' : filteredVenues.length + ' PLACES ON MAP'}</Text>
         </View>
       ) : null}
     </SafeAreaView>
