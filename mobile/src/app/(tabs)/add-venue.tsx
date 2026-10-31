@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StatusBar, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAudioRecorder, useAudioRecorderState, RecordingPresets, setAudioModeAsync } from 'expo-audio';
+import AudioCapture from '@/components/audio-capture';
 import { useAuth } from '@/context/auth';
 
 const API_URL = 'http://192.168.101.73:8082';
@@ -42,37 +42,6 @@ export default function AddVenueScreen() {
       if (!data.length) setStatus('No matching places found.');
     } catch (e) { setStatus(e instanceof Error ? e.message : 'Location search failed.'); }
     finally { setSearching(false); }
-  };
-
-  const analyzeRecording = async (uri: string) => {
-    setAudioBusy(true); setStatus('Analyzing your 5–10 second recording…');
-    try {
-      const form = new FormData();
-      form.append('clip', { uri, name:'soundscout-clip.m4a', type:'audio/mp4' } as any);
-      const res = await fetch(`${API_URL}/api/audio/analyze`, { method:'POST', body:form });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Could not analyze this recording.');
-      setMeasuredDb(Number(data.mean_volume_dbfs));
-      setSuggestedScore(Number(data.suggested_score));
-      setScore(Number(data.suggested_score));
-      setStatus(`Measured ${Number(data.mean_volume_dbfs).toFixed(1)} dBFS · suggested ${data.suggested_score}/5 (${['','Loud','Lively','Moderate','Calm','Silent'][data.suggested_score]}). The audio itself is not stored.`);
-    } catch (e) { setStatus(e instanceof Error ? e.message : 'Audio analysis failed. You can still rate manually.'); }
-    finally { setAudioBusy(false); }
-  };
-
-  const toggleRecording = async () => {
-    try {
-      if (recorderState.isRecording) {
-        await recorder.stop();
-        const uri = recorder.uri;
-        if (uri) await analyzeRecording(uri);
-        return;
-      }
-      await setAudioModeAsync({ allowsRecording:true, playsInSilentMode:true });
-      await recorder.prepareToRecordAsync();
-      recorder.record();
-      setStatus('Recording… stop between 5 and 10 seconds.');
-    } catch (e) { Alert.alert('Microphone unavailable', e instanceof Error ? e.message : 'Could not start recording.'); }
   };
 
   const submit = async () => {
@@ -135,9 +104,7 @@ export default function AddVenueScreen() {
 
       <Text style={s.label}>RECORD AMBIENT SOUND (5–10 SECONDS)</Text>
       <Text style={s.hint}>The website analyzes average loudness (dBFS) and suggests a quietness score. The recording is analyzed temporarily; only the measured level is saved.</Text>
-      <Pressable style={[s.recordButton,recorderState.isRecording&&s.recording]} onPress={toggleRecording} disabled={audioBusy}>
-        <Text style={s.recordText}>{audioBusy?'ANALYZING…':recorderState.isRecording?'■ STOP RECORDING':'● RECORD SOUND'}</Text>
-      </Pressable>
+      <AudioCapture onAnalyzed={(db,nextScore)=>{setMeasuredDb(db);setSuggestedScore(nextScore);setScore(nextScore);setStatus('Audio analyzed. You can adjust the suggested rating before submitting.');}} />
       {measuredDb!==null?<Text style={s.measurement}>✓ {measuredDb.toFixed(1)} dBFS · suggested {suggestedScore}/5 · manual rating {score}/5</Text>:null}
       {status?<Text style={s.status}>{status}</Text>:null}
 
