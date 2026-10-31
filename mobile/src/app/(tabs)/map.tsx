@@ -3,13 +3,13 @@ import {
   ActivityIndicator,
   Platform,
   Pressable,
-  SafeAreaView,
   StatusBar,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
 import MapView, { Circle, Heatmap, Marker, type Region } from 'react-native-maps';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 const API_URL = 'http://192.168.101.73:8082';
@@ -66,7 +66,7 @@ function soundColor(score: number | null) {
   const loud = [0xbd, 0x5b, 0x45];
   const mix = (index: number) =>
     Math.round(quiet[index] + (loud[index] - quiet[index]) * (1 - t));
-  return `rgb(${mix(0)}, ${mix(1)}, ${mix(2)})`;
+  return '#' + [mix(0), mix(1), mix(2)].map((value) => value.toString(16).padStart(2, '0')).join('');
 }
 
 export default function MapScreen() {
