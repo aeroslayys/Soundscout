@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { palettes, useAppTheme } from '@/context/theme';
 
 const API_URL = 'http://192.168.101.73:8082';
 
@@ -19,6 +20,7 @@ type Rating = {
   score: number;
   time?: string;
   measured_db?: number | null;
+  timestamp?: number;
 };
 
 type Venue = {
@@ -32,19 +34,10 @@ type Venue = {
   ratings?: Rating[];
 };
 
-const COLORS = {
-  background: '#101114',
-  surface: '#1B1D22',
-  surfaceLight: '#252830',
-  text: '#F4F4F5',
-  muted: '#92959F',
-  accent: '#B8F36B',
-  border: '#30323A',
-  danger: '#FF7474',
-};
-
 export default function VenueDetailsScreen() {
   const router = useRouter();
+  const { colors: COLORS, resolved } = useAppTheme();
+  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const { id } = useLocalSearchParams<{ id: string }>();
 
   const [venue, setVenue] = useState<Venue | null>(null);
@@ -81,13 +74,29 @@ export default function VenueDetailsScreen() {
   }, [id]);
 
   const average = venue?.ratings?.length
-    ? venue.ratings.reduce((sum, rating) => sum + rating.score, 0) /
-      venue.ratings.length
+    ? venue.ratings.reduce((sum, rating) => sum + Number(rating.score), 0) / venue.ratings.length
     : null;
+
+  const timeBuckets = useMemo(() => {
+    const order = ['morning', 'afternoon', 'evening', 'night'];
+    return order.map((period) => {
+      const entries = (venue?.ratings ?? []).filter((rating) =>
+        String(rating.time ?? '').toLowerCase() === period
+      );
+      const score = entries.length
+        ? entries.reduce((sum, rating) => sum + Number(rating.score), 0) / entries.length
+        : null;
+      const dbEntries = entries.filter((rating) => rating.measured_db != null);
+      const db = dbEntries.length
+        ? dbEntries.reduce((sum, rating) => sum + Number(rating.measured_db), 0) / dbEntries.length
+        : null;
+      return { period, label: period[0].toUpperCase() + period.slice(1), count: entries.length, score, db };
+    });
+  }, [venue]);
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={resolved === "dark" ? "light-content" : "dark-content"} />
 
       <ScrollView contentContainerStyle={styles.container}>
         <Pressable
@@ -123,6 +132,27 @@ export default function VenueDetailsScreen() {
               <Text style={styles.muted}>
                 {venue.ratings?.length ?? 0} community ratings
               </Text>
+            </View>
+
+            <Text style={styles.sectionTitle}>Sound by time of day</Text>
+            <View style={styles.chartCard}>
+              <Text style={styles.chartDescription}>Average community quietness rating for each time period (1 = loud, 5 = silent).</Text>
+              <View style={styles.chart}>
+                {timeBuckets.map((bucket) => (
+                  <View key={bucket.period} style={styles.chartColumn}>
+                    <Text style={styles.chartValue}>{bucket.score === null ? '—' : bucket.score.toFixed(1)}</Text>
+                    <View style={styles.barTrack}>
+                      <View style={[styles.barFill, { height: bucket.score === null ? 0 : Math.max(5, (bucket.score / 5) * 100) + '%' }]} />
+                    </View>
+                    <Text style={styles.chartLabel}>{bucket.label}</Text>
+                    <Text style={styles.chartCount}>{bucket.count} {bucket.count === 1 ? 'rating' : 'ratings'}</Text>
+                    {bucket.db !== null ? <Text style={styles.chartDb}>{bucket.db.toFixed(1)} dBFS</Text> : null}
+                  </View>
+                ))}
+              </View>
+              {!timeBuckets.some((bucket) => bucket.count > 0) ? (
+                <Text style={styles.muted}>No time-of-day data yet. Ratings will appear here as the community contributes.</Text>
+              ) : null}
             </View>
 
             <Text style={styles.sectionTitle}>Venue facilities</Text>
@@ -185,7 +215,7 @@ export default function VenueDetailsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (COLORS: typeof palettes.dark) => StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: COLORS.background,
@@ -240,6 +270,16 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginBottom: 7,
   },
+  chartCard: { backgroundColor: COLORS.surface, borderColor: COLORS.border, borderWidth: 1, borderRadius: 14, padding: 16, marginBottom: 22 },
+  chartDescription: { color: COLORS.muted, fontSize: 11, lineHeight: 17, marginBottom: 18 },
+  chart: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', minHeight: 164, gap: 8 },
+  chartColumn: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
+  chartValue: { color: COLORS.text, fontSize: 12, fontWeight: '800', marginBottom: 7 },
+  barTrack: { width: '72%', height: 100, justifyContent: 'flex-end', backgroundColor: COLORS.surfaceLight, borderRadius: 7, overflow: 'hidden' },
+  barFill: { width: '100%', backgroundColor: COLORS.accent, borderRadius: 7 },
+  chartLabel: { color: COLORS.text, fontSize: 9, fontWeight: '700', marginTop: 8 },
+  chartCount: { color: COLORS.muted, fontSize: 8, marginTop: 3, textAlign: 'center' },
+  chartDb: { color: COLORS.muted, fontSize: 8, marginTop: 3 },
   sectionTitle: {
     color: COLORS.text,
     fontSize: 21,
