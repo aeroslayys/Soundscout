@@ -1,41 +1,64 @@
-# --- Dependencies ---
+
+# Dependencies
 /Backend/node_modules/
+/mobile/node_modules/
 
-# --- Environment variables (never commit real secrets) ---
+# Environment variables and secrets
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.sample
 
-# --- Logs ---
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 *.log
 
-# --- OS files ---
+# OS files
 .DS_Store
 Thumbs.db
+Desktop.ini
 
-# --- Editor / IDE ---
+# Editors / IDEs
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# --- Build output (if you add a bundler later) ---
+# Build output
 dist/
 build/
-
-# --- Coverage / test output ---
 coverage/
 
-# --- Runtime data ---
+# Runtime data
 *.pid
 *.seed
 
-# --- Optional: local SQLite/Postgres dumps if you ever export one ---
+# Database backups
 *.sql.bak
 *.dump
-# --- React Native / Expo ---
-/mobile/node_modules/
+
+# Expo
 /mobile/.expo/
+/mobile/web-build/
+/mobile/expo-env.d.ts
+
+# Android generated files
+/mobile/android/.gradle/
+/mobile/android/local.properties
+/mobile/android/**/build/
+/mobile/android/.cxx/
+/mobile/android/.externalNativeBuild/
+
+# iOS generated project
+/mobile/ios/
+
+# Signing credentials
+*.jks
+*.keystore
+*.p8
+*.p12
+*.mobileprovision
+*.key
+*.pem
