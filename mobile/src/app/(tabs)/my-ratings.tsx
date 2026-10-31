@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@/context/auth';
 
 const API_URL = 'http://192.168.101.73:8082';
 const C = {
@@ -77,7 +78,7 @@ export default function MyRatingsScreen() {
   const [sensitivity, setSensitivity] = useState('3');
   const [isNewUser, setIsNewUser] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
-  const [token, setToken] = useState('');
+  const { token, signOut: clearAuth } = useAuth();
   const [busy, setBusy] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
   const [error, setError] = useState('');
@@ -162,7 +163,6 @@ export default function MyRatingsScreen() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Verification failed.');
       if (!data.token) throw new Error('The server did not return a sign-in token.');
-      setToken(data.token);
       await loadAccountData(data.token);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not sign in.');
@@ -172,7 +172,7 @@ export default function MyRatingsScreen() {
   };
 
   const signOut = () => {
-    setToken('');
+    clearAuth();
     setRatings([]);
     setVenues([]);
     setCode('');
