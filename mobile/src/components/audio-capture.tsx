@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { RecordingPresets, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
+import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 
 const API_URL = 'http://192.168.101.73:8082';
 const C = { surface:'#252830', text:'#F4F4F5', muted:'#92959F', accent:'#B8F36B', border:'#30323A', danger:'#FF7474' };
@@ -41,6 +41,15 @@ export default function AudioCapture({ onAnalyzed }: { onAnalyzed: (db:number, s
   const toggle = async () => {
     try {
       if (state.isRecording) { await finish(); return; }
+      const permission = await requestRecordingPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert(
+          'Microphone permission required',
+          'Allow microphone access for Expo Go in Android Settings, then try recording again.'
+        );
+        setMessage('Microphone access is required to analyze ambient sound.');
+        return;
+      }
       await setAudioModeAsync({ allowsRecording:true, playsInSilentMode:true });
       await recorder.prepareToRecordAsync();
       setStartedAt(Date.now());
