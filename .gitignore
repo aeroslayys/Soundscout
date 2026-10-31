@@ -36,3 +36,6 @@ coverage/
 # --- Optional: local SQLite/Postgres dumps if you ever export one ---
 *.sql.bak
 *.dump
+# --- React Native / Expo ---
+/mobile/node_modules/
+/mobile/.expo/
