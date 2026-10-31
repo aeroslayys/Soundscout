@@ -246,45 +246,36 @@ export default function MapScreen() {
         })}
       </MapView>
 
-      <View style={styles.topOverlay}>
-        <View style={styles.headingCard}>
-          <Text style={styles.brand}>SOUNDSCOUT MAP</Text>
-          <Text style={styles.subtitle}>Explore the sound of your city</Text>
-        </View>
-
-        <View style={styles.categoryRow}>
-          {categories.map((item) => (
-            <Pressable
-              key={item}
-              onPress={() => {
-                setCategory(item);
-                setSelected(null);
-              }}
-              style={[styles.categoryChip, category === item && styles.categoryChipActive]}
-            >
-              <Text style={[styles.categoryText, category === item && styles.categoryTextActive]}>
-                {item === 'all' ? 'All' : item === 'cafe' ? 'Cafés' : item[0].toUpperCase() + item.slice(1)}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.mapActions}>
+      <View style={styles.filterRail}>
+        <Text style={styles.filterTitle}>FILTER</Text>
+        {categories.map((item) => (
+          <Pressable
+            key={item}
+            onPress={() => {
+              setCategory(item);
+              setSelected(null);
+            }}
+            style={[styles.categoryChip, category === item && styles.categoryChipActive]}
+          >
+            <Text style={[styles.categoryText, category === item && styles.categoryTextActive]}>
+              {item === 'all' ? 'All' : item === 'cafe' ? 'Cafés' : item[0].toUpperCase() + item.slice(1)}
+            </Text>
+          </Pressable>
+        ))}
+        <View style={styles.railDivider} />
         <Pressable
           style={[styles.actionButton, heatmapEnabled && styles.actionButtonActive]}
           onPress={() => setHeatmapEnabled((value) => !value)}
         >
           <Text style={[styles.actionText, heatmapEnabled && styles.actionTextActive]}>
-            {heatmapEnabled ? '●  Heatmap on' : '◉  Show heatmap'}
+            {heatmapEnabled ? 'Heatmap on' : 'Heatmap'}
           </Text>
         </Pressable>
-        <Pressable
-          style={styles.actionButton}
-          onPress={() => setSelected(null)}
-        >
-          <Text style={styles.actionText}>Clear selection</Text>
-        </Pressable>
+        {selected ? (
+          <Pressable style={styles.actionButton} onPress={() => setSelected(null)}>
+            <Text style={styles.actionText}>Clear</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       {selected ? (
@@ -356,37 +347,42 @@ export default function MapScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
-  topOverlay: { position: 'absolute', top: 8, left: 14, right: 14, gap: 10 },
-  headingCard: {
-    backgroundColor: COLORS.background + 'EE',
+  filterRail: {
+    position: 'absolute',
+    top: 14,
+    right: 10,
+    alignItems: 'flex-end',
+    gap: 7,
+    padding: 9,
+    borderRadius: 16,
+    backgroundColor: COLORS.background + 'D9',
     borderColor: COLORS.border,
     borderWidth: 1,
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
   },
-  brand: { color: COLORS.accent, fontSize: 13, fontWeight: '900', letterSpacing: 2.2 },
-  subtitle: { color: COLORS.muted, fontSize: 11, marginTop: 4 },
-  categoryRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  filterTitle: { color: COLORS.muted, fontSize: 8, fontWeight: '900', letterSpacing: 1.5, marginBottom: 1 },
+  railDivider: { height: 1, alignSelf: 'stretch', backgroundColor: COLORS.border, marginVertical: 2 },
   categoryChip: {
+    minWidth: 78,
+    alignItems: 'center',
     backgroundColor: COLORS.background + 'E8',
     borderWidth: 1,
     borderColor: COLORS.border,
-    borderRadius: 18,
-    paddingHorizontal: 11,
+    borderRadius: 12,
+    paddingHorizontal: 9,
     paddingVertical: 8,
   },
   categoryChipActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
   categoryText: { color: COLORS.text, fontSize: 10, fontWeight: '700' },
   categoryTextActive: { color: COLORS.background },
-  mapActions: { position: 'absolute', top: 142, right: 14, gap: 8, alignItems: 'flex-end' },
   actionButton: {
     backgroundColor: COLORS.background + 'ED',
     borderColor: COLORS.border,
     borderWidth: 1,
     borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    minWidth: 78,
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 9,
   },
   actionButtonActive: { backgroundColor: COLORS.accent, borderColor: COLORS.accent },
   actionText: { color: COLORS.text, fontSize: 10, fontWeight: '800' },
