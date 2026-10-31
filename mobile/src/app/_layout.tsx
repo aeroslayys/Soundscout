@@ -8,18 +8,18 @@ import { AuthProvider, useAuth } from '@/context/auth';
 SplashScreen.preventAutoHideAsync();
 
 function AppNavigation() {
-  const { token } = useAuth();
+  const { token, ready } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
-    const inAuthScreen = segments[0] === 'auth';
+    if (!ready) return;\n    const inAuthScreen = segments[0] === 'auth';
     if (!token && !inAuthScreen) {
       router.replace('/auth' as never);
     } else if (token && inAuthScreen) {
       router.replace('/(tabs)' as never);
     }
-  }, [token, segments, router]);
+  }, [token, ready, segments, router]);
 
   return (
     <>
