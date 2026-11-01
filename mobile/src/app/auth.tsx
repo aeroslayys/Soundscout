@@ -3,7 +3,7 @@ import { ActivityIndicator, Alert, Pressable, StatusBar, StyleSheet, Text, TextI
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/auth';
 
-const API_URL = 'http://192.168.101.73:8082';
+import { API_URL } from '@/constants/api';
 const C = { bg: '#101114', surface: '#1B1D22', text: '#F4F4F5', muted: '#92959F', accent: '#B8F36B', border: '#30323A' };
 
 export default function AuthScreen() {
