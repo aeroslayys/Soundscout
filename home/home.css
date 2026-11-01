@@ -1261,3 +1261,7 @@ button,
 :root[data-theme="dark"] #account-btn{background:var(--surface-soft);color:var(--quiet);border-color:var(--border);}
 :root[data-theme="dark"] ::selection{background:rgba(184,243,107,.28);color:var(--ink);}
 :root[data-theme="dark"] .ss-placement-pin::before{background:var(--quiet);}
+
+:root[data-theme="dark"] .brand h1,
+:root[data-theme="dark"] .popup-body h3,
+:root[data-theme="dark"] .modal h2{font-family:'Inter',sans-serif;font-weight:800;letter-spacing:-.035em;}
