@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import * as SecureStore from 'expo-secure-store';
 import {
   ActivityIndicator,
   Alert,
@@ -88,6 +89,32 @@ export default function MyRatingsScreen() {
   const [ratings, setRatings] = useState<RatingItem[]>([]);
   const [venues, setVenues] = useState<VenueItem[]>([]);
   const [activeSection, setActiveSection] = useState<'ratings' | 'venues'>('ratings');
+  const [otpDraftReady, setOtpDraftReady] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    SecureStore.getItemAsync(MY_RATINGS_OTP_DRAFT_KEY)
+      .then((raw) => {
+        if (!active || !raw) return;
+        const draft = JSON.parse(raw);
+        setEmail(draft.email ?? '');
+        setCode(draft.code ?? '');
+        setName(draft.name ?? '');
+        setAge(draft.age ?? '');
+        setSensitivity(draft.sensitivity ?? '3');
+        setIsNewUser(Boolean(draft.isNewUser));
+        setOtpSent(Boolean(draft.otpSent));
+      })
+      .catch((err) => console.warn('Could not restore My Ratings OTP form:', err))
+      .finally(() => { if (active) setOtpDraftReady(true); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!otpDraftReady) return;
+    SecureStore.setItemAsync(MY_RATINGS_OTP_DRAFT_KEY, JSON.stringify({ email, code, name, age, sensitivity, isNewUser, otpSent }))
+      .catch((err) => console.warn('Could not save My Ratings OTP form:', err));
+  }, [otpDraftReady, email, code, name, age, sensitivity, isNewUser, otpSent]);
 
   const loadAccountData = useCallback(async (authToken: string) => {
     setLoadingData(true);
@@ -166,6 +193,7 @@ export default function MyRatingsScreen() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Verification failed.');
       if (!data.token) throw new Error('The server did not return a sign-in token.');
+      await SecureStore.deleteItemAsync(MY_RATINGS_OTP_DRAFT_KEY);
       await setToken(data.token, data.user);
       await loadAccountData(data.token);
     } catch (err) {
@@ -181,6 +209,7 @@ export default function MyRatingsScreen() {
     setVenues([]);
     setCode('');
     setOtpSent(false);
+    void SecureStore.deleteItemAsync(MY_RATINGS_OTP_DRAFT_KEY);
     setError('');
   };
 
