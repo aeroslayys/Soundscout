@@ -2,6 +2,10 @@
 
 **Find places that sound right for you.**
 
+🌐 **[Open SoundScout on the web](https://jellyfin-server.tail0a3780.ts.net)** — use SoundScout directly in your browser; no app installation needed.
+
+📱 **[Get the Android beta APK](https://github.com/aeroslayys/Soundscout/releases)** — install the mobile app.
+
 SoundScout is a community-powered platform for discovering places based on their sound environment—not just their photos, menus, or star ratings.
 
 A café can look perfect online and still be too loud to work in. A restaurant can have great reviews but be overwhelming for a quiet conversation. SoundScout helps people get a better idea of what a place may actually feel like before they visit.
