@@ -289,3 +289,35 @@ body{
   background: #EAF3F3;
   color: #2B6E6E;
 }
+
+/* SoundScout mobile visual system */
+:root{
+  color-scheme:dark;
+  --bg:#101114;
+  --ink:#F4F4F5;
+  --ink-soft:#D5D7DC;
+  --muted:#92959F;
+  --dark-green:#B8F36B;
+  --quiet:#B8F36B;
+  --loud:#FF7474;
+  --card:#1B1D22;
+  --border:#30323A;
+  --ring:rgba(184,243,107,.16);
+}
+body{background:var(--bg);color:var(--ink);}
+.topbar{background:#1B1D22;border-color:var(--border);}
+.brand-link{color:var(--ink);}
+.brand-mark{background:var(--dark-green);box-shadow:0 0 18px rgba(184,243,107,.18);}
+.brand-name,.profile-name,.section-header h2{font-family:'Inter',sans-serif;font-weight:800;letter-spacing:-.035em;}
+.back-link{color:var(--dark-green);}
+.profile-card,.stat-box,.rating-card,.empty-state,.added-venue-card{background:var(--card);border-color:var(--border);color:var(--ink);box-shadow:0 8px 24px rgba(0,0,0,.12);}
+.avatar{background:var(--ring);color:var(--dark-green);}
+.profile-email,.rating-meta,.section-header p,.stat-label{color:var(--muted);}
+.meta-pill,.rating-tag,.added-venue-tag{background:#252830;color:var(--ink-soft);}
+.logout-btn{border-color:var(--border);color:var(--ink-soft);background:#252830;}
+.logout-btn:hover{border-color:var(--loud);color:var(--loud);}
+.stat-value,.empty-state a{color:var(--dark-green);}
+.rating-score-badge{color:#101114;}
+.added-venue-card{border-radius:16px;}
+.added-venue-name{color:var(--ink);}
+.added-venue-meta{color:var(--muted);}
