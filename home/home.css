@@ -1191,3 +1191,73 @@ button,
     z-index:5;
   }
 }
+
+
+/* =========================================================
+   SOUNDSCOUT MOBILE VISUAL SYSTEM — dark / electric lime
+   ========================================================= */
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#101114;
+  --surface:#1B1D22;
+  --surface-soft:#252830;
+  --ink:#F4F4F5;
+  --ink-soft:#D5D7DC;
+  --muted:#92959F;
+  --border:#30323A;
+  --border-strong:#41444E;
+  --quiet:#B8F36B;
+  --quiet-deep:#B8F36B;
+  --loud:#FF7474;
+  --loud-deep:#FF8B8B;
+  --focus:#B8F36B;
+  --action:#B8F36B;
+  --action-hover:#C8FA83;
+  --on-action:#101114;
+}
+:root[data-theme="dark"] body{background:var(--bg);color:var(--ink);}
+:root[data-theme="dark"] #sidebar,
+:root[data-theme="dark"] .modal,
+:root[data-theme="dark"] .leaflet-popup-content-wrapper{background:var(--surface);color:var(--ink);}
+:root[data-theme="dark"] .sidebar-header,
+:root[data-theme="dark"] .filters,
+:root[data-theme="dark"] .footnote{border-color:var(--border);}
+:root[data-theme="dark"] .brand h1,
+:root[data-theme="dark"] .venue-name,
+:root[data-theme="dark"] .modal h2,
+:root[data-theme="dark"] .popup-body h3{color:var(--ink);}
+:root[data-theme="dark"] .tagline,
+:root[data-theme="dark"] .list-meta,
+:root[data-theme="dark"] .venue-cat,
+:root[data-theme="dark"] .footnote,
+:root[data-theme="dark"] .modal .sub{color:var(--muted);}
+:root[data-theme="dark"] .brand .dot{background:var(--quiet);}
+:root[data-theme="dark"] .add-btn,
+:root[data-theme="dark"] .btn-primary{background:var(--action);color:var(--on-action);border-color:var(--action);font-weight:800;}
+:root[data-theme="dark"] .add-btn:hover,
+:root[data-theme="dark"] .btn-primary:hover{background:var(--action-hover);}
+:root[data-theme="dark"] .search-box input,
+:root[data-theme="dark"] .field input[type="text"],
+:root[data-theme="dark"] .field select{background:var(--surface-soft);color:var(--ink);border-color:var(--border);}
+:root[data-theme="dark"] .search-box input::placeholder{color:var(--muted);}
+:root[data-theme="dark"] .chip{background:var(--surface);color:var(--ink-soft);border-color:var(--border-strong);}
+:root[data-theme="dark"] .chip.active{background:var(--action);border-color:var(--action);color:var(--on-action);}
+:root[data-theme="dark"] .toggle-row label,
+:root[data-theme="dark"] .field label{color:var(--ink-soft);}
+:root[data-theme="dark"] .toggle-row input,
+:root[data-theme="dark"] .checkbox-field input,
+:root[data-theme="dark"] .slider-row input{accent-color:var(--quiet);}
+:root[data-theme="dark"] .venue-card:hover,
+:root[data-theme="dark"] .venue-card.selected{background:var(--surface-soft);border-color:var(--border-strong);}
+:root[data-theme="dark"] .tag-pill{color:var(--ink-soft);border-color:var(--border-strong);}
+:root[data-theme="dark"] .tag-pill svg{stroke:var(--quiet);}
+:root[data-theme="dark"] .popup-rate-btn,
+:root[data-theme="dark"] .btn-secondary{background:var(--surface-soft);color:var(--ink);border-color:var(--border-strong);}
+:root[data-theme="dark"] .popup-rate-btn:hover,
+:root[data-theme="dark"] .btn-secondary:hover{background:#30343D;}
+:root[data-theme="dark"] .modal-overlay{background:rgba(0,0,0,.72);}
+:root[data-theme="dark"] .leaflet-popup-tip{background:var(--surface);}
+:root[data-theme="dark"] #theme-toggle,
+:root[data-theme="dark"] #account-btn{background:var(--surface-soft);color:var(--quiet);border-color:var(--border);}
+:root[data-theme="dark"] ::selection{background:rgba(184,243,107,.28);color:var(--ink);}
+:root[data-theme="dark"] .ss-placement-pin::before{background:var(--quiet);}
