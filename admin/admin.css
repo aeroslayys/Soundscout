@@ -1208,3 +1208,7 @@ input::placeholder,textarea::placeholder{color:#777C87;}
 .record-row,.table-row,.metric-card{border-color:var(--border);}
 .admin-toast{background:#252830;color:var(--ink);border:1px solid var(--border);}
 *{scrollbar-color:var(--border-strong) transparent;}
+
+.admin-brand h1,.panel-heading h2,.section-card h3{font-family:'Inter',sans-serif;font-weight:800;letter-spacing:-.035em;}
+.admin-user button,.nav-tab,.secondary-btn{color:var(--ink-soft);}
+.admin-user button:hover,.secondary-btn:hover{border-color:var(--quiet);color:var(--quiet);}
