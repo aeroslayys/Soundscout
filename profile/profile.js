@@ -1,3 +1,31 @@
+
+/* Keep the profile page in sync with the map and login theme preference. */
+(function(){
+  var key = "soundscout_theme";
+  var saved = localStorage.getItem(key);
+  var theme = saved === "light" || saved === "dark" ? saved : "dark";
+  var root = document.documentElement;
+  var button = document.getElementById("themeToggle");
+
+  function applyTheme(next){
+    theme = next;
+    root.setAttribute("data-theme", theme);
+    localStorage.setItem(key, theme);
+    if(button){
+      button.textContent = theme === "dark" ? "☀" : "☾";
+      button.setAttribute("aria-label", theme === "dark" ? "Switch to light mode" : "Switch to dark mode");
+      button.title = theme === "dark" ? "Switch to light mode" : "Switch to dark mode";
+    }
+  }
+
+  applyTheme(theme);
+  if(button){
+    button.addEventListener("click", function(){
+      applyTheme(theme === "dark" ? "light" : "dark");
+    });
+  }
+})();
+
 (function(){
 
   var API_BASE = "/api";
