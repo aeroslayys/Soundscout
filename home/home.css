@@ -1265,3 +1265,13 @@ button,
 :root[data-theme="dark"] .brand h1,
 :root[data-theme="dark"] .popup-body h3,
 :root[data-theme="dark"] .modal h2{font-family:'Inter',sans-serif;font-weight:800;letter-spacing:-.035em;}
+
+
+/* Venue detail popup — match the dark app surfaces and lime accent */
+:root[data-theme="dark"] .leaflet-popup-content-wrapper,
+:root[data-theme="dark"] .leaflet-popup-tip{background:var(--surface);color:var(--ink);}
+:root[data-theme="dark"] .popup-body{color:var(--ink);}
+:root[data-theme="dark"] .popup-body p{color:var(--muted);}
+:root[data-theme="dark"] .popup-body [style*="border-top"],
+:root[data-theme="dark"] .popup-body [style*="border-bottom"]{border-color:var(--border) !important;}
+:root[data-theme="dark"] .popup-body [style*="background:var(--bg)"]{background:var(--surface-soft) !important;}
