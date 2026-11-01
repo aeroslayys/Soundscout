@@ -5,8 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import AudioCapture from '@/components/audio-capture';
 import { useAuth } from '@/context/auth';
 import { palettes, useAppTheme } from '@/context/theme';
-
-const API_URL = 'http://192.168.101.73:8082';
+import { API_URL } from '@/constants/api';
 const START: Region = { latitude:12.0022, longitude:79.8100, latitudeDelta:0.018, longitudeDelta:0.018 };
 const CATEGORIES = ['cafe','restaurant','library','gym','coworking'];
 
