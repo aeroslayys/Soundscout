@@ -2,7 +2,9 @@
 
 **Find places that sound right for you.**
 
-🌐 **[Open SoundScout on the web](https://jellyfin-server.tail0a3780.ts.net)** — use SoundScout directly in your browser; no app installation needed.
+🌐 **[Visit the SoundScout landing page](https://aeroslayys.github.io/Soundscout/)** — learn about the project, explore its features, and share feedback.
+
+🖥️ **[Open SoundScout on the web](https://jellyfin-server.tail0a3780.ts.net)** — use SoundScout directly in your browser; no app installation needed.
 
 📱 **[Get the Android beta APK](https://github.com/aeroslayys/Soundscout/releases)** — install the mobile app.
 
