@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/auth';
 import { useAppTheme, type ThemeMode, palettes } from '@/context/theme';
 
-const API_URL = 'http://192.168.101.73:8082';
+import { API_URL } from '@/constants/api';
 const C = {
   bg: '#101114',
   surface: '#1B1D22',
