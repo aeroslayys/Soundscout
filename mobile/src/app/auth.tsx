@@ -1,9 +1,14 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import * as SecureStore from 'expo-secure-store';
 import { ActivityIndicator, Alert, Pressable, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/auth';
 
 import { API_URL } from '@/constants/api';
+const OTP_DRAFT_KEY = 'soundscout.auth.otp-draft';
+
+type OtpDraft = { email: string; code: string; name: string; age: string; sensitivity: string; newUser: boolean; sent: boolean };
+
 const C = { bg: '#101114', surface: '#1B1D22', text: '#F4F4F5', muted: '#92959F', accent: '#B8F36B', border: '#30323A' };
 
 export default function AuthScreen() {
@@ -17,6 +22,35 @@ export default function AuthScreen() {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [draftReady, setDraftReady] = useState(false);
+
+  // Android may reclaim the app process while the user switches to their email app.
+  // Restore the OTP form instead of returning to the initial sign-in screen.
+  useEffect(() => {
+    let active = true;
+    SecureStore.getItemAsync(OTP_DRAFT_KEY)
+      .then((raw) => {
+        if (!active || !raw) return;
+        const draft = JSON.parse(raw) as OtpDraft;
+        setEmail(draft.email ?? '');
+        setCode(draft.code ?? '');
+        setName(draft.name ?? '');
+        setAge(draft.age ?? '');
+        setSensitivity(draft.sensitivity ?? '3');
+        setNewUser(Boolean(draft.newUser));
+        setSent(Boolean(draft.sent));
+      })
+      .catch((e) => console.warn('Could not restore OTP form:', e))
+      .finally(() => { if (active) setDraftReady(true); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (!draftReady) return;
+    const draft: OtpDraft = { email, code, name, age, sensitivity, newUser, sent };
+    SecureStore.setItemAsync(OTP_DRAFT_KEY, JSON.stringify(draft))
+      .catch((e) => console.warn('Could not save OTP form:', e));
+  }, [draftReady, email, code, name, age, sensitivity, newUser, sent]);
 
   const requestCode = async () => {
     if (!email.trim()) return setError('Enter your email address.');
@@ -39,6 +73,7 @@ export default function AuthScreen() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Verification failed.');
       if (!data.token) throw new Error('Authentication token was not returned.');
+      await SecureStore.deleteItemAsync(OTP_DRAFT_KEY);
       await setToken(data.token, data.user);
     } catch (e) { setError(e instanceof Error ? e.message : 'Sign in failed.'); }
     finally { setBusy(false); }
