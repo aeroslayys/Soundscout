@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f6f4ee">
+  <meta name="description" content="Find places that sound right for you. Discover venues by their sound environment, community quietness ratings and accessibility details with SoundScout.">
+  <title>SoundScout — Know before you go</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="site-shell">
+    <header class="topbar">
+      <a class="brand" href="#home" aria-label="SoundScout home">
+        <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span><strong>SoundScout</strong><small>KNOW BEFORE YOU GO</small></span>
+      </a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <button class="nav-tab active" data-tab="discover">Discover</button>
+        <button class="nav-tab" data-tab="development">Development</button>
+        <button class="nav-tab" data-tab="community">Community</button>
+      </nav>
+      <div class="top-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle colour theme" title="Toggle theme">◐</button>
+        <a class="button button-small button-outline" href="https://github.com/aeroslayys/Soundscout" target="_blank" rel="noreferrer">GitHub <span>↗</span></a>
+      </div>
+    </header>
+
+    <main id="home">
+      <section class="tab-panel active" id="discover" role="tabpanel">
+        <section class="hero">
+          <div class="hero-copy">
+            <div class="eyebrow"><span class="pulse"></span> A different way to discover places</div>
+            <h1>Find places that<br><em>sound right</em> for you.</h1>
+            <p class="hero-lede">A great place isn't just about how it looks. Discover cafés, restaurants and spaces by the sound of them — before you make the trip.</p>
+            <div class="hero-actions">
+              <a class="button button-primary" href="https://jellyfin-server.tail0a3780.ts.net" target="_blank" rel="noreferrer">Explore the web app <span>↗</span></a>
+              <a class="button button-soft" href="https://github.com/aeroslayys/Soundscout/releases" target="_blank" rel="noreferrer">Get the Android app <span>↓</span></a>
+            </div>
+            <div class="hero-footnote"><span class="mini-dot"></span> Community-powered · Web + Android · Actively evolving</div>
+          </div>
+          <div class="hero-art" aria-label="Illustration of a venue sound map">
+            <div class="map-card">
+              <div class="map-top"><span class="map-label">AROUND YOU</span><span class="map-live"><b></b> SOUND MAP</span></div>
+              <div class="map-grid">
+                <span class="street street-a"></span><span class="street street-b"></span><span class="street street-c"></span><span class="street street-d"></span>
+                <span class="park"></span><span class="water"></span>
+                <div class="map-pin pin-one"><b>4.8</b><small>CALM</small></div>
+                <div class="map-pin pin-two"><b>3.2</b><small>MODERATE</small></div>
+                <div class="map-pin pin-three"><b>4.2</b><small>CALM</small></div>
+                <div class="you-pin"><span></span><small>YOU</small></div>
+              </div>
+              <div class="map-legend"><span><i class="legend-calm"></i> Calm</span><span><i class="legend-mid"></i> Moderate</span><span><i class="legend-loud"></i> Lively</span></div>
+            </div>
+            <div class="floating-note note-top"><span class="note-icon">♫</span><span><b>More than a star rating</b><small>Know the atmosphere</small></span></div>
+            <div class="floating-note note-bottom"><span class="quiet-score">4.8</span><span><b>Community rated</b><small>Quietness score</small></span></div>
+            <div class="hero-orbit"></div>
+          </div>
+        </section>
+
+        <section class="ticker" aria-label="SoundScout features"><span>QUIETNESS RATINGS</span><i>✳</i><span>AMBIENT SOUND INSIGHTS</span><i>✳</i><span>ACCESSIBILITY DETAILS</span><i>✳</i><span>COMMUNITY REPORTS</span></section>
+
+        <section class="section intro-section">
+          <div class="section-kicker">THE IDEA</div>
+          <div class="intro-grid">
+            <h2>Because the<br>vibe is more<br>than a photo.</h2>
+            <div><p class="body-large">A café can look perfect online and still be too loud to focus. A restaurant can have glowing reviews but make conversation difficult.</p><p>SoundScout brings sound and useful accessibility context into venue discovery, helping you choose spaces that fit your day, your plans and your comfort.</p></div>
+          </div>
+        </section>
+
+        <section class="section feature-section">
+          <div class="section-heading"><div><div class="section-kicker">WHAT YOU CAN DO</div><h2>Look beyond the usual rating.</h2></div><p>Useful context from people who have actually been there.</p></div>
+          <div class="feature-grid">
+            <article class="feature-card feature-wide"><div class="feature-number">01 / DISCOVER</div><div class="feature-visual sound-bars"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><h3>Find your kind of quiet.</h3><p>Explore venues on a map, compare community quietness ratings and use Quiet Near Me to find calmer places around you.</p></article>
+            <article class="feature-card"><div class="feature-number">02 / UNDERSTAND</div><div class="feature-visual trend-visual"><svg viewBox="0 0 260 92" role="img" aria-label="Illustrative sound trend"><path d="M4 73 C28 67 32 23 58 37 S89 74 112 52 S145 14 166 31 S201 69 222 42 S244 29 256 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="M4 73 C28 67 32 23 58 37 S89 74 112 52 S145 14 166 31 S201 69 222 42 S244 29 256 18 L256 92 L4 92Z" fill="currentColor" opacity=".09"/></svg></div><h3>Get a feel for the atmosphere.</h3><p>Read recent sound reports and explore available recording-derived sound information and time-of-day patterns.</p></article>
+            <article class="feature-card"><div class="feature-number">03 / CONTRIBUTE</div><div class="feature-visual rating-visual"><div class="rating-big">4.0<span>/5</span></div><div class="rating-stars">✳ ✳ ✳ ✳ ✳</div><small>YOUR EXPERIENCE HELPS</small></div><h3>Make the next visit easier.</h3><p>Share a quietness rating, submit a sound report and add venue details that help the community decide.</p></article>
+            <article class="feature-card feature-wide access-card"><div class="feature-number">04 / FEEL WELCOME</div><div class="access-pills"><span>♿ Accessibility info</span><span>◎ Gender-neutral toilet</span><span>⌁ Venue details</span></div><h3>Find spaces that work for more people.</h3><p>Explore community-provided accessibility details alongside sound information. The little things can make a big difference.</p></article>
+          </div>
+        </section>
+
+        <section class="section scale-section">
+          <div class="section-kicker">A SIMPLE SCALE</div><h2>One score. A clearer picture.</h2>
+          <p class="section-desc">Community quietness ratings use a five-point scale to describe the general sound experience.</p>
+          <div class="scale-list">
+            <div><b class="scale-num loud">1</b><span><strong>Loud</strong><small>High noise, hard to tune out</small></span><i class="scale-track"><i style="width:100%"></i></i></div>
+            <div><b class="scale-num lively">2</b><span><strong>Lively</strong><small>Energetic, lots happening</small></span><i class="scale-track"><i style="width:78%"></i></i></div>
+            <div><b class="scale-num moderate">3</b><span><strong>Moderate</strong><small>A balanced, everyday atmosphere</small></span><i class="scale-track"><i style="width:56%"></i></i></div>
+            <div><b class="scale-num calm">4</b><span><strong>Calm</strong><small>Comfortable for conversation</small></span><i class="scale-track"><i style="width:34%"></i></i></div>
+            <div><b class="scale-num silent">5</b><span><strong>Silent</strong><small>Very little ambient noise</small></span><i class="scale-track"><i style="width:12%"></i></i></div>
+          </div>
+          <p class="fine-print">Scores are community observations, not a promise of conditions at the time you visit. Venue noise can change with the hour, day and crowd.</p>
+        </section>
+
+        <section class="section privacy-band">
+          <div class="privacy-symbol">⌁</div><div><div class="section-kicker">AUDIO, WITH CARE</div><h2>Your surroundings are analysed.<br>Your recordings aren't kept.</h2><p>Optional ambient audio is temporarily processed for analysis and deleted afterwards. SoundScout stores derived information rather than retaining submitted audio clips.</p></div>
+          <a class="text-link" href="https://github.com/aeroslayys/Soundscout#readme" target="_blank" rel="noreferrer">Read the project notes ↗</a>
+        </section>
+
+        <section class="section audience-section">
+          <div class="section-heading"><div><div class="section-kicker">MADE FOR REAL-LIFE PLANS</div><h2>Different days. Different needs.</h2></div></div>
+          <div class="audience-grid"><div><span>01</span><b>Study sessions</b><p>Find a spot where you can focus without fighting the background noise.</p></div><div><span>02</span><b>Catch-ups</b><p>Choose somewhere you can actually hear each other talk.</p></div><div><span>03</span><b>Quiet moments</b><p>Get a better idea of the atmosphere before heading out.</p></div><div><span>04</span><b>More accessible outings</b><p>Check community-shared venue details before you arrive.</p></div></div>
+        </section>
+        <section class="final-cta"><div class="section-kicker">YOUR NEXT PLACE IS OUT THERE</div><h2>Go where it feels right.</h2><p>Explore the map, discover a new favourite and help make venue information more useful for everyone.</p><div class="hero-actions"><a class="button button-primary" href="https://jellyfin-server.tail0a3780.ts.net" target="_blank" rel="noreferrer">Open SoundScout <span>↗</span></a><a class="button button-light" href="https://github.com/aeroslayys/Soundscout/releases" target="_blank" rel="noreferrer">Android app <span>↓</span></a></div></section>
+      </section>
+
+      <section class="tab-panel" id="development" role="tabpanel" hidden>
+        <section class="page-heading"><div class="section-kicker">BEHIND THE BUILD</div><h1>Built from a simple<br><em>what if?</em></h1><p>What if choosing a café wasn't just about its photos and star rating? SoundScout grew from that question into a full-stack, community-powered discovery project.</p></section>
+        <section class="section dev-story"><div class="dev-lead"><span class="dev-stamp">THE BUILD LOG</span><h2>One idea, a lot of moving parts.</h2><p>SoundScout is developed as a connected web and mobile experience, with a backend that brings venue discovery, community contributions and sound insights together.</p></div><div class="dev-steps">
+          <article><span>01</span><div><h3>Start with the missing context</h3><p>The first step was to rethink what a venue listing should tell you. Alongside the usual details, SoundScout centres quietness, sound reports and accessibility information.</p></div></article>
+          <article><span>02</span><div><h3>Build the discovery experience</h3><p>An interactive map, venue search, quietness ratings, Quiet Near Me and a sound heatmap make community information easier to explore geographically.</p></div></article>
+          <article><span>03</span><div><h3>Bring sound into the picture</h3><p>Optional short ambient recordings can be analysed to derive digital recording-level information. Reports and time-based views add context to those observations.</p></div></article>
+          <article><span>04</span><div><h3>Make it a community product</h3><p>Accounts, profiles, venue submissions, content flags, approvals and moderation workflows help people contribute while giving the project ways to maintain data quality.</p></div></article>
+          <article><span>05</span><div><h3>Take it beyond the browser</h3><p>The project includes a browser-based application and an Android mobile app built with React Native and Expo, supported by a shared backend.</p></div></article>
+          <article><span>06</span><div><h3>Run it, learn, improve</h3><p>Self-hosted services, containerised deployment and ongoing iteration keep the project moving. SoundScout is still actively evolving, and community feedback helps shape what comes next.</p></div></article>
+        </div></section>
+        <section class="section stack-section"><div class="section-kicker">THE TOOLBOX</div><h2>A connected stack.</h2><p class="section-desc">The project combines web technologies, backend services, audio analysis and mobile development.</p><div class="stack-grid"><div><small>01 / EXPERIENCE</small><b>Web application</b><p>Browser-based venue discovery, profiles and interactive map experiences.</p></div><div><small>02 / MOBILE</small><b>React Native + Expo</b><p>A companion Android application for discovery on the go.</p></div><div><small>03 / PLATFORM</small><b>Backend + database</b><p>APIs, persistent venue and user data, and community workflows.</p></div><div><small>04 / AUDIO</small><b>Signal analysis</b><p>Optional ambient audio processing and derived sound-level insights.</p></div><div><small>05 / OPERATIONS</small><b>Containers + self-hosting</b><p>Containerised services and deployment across the project's environment.</p></div><div><small>06 / COMMUNITY</small><b>Moderation tools</b><p>Venue review, user reports and administrative controls.</p></div></div></section>
+        <section class="section dev-note"><div class="section-kicker">A WORK IN PROGRESS</div><h2>Built in the open. Improved with use.</h2><p>SoundScout is an evolving independent project. Features, measurements and interfaces may change as testing and real-world contributions reveal what works best.</p><a class="text-link" href="https://github.com/aeroslayys/Soundscout" target="_blank" rel="noreferrer">Explore the source on GitHub ↗</a></section>
+      </section>
+
+      <section class="tab-panel" id="community" role="tabpanel" hidden>
+        <section class="page-heading"><div class="section-kicker">THE COMMUNITY</div><h1>Good places are<br><em>better shared.</em></h1><p>SoundScout gets more useful when people share honest, recent observations. Your experience can help someone else choose a place that feels right.</p></section>
+        <section class="section contribute-grid"><div class="contribute-card"><div class="feature-number">SHARE WHAT YOU KNOW</div><h2>Been somewhere lately?</h2><p>Leave a quietness rating, describe the sound environment or add useful venue details. A small contribution can make someone else's outing easier.</p><a class="button button-primary" href="https://jellyfin-server.tail0a3780.ts.net" target="_blank" rel="noreferrer">Contribute in the app ↗</a></div><div class="contribute-aside"><div class="quote-mark">“</div><h3>Specific beats vague.</h3><p>Was it quiet in the afternoon? Busy during lunch? Could you hold a conversation? The time and context behind a report make it more helpful.</p></div></section>
+        <section class="section feedback-section"><div class="feedback-copy"><div class="section-kicker">FEEDBACK / SUGGESTIONS</div><h2>Help shape what<br>SoundScout becomes.</h2><p>Found a bug, have an idea, or want to tell us what worked? Send a review or suggestion through the project's GitHub issue tracker.</p><div class="feedback-points"><span>↗ Feature ideas</span><span>↗ Bug reports</span><span>↗ Experience feedback</span></div></div>
+          <form class="feedback-form" id="feedbackForm">
+            <label for="feedbackType">WHAT'S ON YOUR MIND?</label>
+            <select id="feedbackType"><option value="Suggestion">Feature suggestion</option><option value="Review">Review / general feedback</option><option value="Bug report">Bug report</option></select>
+            <label for="feedbackRating">HOW'S YOUR EXPERIENCE?</label>
+            <div class="rating-select" role="group" aria-label="Experience rating"><button type="button" data-rating="1">1</button><button type="button" data-rating="2">2</button><button type="button" data-rating="3">3</button><button type="button" data-rating="4">4</button><button type="button" data-rating="5">5</button></div>
+            <label for="feedbackMessage">YOUR FEEDBACK</label>
+            <textarea id="feedbackMessage" rows="5" placeholder="Tell us what's working, what could be better, or what you'd love to see..." required></textarea>
+            <button class="button button-primary submit-button" type="submit">Continue to GitHub <span>↗</span></button>
+            <small class="form-note">You'll review and submit your feedback on GitHub. Nothing is sent from this page.</small>
+          </form>
+        </section>
+        <section class="section community-links"><div><div class="section-kicker">FOLLOW THE PROJECT</div><h2>Stay in the loop.</h2></div><a href="https://github.com/aeroslayys/Soundscout" target="_blank" rel="noreferrer"><span>GitHub repository</span><b>↗</b></a><a href="https://github.com/aeroslayys/Soundscout/releases" target="_blank" rel="noreferrer"><span>Android releases</span><b>↗</b></a><a href="https://jellyfin-server.tail0a3780.ts.net" target="_blank" rel="noreferrer"><span>Open the web app</span><b>↗</b></a></section>
+      </section>
+    </main>
+
+    <footer class="footer"><a class="brand footer-brand" href="#home"><span class="brand-mark"><i></i><i></i><i></i></span><span><strong>SoundScout</strong><small>KNOW BEFORE YOU GO</small></span></a><p>Made for the places that feel right.</p><div><a href="https://github.com/aeroslayys/Soundscout" target="_blank" rel="noreferrer">GitHub</a><a href="https://jellyfin-server.tail0a3780.ts.net" target="_blank" rel="noreferrer">Web app</a><a href="https://github.com/aeroslayys/Soundscout/releases" target="_blank" rel="noreferrer">Android</a></div><small class="copyright">© <span id="year"></span> SoundScout · An independent project</small></footer>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
