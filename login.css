@@ -164,3 +164,36 @@ input:focus{ border-color: var(--teal); box-shadow: 0 0 0 3px var(--ring); }
 }
 .auth-status.error{ color: var(--loud); }
 .auth-status.success{ color: var(--teal-dark); }
+
+/* SoundScout mobile visual system */
+:root{
+  color-scheme:dark;
+  --bg:#101114;
+  --ink:#F4F4F5;
+  --ink-soft:#D5D7DC;
+  --muted:#92959F;
+  --teal:#B8F36B;
+  --teal-dark:#A5E65B;
+  --loud:#FF7474;
+  --quiet:#B8F36B;
+  --card:#1B1D22;
+  --border:#30323A;
+  --ring:rgba(184,243,107,.16);
+}
+body{background:radial-gradient(ellipse at 50% 0%,#20251B 0%,var(--bg) 54%);color:var(--ink);}
+.auth-card{background:var(--card);border-color:var(--border);border-radius:20px;box-shadow:0 24px 70px rgba(0,0,0,.38);}
+.brand-mark{background:var(--teal);box-shadow:0 0 24px rgba(184,243,107,.2);}
+.brand-name,.auth-title{font-family:'Inter',sans-serif;font-weight:800;letter-spacing:-.04em;color:var(--ink);}
+.brand-tag,.auth-sub{color:var(--muted);}
+.field-label{color:var(--muted);}
+input[type=email],input[type=text],input[type=number]{background:#252830;color:var(--ink);border-color:var(--border);border-radius:11px;}
+input::placeholder{color:#777C87;}
+input:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--ring);}
+.btn-primary{background:var(--teal);color:#101114;border-radius:11px;font-weight:800;}
+.btn-primary:hover{background:#C8FA83;}
+.link-btn{color:var(--teal);}
+.link-btn:hover{color:#C8FA83;}
+.sens-opt{border-color:var(--border);color:var(--muted);border-radius:10px;}
+.sens-opt.active{border-color:var(--teal);background:var(--ring);color:var(--teal);}
+.field-divider{border-color:var(--border);}
+.auth-status.success{color:var(--teal);}
