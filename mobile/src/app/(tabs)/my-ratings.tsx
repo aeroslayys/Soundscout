@@ -16,6 +16,8 @@ import { useAuth } from '@/context/auth';
 import { useAppTheme, type ThemeMode, palettes } from '@/context/theme';
 
 import { API_URL } from '@/constants/api';
+
+const MY_RATINGS_OTP_DRAFT_KEY = 'soundscout.my-ratings.otp-draft';
 const C = {
   bg: '#101114',
   surface: '#1B1D22',
