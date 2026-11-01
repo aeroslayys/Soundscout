@@ -321,3 +321,75 @@ body{background:var(--bg);color:var(--ink);}
 .added-venue-card{border-radius:16px;}
 .added-venue-name{color:var(--ink);}
 .added-venue-meta{color:var(--muted);}
+
+
+/* Unified SoundScout app theme */
+:root{
+  color-scheme:dark;
+  --bg:#101114;
+  --surface:#1B1D22;
+  --surface-soft:#252830;
+  --ink:#F4F4F5;
+  --ink-soft:#D5D7DC;
+  --muted:#92959F;
+  --accent:#B8F36B;
+  --danger:#FF7474;
+  --card:var(--surface);
+  --border:#30323A;
+  --ring:rgba(184,243,107,.16);
+  --dark-green:var(--accent);
+  --quiet:var(--accent);
+  --loud:var(--danger);
+}
+html,body{min-height:100%;background:var(--bg);color:var(--ink);}
+body{font-family:'Inter',sans-serif;}
+.topbar{
+  background:var(--surface);
+  border-color:var(--border);
+}
+.brand-link{color:var(--ink);}
+.brand-mark{
+  background:var(--accent);
+  box-shadow:0 0 18px rgba(184,243,107,.18);
+}
+.brand-name,.profile-name,.section-header h2{
+  font-family:'Inter',sans-serif;
+  font-weight:800;
+  letter-spacing:-.035em;
+}
+.back-link,.stat-value,.empty-state a{color:var(--accent);}
+.page-wrap{max-width:760px;}
+.profile-card,.stat-box,.rating-card,.empty-state,.added-venue-card{
+  background:var(--surface);
+  border-color:var(--border);
+  color:var(--ink);
+  box-shadow:0 8px 24px rgba(0,0,0,.16);
+}
+.avatar{background:var(--ring);color:var(--accent);}
+.profile-email,.rating-meta,.section-header p,.stat-label,.added-venue-meta{color:var(--muted);}
+.meta-pill,.rating-tag,.added-venue-tag{
+  background:var(--surface-soft);
+  color:var(--ink-soft);
+}
+.logout-btn{
+  border-color:var(--border);
+  color:var(--ink-soft);
+  background:var(--surface-soft);
+}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger);}
+.added-venue-name,.rating-venue-name{color:var(--ink);}
+.added-venue-card{border-radius:16px;}
+.rating-score-badge{color:#101114;}
+.rating-tag,.added-venue-tag{border:1px solid var(--border);}
+@media(max-width:600px){
+  .topbar{padding:14px 16px;}
+  .page-wrap{padding:22px 14px 40px;}
+  .profile-card{padding:17px;gap:12px;flex-wrap:wrap;}
+  .profile-info{min-width:calc(100% - 76px);}
+  .logout-btn{margin-left:auto;}
+  .stats-row{gap:8px;flex-wrap:wrap;}
+  .stat-box{min-width:calc(50% - 4px);padding:12px 8px;}
+  .stat-value{font-size:19px;}
+  .rating-card,.added-venue-card{padding:12px;gap:10px;}
+  .section-header{gap:10px;}
+}
