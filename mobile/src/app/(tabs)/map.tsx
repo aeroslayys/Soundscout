@@ -18,7 +18,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/auth';
 import AudioCapture from '@/components/audio-capture';
 
-const API_URL = 'http://192.168.101.73:8082';
+import { API_URL } from '@/constants/api';
 
 type Rating = {
   id: string;
