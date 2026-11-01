@@ -337,7 +337,7 @@ function timeBarChartHTML(v){
 
         '<p style="' +
           'font-size:11px;' +
-          'color:#607470;' +
+          'color:var(--muted);' +
           'margin:0;' +
         '">' +
 
@@ -421,14 +421,14 @@ var MIN_BAR_PX =
               'width:100%;' +
               'max-width:30px;' +
               'height:4px;' +
-              'background:#D9E3DF;' +
+              'background:var(--border);' +
               'border-radius:3px;' +
             '">' +
             '</div>' +
 
             '<span style="' +
               'font-size:9px;' +
-              'color:#607470;' +
+              'color:var(--muted);' +
               'text-align:center;' +
             '">' +
 
@@ -492,7 +492,7 @@ var MIN_BAR_PX =
             'font-family:\'IBM Plex Mono\',monospace;' +
             'font-size:9px;' +
             'font-weight:500;' +
-            'color:#1E3937;' +
+            'color:var(--ink);' +
             'white-space:nowrap;' +
           '">' +
 
@@ -517,7 +517,7 @@ var MIN_BAR_PX =
 
           '<span style="' +
             'font-size:9px;' +
-            'color:#607470;' +
+            'color:var(--muted);' +
             'text-align:center;' +
           '">' +
 
@@ -552,7 +552,7 @@ var MIN_BAR_PX =
     '<div style="' +
       'margin:12px 0 8px 0;' +
       'padding-top:10px;' +
-      'border-top:1px solid #D9E3DF;' +
+      'border-top:1px solid var(--border);' +
     '">' +
 
 
@@ -568,7 +568,7 @@ var MIN_BAR_PX =
           'font-weight:600;' +
           'letter-spacing:0.06em;' +
           'text-transform:uppercase;' +
-          'color:#607470;' +
+          'color:var(--muted);' +
         '">' +
 
           'Recorded sound by time' +
