@@ -8,6 +8,17 @@
 
 📱 **[Get the Android beta APK](https://github.com/aeroslayys/Soundscout/releases)** — install the mobile app.
 
+> [!NOTE]
+> **We're still building the SoundScout data map, and we need your help!**
+>
+> SoundScout is in its early stages, so venue coverage and sound reports are currently limited. If you use the app, please help us grow the community dataset:
+> - **Log the places you visit** by adding a quietness rating and a sound report.
+> - **Include when you visited** and what the environment was like. Sound levels can change throughout the day.
+> - **Contribute regularly** — even a quick rating helps someone else decide where to go.
+> - **Try optional audio analysis** if you're comfortable doing so; a written observation is useful too.
+>
+> More real-world contributions mean better coverage, more useful comparisons, and a more helpful SoundScout for everyone. Start by [opening the web app](https://jellyfin-server.tail0a3780.ts.net) or [installing the Android beta](https://github.com/aeroslayys/Soundscout/releases).
+
 SoundScout is a community-powered platform for discovering places based on their sound environment—not just their photos, menus, or star ratings.
 
 A café can look perfect online and still be too loud to work in. A restaurant can have great reviews but be overwhelming for a quiet conversation. SoundScout helps people get a better idea of what a place may actually feel like before they visit.
