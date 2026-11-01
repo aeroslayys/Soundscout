@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
 import * as FileSystem from 'expo-file-system/legacy';
-const API_URL = 'http://192.168.101.73:8082';
+import { API_URL } from '@/constants/api';
 const C = { surface:'#252830', text:'#F4F4F5', muted:'#92959F', accent:'#B8F36B', danger:'#FF7474' };
 export default function AudioCapture({ onAnalyzed }: { onAnalyzed: (db:number, score:number) => void }) {
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
