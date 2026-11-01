@@ -194,6 +194,8 @@ export default function MyRatingsScreen() {
       if (!response.ok) throw new Error(data.error || 'Verification failed.');
       if (!data.token) throw new Error('The server did not return a sign-in token.');
       await SecureStore.deleteItemAsync(MY_RATINGS_OTP_DRAFT_KEY);
+      setOtpSent(false);
+      setCode('');
       await setToken(data.token, data.user);
       await loadAccountData(data.token);
     } catch (err) {
@@ -209,6 +211,9 @@ export default function MyRatingsScreen() {
     setVenues([]);
     setCode('');
     setOtpSent(false);
+    setEmail('');
+    setName('');
+    setAge('');
     void SecureStore.deleteItemAsync(MY_RATINGS_OTP_DRAFT_KEY);
     setError('');
   };
