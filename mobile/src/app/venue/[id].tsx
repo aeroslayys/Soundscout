@@ -13,7 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { palettes, useAppTheme } from '@/context/theme';
 
-const API_URL = 'http://192.168.101.73:8082';
+import { API_URL } from '@/constants/api';
 
 type Rating = {
   id: string;
