@@ -57,12 +57,12 @@ router.post('/analyze', (req, res) => {
           'bytes', req.file.size
         );
 
-        const meanMatch = stderr.match(/mean_volume:\\s*(-?\\d+(\\.\\d+)?)\\s*dB/);
-        const maxMatch = stderr.match(/max_volume:\\s*(-?\\d+(\\.\\d+)?)\\s*dB/);
+        const meanMatch = stderr.match(/mean_volume:\s*(-?\d+(\.\d+)?)\s*dB/);
+        const maxMatch = stderr.match(/max_volume:\s*(-?\d+(\.\d+)?)\s*dB/);
 
         if (err || !meanMatch) {
           if (err) console.error('[SoundScout] ffmpeg analysis failed:', err.message);
-          else console.error('[SoundScout] ffmpeg volumedetect parse failed. stderr was:\\n', stderr);
+          else console.error('[SoundScout] ffmpeg volumedetect parse failed. stderr was:\n', stderr);
           return res.status(err && err.killed ? 504 : 500).json({
             error: err && err.killed ? 'Audio analysis timed out. Please try again.' : 'Could not analyze this audio clip.',
           });
