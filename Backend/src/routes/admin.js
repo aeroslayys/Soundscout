@@ -2,6 +2,8 @@ const express = require('express');
 const router = express.Router();
 const pool = require('../db');
 const { requireAuth, requireAdmin } = require('../middleware/adminAuth');
+const crypto = require('crypto');
+const { sendAnnouncementEmail } = require('../mailer');
 
 const PAGE_SIZE_MAX = 100;
 const ALLOWED_FLAG_STATUSES = new Set(['reviewed', 'dismissed', 'action_taken']);
@@ -380,7 +382,7 @@ router.get('/users', async (req, res) => {
   try {
     const count = await pool.query('SELECT COUNT(*)::int AS total FROM users ' + whereSql, params);
     const rows = await pool.query(
-      'SELECT id, name, email, age, sensitivity, created_at, is_suspended AS suspended, suspended_at, suspension_reason FROM users ' + whereSql + ' ORDER BY created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2),
+      'SELECT id, name, email, age, sensitivity, created_at, signup_platform, announcement_opt_in, is_suspended AS suspended, suspended_at, suspension_reason FROM users ' + whereSql + ' ORDER BY created_at DESC LIMIT $' + (params.length + 1) + ' OFFSET $' + (params.length + 2),
       params.concat([limit, offset])
     );
     res.json({ items: rows.rows, page, limit, total: count.rows[0].total });
@@ -441,6 +443,102 @@ router.get('/audit', async (req, res) => {
   } catch (err) {
     console.error('Admin audit log error:', err);
     res.status(500).json({ error: 'Failed to load audit log.' });
+  }
+});
+
+
+router.get('/announcements/recipients', async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT COUNT(*)::int AS total FROM users WHERE announcement_opt_in = TRUE AND is_suspended = FALSE'
+    );
+    res.json({ recipients: result.rows[0].total });
+  } catch (err) {
+    console.error('Announcement recipient count error:', err);
+    res.status(500).json({ error: 'Could not count announcement recipients.' });
+  }
+});
+
+router.get('/announcements/history', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT c.id, c.subject, c.created_at, c.completed_at,
+        COUNT(d.id)::int AS total,
+        COUNT(d.id) FILTER (WHERE d.status = 'sent')::int AS sent,
+        COUNT(d.id) FILTER (WHERE d.status = 'failed')::int AS failed
+       FROM announcement_campaigns c
+       LEFT JOIN announcement_deliveries d ON d.campaign_id = c.id
+       GROUP BY c.id ORDER BY c.created_at DESC LIMIT 30`
+    );
+    res.json({ items: result.rows });
+  } catch (err) {
+    console.error('Announcement history error:', err);
+    res.status(500).json({ error: 'Could not load announcement history.' });
+  }
+});
+
+router.post('/announcements', async (req, res) => {
+  const subject = typeof req.body?.subject === 'string' ? req.body.subject.trim() : '';
+  const body = typeof req.body?.body === 'string' ? req.body.body.trim() : '';
+  if (subject.length < 3 || subject.length > 180) return res.status(400).json({ error: 'Subject must be between 3 and 180 characters.' });
+  if (body.length < 10 || body.length > 20000) return res.status(400).json({ error: 'Message must be between 10 and 20,000 characters.' });
+
+  const baseUrl = String(process.env.PUBLIC_WEB_URL || process.env.APP_URL || '').replace(/\/$/, '');
+  if (!baseUrl) return res.status(503).json({ error: 'Set PUBLIC_WEB_URL in the backend environment before sending announcements.' });
+
+  let campaign;
+  try {
+    const recipients = await pool.query(
+      'SELECT id, email, announcement_unsubscribe_token FROM users WHERE announcement_opt_in = TRUE AND is_suspended = FALSE ORDER BY created_at ASC'
+    );
+    if (!recipients.rowCount) return res.status(409).json({ error: 'There are no users currently opted in to announcements.' });
+
+    const created = await pool.query(
+      'INSERT INTO announcement_campaigns (subject, body, created_by) VALUES ($1, $2, $3) RETURNING id',
+      [subject, body, req.userId]
+    );
+    campaign = created.rows[0];
+
+    let sent = 0;
+    let failed = 0;
+    for (const recipient of recipients.rows) {
+      try {
+        let unsubscribeToken = recipient.announcement_unsubscribe_token;
+        if (!unsubscribeToken) {
+          const generated = crypto.randomBytes(32).toString('hex');
+          await pool.query(
+            'UPDATE users SET announcement_unsubscribe_token = $2 WHERE id = $1 AND announcement_unsubscribe_token IS NULL',
+            [recipient.id, generated]
+          );
+          const latest = await pool.query('SELECT announcement_unsubscribe_token FROM users WHERE id = $1', [recipient.id]);
+          unsubscribeToken = latest.rows[0].announcement_unsubscribe_token;
+        }
+        const unsubscribeUrl = baseUrl + '/api/auth/unsubscribe/' + encodeURIComponent(unsubscribeToken);
+        await sendAnnouncementEmail(recipient.email, { subject, body, unsubscribeUrl });
+        await pool.query(
+          "INSERT INTO announcement_deliveries (campaign_id, user_id, email, status, sent_at) VALUES ($1, $2, $3, 'sent', NOW())",
+          [campaign.id, recipient.id, recipient.email]
+        );
+        sent += 1;
+      } catch (err) {
+        failed += 1;
+        await pool.query(
+          "INSERT INTO announcement_deliveries (campaign_id, user_id, email, status, error_message) VALUES ($1, $2, $3, 'failed', $4)",
+          [campaign.id, recipient.id, recipient.email, String(err.message || 'Delivery failed').slice(0, 1000)]
+        );
+      }
+    }
+
+    await pool.query(
+      'UPDATE announcement_campaigns SET completed_at = NOW(), sent_count = $2, failed_count = $3 WHERE id = $1',
+      [campaign.id, sent, failed]
+    );
+    await writeAudit(pool, req, 'announcement_sent', 'announcement', campaign.id, null, { total: recipients.rowCount, sent, failed, subject });
+    res.status(201).json({ campaignId: campaign.id, total: recipients.rowCount, sent, failed });
+  } catch (err) {
+    console.error('Announcement send error:', err);
+    if (campaign) await pool.query('UPDATE announcement_campaigns SET completed_at = NOW() WHERE id = $1', [campaign.id]).catch(() => {});
+    res.status(500).json({ error: 'Could not complete the announcement send.' });
   }
 });
 
