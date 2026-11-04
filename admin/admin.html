@@ -68,16 +68,17 @@
     </section>
 
     <section class="admin-panel" id="panel-announcements">
-      <div class="panel-heading"><div><p class="eyebrow">COMMUNITY UPDATES</p><h2>Email announcements</h2><p class="panel-subtitle">Send product news to members who explicitly opted in. OTP and essential account emails are separate.</p></div></div>
+      <div class="panel-heading"><div><p class="eyebrow">COMMUNITY UPDATES</p><h2>Email announcements</h2><p class="panel-subtitle">Send product news to opted-in members, or choose a one-time broad announcement. OTP and essential account emails are separate.</p></div></div>
       <div class="section-card announcement-composer">
         <div class="section-card-heading"><div><h3>Compose an update</h3><p id="announcementRecipientCount">Checking opted-in recipients…</p></div><button class="secondary-btn" id="refreshAnnouncementCount">Refresh count</button></div>
         <label class="field-label" for="announcementSubject">Email subject</label>
         <input id="announcementSubject" type="text" maxlength="180" placeholder="What's new in SoundScout?">
         <label class="field-label" for="announcementBody">Message</label>
         <textarea id="announcementBody" rows="9" maxlength="20000" placeholder="Write your update here. Plain text is supported; line breaks are preserved."></textarea>
+        <label class="announcement-consent"><input id="announcementIncludeNonOptedIn" type="checkbox"><span><strong>One-time announcement to all eligible users</strong><small>Include users who never opted in. Previously unsubscribed and suspended accounts remain excluded. Leave unchecked for opted-in recipients only.</small></span></label>
         <div class="announcement-preview"><strong>Preview</strong><div id="announcementPreview">Your email preview will appear here.</div></div>
         <button class="primary-btn" id="sendAnnouncementBtn" disabled>Send announcement</button>
-        <p class="helper-note">Emails are sent individually through the existing Gmail SMTP configuration. Every message includes an unsubscribe link.</p>
+        <p class="helper-note">Emails are sent individually through the existing Gmail SMTP configuration. Every message includes an unsubscribe link. The broad-audience option excludes anyone who previously unsubscribed and does not change their preferences.</p>
       </div>
       <div class="section-card"><div class="section-card-heading"><div><h3>Previous announcements</h3><p>Delivery totals for the last 30 campaigns.</p></div><button class="secondary-btn" id="refreshAnnouncementHistory">Refresh history</button></div><div id="announcementHistory" class="record-list"><p class="loading">Loading announcement history…</p></div></div>
     </section>
