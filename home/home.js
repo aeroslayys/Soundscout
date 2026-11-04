@@ -3074,11 +3074,32 @@ audioField.appendChild(
         if(e.data.size > 0) recordChunks.push(e.data);
       };
 
+      mediaRecorder.onerror = function(event){
+        stopRecordingTimer();
+        if(mediaStream){
+          mediaStream.getTracks().forEach(function(track){ track.stop(); });
+          mediaStream = null;
+        }
+        recordBtn.textContent = "● Record clip";
+        recordBtn.disabled = false;
+        var detail = event && event.error && event.error.message;
+        setAudioStatus("The browser couldn't finalize the recording" + (detail ? ": " + detail : ".") + " Please try again.", "error");
+      };
+
       mediaRecorder.onstop = function(){
         stopRecordingTimer();
-        mediaStream.getTracks().forEach(function(t){ t.stop(); });
+        setAudioStatus("Preparing audio clip...", "");
 
-        var elapsedSeconds = (Date.now() - recordStartTime) / 1000;
+        // A browser/device may already have ended the stream. Cleanup must
+        // never prevent the final dataavailable chunks from being analyzed.
+        if(mediaStream){
+          mediaStream.getTracks().forEach(function(track){ track.stop(); });
+          mediaStream = null;
+        }
+
+        var elapsedSeconds = recordStartTime
+          ? (Date.now() - recordStartTime) / 1000
+          : 0;
         var blob = new Blob(recordChunks, { type: "audio/webm" });
 
         recordBtn.textContent = "● Record clip";
@@ -3086,6 +3107,10 @@ audioField.appendChild(
 
         if(elapsedSeconds < MIN_CLIP_SECONDS){
           setAudioStatus("Recording was only " + elapsedSeconds.toFixed(1) + "s — needs at least " + MIN_CLIP_SECONDS + "s. Try again.", "error");
+          return;
+        }
+        if(!blob.size){
+          setAudioStatus("The browser returned an empty recording. Please try again or upload an audio file.", "error");
           return;
         }
         finishClip(blob, elapsedSeconds);
