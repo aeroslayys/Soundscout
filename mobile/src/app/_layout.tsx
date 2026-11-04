@@ -9,7 +9,6 @@ SplashScreen.preventAutoHideAsync();
 
 function AppNavigation() {
   const { token, ready } = useAuth();
-  const { resolved } = useAppTheme();
   const segments = useSegments();
   const router = useRouter();
   const params = useLocalSearchParams<{ next?: string }>();
