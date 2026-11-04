@@ -47,19 +47,13 @@ export default function VenueDetailsScreen() {
   useEffect(() => {
     async function loadVenue() {
       try {
-        const response = await fetch(`${API_URL}/api/venues`);
+        const response = await fetch(`${API_URL}/api/venues/${encodeURIComponent(id)}`);
 
         if (!response.ok) {
           throw new Error(`Server returned HTTP ${response.status}`);
         }
 
-        const venues: Venue[] = await response.json();
-        const selected = venues.find(item => item.id === id);
-
-        if (!selected) {
-          throw new Error('Venue not found');
-        }
-
+        const selected: Venue = await response.json();
         setVenue(selected);
       } catch (err) {
         setError(

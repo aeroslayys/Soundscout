@@ -109,6 +109,75 @@ router.get('/', async (req, res) => {
 
 
 // ==========================================
+
+/* Lightweight venue summaries for the native map. */
+router.get('/summary', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT v.id, v.name, v.category,
+        ST_Y(v.location::geometry) AS lat,
+        ST_X(v.location::geometry) AS lng,
+        v.access, v.toilet,
+        COALESCE(stats.rating_count, 0)::int AS rating_count,
+        stats.average_score,
+        COALESCE(recent.ratings, '[]'::json) AS ratings
+      FROM venues v
+      LEFT JOIN LATERAL (
+        SELECT COUNT(*) AS rating_count, AVG(r.score)::float AS average_score
+        FROM ratings r
+        WHERE r.venue_id = v.id AND r.deleted_at IS NULL
+      ) stats ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT json_agg(json_build_object(
+          'id', latest.id, 'score', latest.score,
+          'time', latest.time_of_day, 'measured_db', latest.measured_db,
+          'timestamp', EXTRACT(EPOCH FROM latest.submitted_at) * 1000
+        ) ORDER BY latest.submitted_at DESC) AS ratings
+        FROM (
+          SELECT r.id, r.score, r.time_of_day, r.measured_db, r.submitted_at
+          FROM ratings r
+          WHERE r.venue_id = v.id AND r.deleted_at IS NULL
+          ORDER BY r.submitted_at DESC LIMIT 3
+        ) latest
+      ) recent ON TRUE
+      WHERE v.deleted_at IS NULL AND v.approval_status = 'approved'
+      ORDER BY v.created_at DESC
+    `);
+    res.set('Cache-Control', 'public, max-age=15, stale-while-revalidate=60');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Failed to load venue summaries:', error);
+    res.status(500).json({ error: 'Could not load venue summaries.' });
+  }
+});
+
+/* Full rating history is loaded only for an opened venue. */
+router.get('/:id', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT v.id, v.name, v.category,
+        ST_Y(v.location::geometry) AS lat,
+        ST_X(v.location::geometry) AS lng,
+        v.access, v.toilet,
+        COALESCE(json_agg(json_build_object(
+          'id', r.id, 'score', r.score, 'time', r.time_of_day,
+          'measured_db', r.measured_db,
+          'timestamp', EXTRACT(EPOCH FROM r.submitted_at) * 1000
+        ) ORDER BY r.submitted_at DESC) FILTER (WHERE r.id IS NOT NULL), '[]'::json) AS ratings
+      FROM venues v
+      LEFT JOIN ratings r ON r.venue_id = v.id AND r.deleted_at IS NULL
+      WHERE v.id = $1 AND v.deleted_at IS NULL AND v.approval_status = 'approved'
+      GROUP BY v.id, v.name, v.category, v.location, v.access, v.toilet
+    `, [req.params.id]);
+    if (!result.rowCount) return res.status(404).json({ error: 'Venue not found.' });
+    res.set('Cache-Control', 'public, max-age=15, stale-while-revalidate=60');
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Failed to load venue:', error);
+    res.status(500).json({ error: 'Could not load venue.' });
+  }
+});
+
 // SEARCH LOCATION
 // GET /api/venues/search-location?q=Auroville
 //
