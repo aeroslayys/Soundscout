@@ -483,7 +483,7 @@ router.post('/announcements', async (req, res) => {
   if (subject.length < 3 || subject.length > 180) return res.status(400).json({ error: 'Subject must be between 3 and 180 characters.' });
   if (body.length < 10 || body.length > 20000) return res.status(400).json({ error: 'Message must be between 10 and 20,000 characters.' });
 
-  const baseUrl = String(process.env.PUBLIC_WEB_URL || process.env.APP_URL || '').replace(/\/$/, '');
+  const baseUrl = String(process.env.PUBLIC_WEB_URL || process.env.APP_URL || 'https://jellyfin-server.tail0a3780.ts.net').replace(/\/$/, '');
   if (!baseUrl) return res.status(503).json({ error: 'Set PUBLIC_WEB_URL in the backend environment before sending announcements.' });
 
   let campaign;
