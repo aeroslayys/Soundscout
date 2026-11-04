@@ -1,0 +1,45 @@
+name: Publish SoundScout Android OTA
+
+on:
+  push:
+    branches:
+      - feature/onboarding-venue-partners
+    paths:
+      - "mobile/src/**"
+      - "mobile/assets/**"
+      - ".github/workflows/soundscout-ota.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: soundscout-android-ota
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: Publish Android update to EAS
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish OTA update
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          UPDATE_MESSAGE: ${{ github.event.head_commit.message || 'Manual Android OTA publication' }}
+        run: npx eas-cli@latest update --branch preview --platform android --message "$UPDATE_MESSAGE"
