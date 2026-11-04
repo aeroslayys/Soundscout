@@ -302,12 +302,16 @@ export default function MapScreen() {
       };
       const updateVenue = (venue: Venue): Venue => {
         if (venue.id !== selected.id) return venue;
+        const previousCount = venue.rating_count ?? venue.ratings?.length ?? 0;
+        const previousAverage = Number(venue.average_score);
+        const average = Number.isFinite(previousAverage) && previousCount > 0
+          ? ((previousAverage * previousCount) + newRating.score) / (previousCount + 1)
+          : newRating.score;
         const ratings = [newRating, ...(venue.ratings ?? [])];
-        const average = ratings.reduce((sum, rating) => sum + Number(rating.score), 0) / ratings.length;
         return {
           ...venue,
           ratings: ratings.slice(0, 3),
-          rating_count: (venue.rating_count ?? venue.ratings?.length ?? 0) + 1,
+          rating_count: previousCount + 1,
           average_score: average,
         };
       };
