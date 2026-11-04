@@ -1,5 +1,6 @@
 import { DarkTheme, DefaultTheme, ThemeProvider as ExpoThemeProvider, Stack, useRouter, useSegments, useLocalSearchParams } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Updates from 'expo-updates';
 import { useEffect } from 'react';
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { AuthProvider, useAuth } from '@/context/auth';
@@ -8,6 +9,15 @@ import { ThemeProvider, useAppTheme } from '@/context/theme';
 SplashScreen.preventAutoHideAsync();
 
 function AppNavigation() {
+  useEffect(() => {
+    console.log('[OTA CONFIG]', {
+      enabled: Updates.isEnabled,
+      channel: Updates.channel,
+      runtimeVersion: Updates.runtimeVersion,
+      updateId: Updates.updateId,
+      embedded: Updates.isEmbeddedLaunch,
+    });
+  }, []);
   const { token, ready } = useAuth();
   const segments = useSegments();
   const router = useRouter();
