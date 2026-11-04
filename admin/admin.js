@@ -407,6 +407,7 @@ function activatePanel(name) {
   if (name === "reviews") loadReviews();
   if (name === "moderation") loadFlags();
   if (name === "users") loadUsers();
+  if (name === "announcements") loadAnnouncements();
   if (name === "audit") loadAudit();
 }
 document.querySelectorAll(".nav-tab").forEach(function (button) {
