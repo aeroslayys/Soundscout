@@ -291,3 +291,8 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px var(--ring);}
   .auth-card{padding:26px 20px 22px;}
   .theme-toggle{top:14px;right:14px;}
 }
+
+
+.announcement-consent{display:flex;align-items:flex-start;gap:9px;margin-top:16px;color:var(--muted);font-size:11px;line-height:1.5;}
+.announcement-consent input{width:auto;margin:2px 0 0;accent-color:var(--accent);flex:none;}
+.announcement-consent span{flex:1;}
