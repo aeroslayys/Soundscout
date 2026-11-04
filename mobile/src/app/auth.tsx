@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/auth';
 
 import { API_URL } from '@/constants/api';
+import { apiRequestJson } from '@/utils/api';
 const OTP_DRAFT_KEY = 'soundscout.auth.otp-draft';
 
 type OtpDraft = { email: string; code: string; name: string; age: string; sensitivity: string; newUser: boolean; sent: boolean };
@@ -56,8 +57,7 @@ export default function AuthScreen() {
     if (!email.trim()) return setError('Enter your email address.');
     setBusy(true); setError('');
     try {
-      const res = await fetch(API_URL + '/api/auth/request-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim() }) });
-      const data = await res.json();
+      const { response: res, data } = await apiRequestJson<{ isNewUser?: boolean; error?: string }>('OTP request', API_URL + '/api/auth/request-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim() }) });
       if (!res.ok) throw new Error(data.error || 'Could not send code.');
       setNewUser(Boolean(data.isNewUser)); setSent(true);
     } catch (e) { setError(e instanceof Error ? e.message : 'Request failed.'); }
@@ -69,8 +69,7 @@ export default function AuthScreen() {
     if (newUser && (!name.trim() || !age.trim())) return setError('Enter your name and age to create an account.');
     setBusy(true); setError('');
     try {
-      const res = await fetch(API_URL + '/api/auth/verify-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim(), code: code.trim(), ...(newUser ? { name: name.trim(), age: Number(age), sensitivity: Number(sensitivity) } : {}) }) });
-      const data = await res.json();
+      const { response: res, data } = await apiRequestJson<{ token?: string; user?: any; error?: string }>('OTP verification', API_URL + '/api/auth/verify-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim(), code: code.trim(), ...(newUser ? { name: name.trim(), age: Number(age), sensitivity: Number(sensitivity) } : {}) }) });
       if (!res.ok) throw new Error(data.error || 'Verification failed.');
       if (!data.token) throw new Error('Authentication token was not returned.');
       await SecureStore.deleteItemAsync(OTP_DRAFT_KEY);
