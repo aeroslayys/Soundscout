@@ -19,6 +19,7 @@ import { useAuth } from '@/context/auth';
 import AudioCapture from '@/components/audio-capture';
 
 import { API_URL } from '@/constants/api';
+import { apiRequestJson } from '@/utils/api';
 
 type Rating = {
   id: string;
@@ -171,9 +172,8 @@ export default function MapScreen() {
   const fetchVenues = useCallback(async () => {
     try {
       setError('');
-      const response = await fetch(`${API_URL}/api/venues/summary`);
+      const { response, data } = await apiRequestJson<Venue[]>('Map venue summary', `${API_URL}/api/venues/summary`);
       if (!response.ok) throw new Error(`Server returned HTTP ${response.status}`);
-      const data: Venue[] = await response.json();
       setVenues(data.filter((venue) =>
         Number.isFinite(Number(venue.lat)) && Number.isFinite(Number(venue.lng))
       ));
@@ -279,7 +279,7 @@ export default function MapScreen() {
     }
     setRatingBusy(true);
     try {
-      const response = await fetch(`${API_URL}/api/venues/${selected.id}/ratings`, {
+      const { response, data } = await apiRequestJson<{ rating: any; error?: string }>('Venue rating submission', `${API_URL}/api/venues/${selected.id}/ratings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -287,7 +287,6 @@ export default function MapScreen() {
         },
         body: JSON.stringify({ score: ratingScore, measured_db: ratingMeasuredDb, had_audio_clip: ratingHasAudio }),
       });
-      const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Could not save rating.');
 
       // The POST response already contains the saved rating. Update the local
