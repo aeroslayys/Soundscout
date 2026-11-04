@@ -33,9 +33,11 @@ export default function AddVenueScreen() {
   const searchLocation = async () => {
     if (query.trim().length < 3) return;
     setSearching(true); setSuggestions([]); setStatus('');
+    const searchStartedAt = Date.now();
     try {
       const res = await fetch(`${API_URL}/api/venues/search-location?q=${encodeURIComponent(query.trim())}`);
       const data = await res.json();
+      if (__DEV__) console.info('[SoundScout perf] location search:', Date.now() - searchStartedAt, 'ms; HTTP', res.status, '; results', Array.isArray(data) ? data.length : 'invalid');
       if (!res.ok) throw new Error(data.error || 'Location search failed.');
       setSuggestions(data);
       if (!data.length) setStatus('No matching places found.');
@@ -49,6 +51,7 @@ export default function AddVenueScreen() {
     if (!locationConfirmed) return Alert.alert('Location required','Search for the venue, then tap the map or drag the pin to confirm its exact location.');
     if (measuredDb === null && score < 1) return;
     setSubmitting(true);
+    const submitStartedAt = Date.now();
     try {
       const res = await fetch(`${API_URL}/api/venues`, {
         method:'POST',
@@ -59,6 +62,7 @@ export default function AddVenueScreen() {
         })
       });
       const data = await res.json();
+      if (__DEV__) console.info('[SoundScout perf] add venue submission:', Date.now() - submitStartedAt, 'ms; HTTP', res.status);
       if (!res.ok) throw new Error(data.error || 'Could not submit venue.');
       Alert.alert('Venue submitted','Your venue and first rating have been submitted for admin approval. It will appear on the public map after approval.');
       setName(''); setCategory('cafe'); setAccess(false); setToilet(false); setMeasuredDb(null); setScore(3); setStatus('');
