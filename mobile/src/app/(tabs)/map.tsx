@@ -89,30 +89,46 @@ type VenueCluster = {
   longitude: number;
 };
 
-function distanceMeters(a: Venue, b: Venue) {
-  const latitude = (Number(a.lat) + Number(b.lat)) / 2;
-  const latitudeDistance = (Number(a.lat) - Number(b.lat)) * 111_320;
-  const longitudeDistance =
-    (Number(a.lng) - Number(b.lng)) * 111_320 * Math.cos((latitude * Math.PI) / 180);
-  return Math.hypot(latitudeDistance, longitudeDistance);
+function venuesInViewport(venues: Venue[], region: Region): Venue[] {
+  // Include a modest buffer around the visible map so markers do not pop in
+  // exactly at the screen edge while the user pans.
+  const latitudeBuffer = region.latitudeDelta * 0.65;
+  const longitudeBuffer = region.longitudeDelta * 0.65;
+  const minLatitude = region.latitude - latitudeBuffer;
+  const maxLatitude = region.latitude + latitudeBuffer;
+  const minLongitude = region.longitude - longitudeBuffer;
+  const maxLongitude = region.longitude + longitudeBuffer;
+
+  return venues.filter((venue) => {
+    const latitude = Number(venue.lat);
+    const longitude = Number(venue.lng);
+    return latitude >= minLatitude && latitude <= maxLatitude &&
+      longitude >= minLongitude && longitude <= maxLongitude;
+  });
 }
 
 function clusterVenues(venues: Venue[], region: Region): VenueCluster[] {
-  // The clustering radius shrinks as the user zooms in, so individual venues
-  // become selectable naturally at street level.
+  // Bucket points into a spatial grid. This avoids repeatedly scanning every
+  // existing cluster (quadratic for widely spread venue sets).
   const radius = Math.max(25, Math.min(250, region.longitudeDelta * 111_320 * 0.025));
-  const groups: Venue[][] = [];
+  const latitudeCell = radius / 111_320;
+  const meanLatitude = region.latitude * Math.PI / 180;
+  const longitudeCell = radius / Math.max(1, 111_320 * Math.abs(Math.cos(meanLatitude)));
+  const groups = new Map<string, Venue[]>();
 
-  venues.forEach((venue) => {
-    const nearbyGroup = groups.find((group) =>
-      group.some((member) => distanceMeters(venue, member) <= radius)
-    );
-    if (nearbyGroup) nearbyGroup.push(venue);
-    else groups.push([venue]);
-  });
+  for (const venue of venues) {
+    const latitude = Number(venue.lat);
+    const longitude = Number(venue.lng);
+    const row = Math.floor(latitude / latitudeCell);
+    const column = Math.floor(longitude / longitudeCell);
+    const key = `${row}:${column}`;
+    const group = groups.get(key);
+    if (group) group.push(venue);
+    else groups.set(key, [venue]);
+  }
 
-  return groups.map((group) => ({
-    id: group.map((venue) => venue.id).sort().join('-'),
+  return Array.from(groups.entries()).map(([id, group]) => ({
+    id,
     venues: group,
     latitude: group.reduce((sum, venue) => sum + Number(venue.lat), 0) / group.length,
     longitude: group.reduce((sum, venue) => sum + Number(venue.lng), 0) / group.length,
@@ -155,7 +171,7 @@ export default function MapScreen() {
   const fetchVenues = useCallback(async () => {
     try {
       setError('');
-      const response = await fetch(`${API_URL}/api/venues`);
+      const response = await fetch(`${API_URL}/api/venues/summary`);
       if (!response.ok) throw new Error(`Server returned HTTP ${response.status}`);
       const data: Venue[] = await response.json();
       setVenues(data.filter((venue) =>
@@ -221,8 +237,14 @@ export default function MapScreen() {
     setQuietNearMe(true);
   };
 
-  const heatPoints = useMemo(
-    () => visibleVenues.flatMap((venue) => {
+  const mapVenues = useMemo(
+    () => venuesInViewport(visibleVenues, region),
+    [visibleVenues, region]
+  );
+
+  const heatPoints = useMemo(() => {
+    if (!heatmapEnabled || Platform.OS !== 'android') return [];
+    return mapVenues.flatMap((venue) => {
       const score = averageRating(venue);
       if (score === null) return [];
       return [{
@@ -230,13 +252,12 @@ export default function MapScreen() {
         longitude: Number(venue.lng),
         weight: Math.max(0.2, Math.min(1, (6 - score) / 5)),
       }];
-    }),
-    [visibleVenues]
-  );
+    });
+  }, [heatmapEnabled, mapVenues]);
 
   const clusters = useMemo(
-    () => clusterVenues(visibleVenues, region),
-    [visibleVenues, region]
+    () => clusterVenues(mapVenues, region),
+    [mapVenues, region]
   );
 
   const zoomIntoCluster = (cluster: VenueCluster) => {
@@ -268,7 +289,7 @@ export default function MapScreen() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Could not save rating.');
-      const refreshed = await fetch(`${API_URL}/api/venues`);
+      const refreshed = await fetch(`${API_URL}/api/venues/summary`);
       if (refreshed.ok) {
         const list: Venue[] = await refreshed.json();
         const valid = list.filter((venue) =>
@@ -349,7 +370,7 @@ export default function MapScreen() {
           />
         ) : null}
 
-        {heatmapEnabled && Platform.OS !== 'android' ? filteredVenues.map((venue) => {
+        {heatmapEnabled && Platform.OS !== 'android' ? mapVenues.map((venue) => {
           const score = averageRating(venue);
           if (score === null) return null;
           const weight = Math.max(0.2, Math.min(1, (6 - score) / 5));
