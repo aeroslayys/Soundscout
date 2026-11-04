@@ -155,6 +155,7 @@ JWT_SECRET=replace-with-a-long-random-secret
 ADMIN_EMAIL=admin@example.com
 
 CORS_ORIGIN=https://your-soundscout-url.example
+PUBLIC_WEB_URL=https://jellyfin-server.tail0a3780.ts.net
 
 DATABASE_SSL=true # Use false for a local PostgreSQL server without TLS
 
