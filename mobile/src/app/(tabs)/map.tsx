@@ -155,7 +155,7 @@ export default function MapScreen() {
   const fetchVenues = useCallback(async () => {
     try {
       setError('');
-      const response = await fetch(`${API_URL}/api/venues/summary`);
+      const response = await fetch(`${API_URL}/api/venues`);
       if (!response.ok) throw new Error(`Server returned HTTP ${response.status}`);
       const data: Venue[] = await response.json();
       setVenues(data.filter((venue) =>
@@ -268,7 +268,7 @@ export default function MapScreen() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Could not save rating.');
-      const refreshed = await fetch(`${API_URL}/api/venues/summary`);
+      const refreshed = await fetch(`${API_URL}/api/venues`);
       if (refreshed.ok) {
         const list: Venue[] = await refreshed.json();
         const valid = list.filter((venue) =>
