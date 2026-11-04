@@ -1226,3 +1226,10 @@ input::placeholder,textarea::placeholder{color:#777C87;}
 .announcement-preview #announcementPreview{color:var(--ink-soft);}
 .announcement-consent{display:flex;align-items:flex-start;gap:9px;margin-top:16px;color:var(--muted);font-size:11px;line-height:1.5;}
 .announcement-consent input{margin-top:2px;accent-color:var(--quiet);}
+
+.announcement-composer .announcement-consent input{
+  display:inline-block;width:auto;flex:0 0 auto;margin:2px 0 0;padding:0;
+  border:0;background:transparent;
+}
+.announcement-consent span{display:block;}
+.announcement-consent small{display:block;margin-top:3px;color:var(--muted);font-size:11px;}
