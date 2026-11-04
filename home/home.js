@@ -3045,6 +3045,42 @@ audioField.appendChild(
     autoStopTimeout = null;
   }
 
+  var recordingFinalizeWatchdog = null;
+  var recordingFinalized = false;
+
+  function finalizeRecordedClip(){
+    if(recordingFinalized) return;
+    recordingFinalized = true;
+    clearTimeout(recordingFinalizeWatchdog);
+    stopRecordingTimer();
+    setAudioStatus("Preparing audio clip...", "");
+
+    if(mediaStream){
+      mediaStream.getTracks().forEach(function(track){ track.stop(); });
+      mediaStream = null;
+    }
+
+    var elapsedSeconds = recordStartTime
+      ? (Date.now() - recordStartTime) / 1000
+      : 0;
+    var mimeType = (mediaRecorder && mediaRecorder.mimeType) ||
+      (recordChunks[0] && recordChunks[0].type) || "audio/webm";
+    var blob = new Blob(recordChunks, { type: mimeType });
+
+    recordBtn.textContent = "● Record clip";
+    recordBtn.disabled = false;
+
+    if(elapsedSeconds < MIN_CLIP_SECONDS){
+      setAudioStatus("Recording was only " + elapsedSeconds.toFixed(1) + "s — needs at least " + MIN_CLIP_SECONDS + "s. Try again.", "error");
+      return;
+    }
+    if(!blob.size){
+      setAudioStatus("Firefox returned no audio data. Please try Chrome or upload an audio file.", "error");
+      return;
+    }
+    finishClip(blob, elapsedSeconds);
+  }
+
   function stopActiveRecording(){
     if(!mediaRecorder || mediaRecorder.state !== "recording") return;
     stopRecordingTimer();
@@ -3053,6 +3089,14 @@ audioField.appendChild(
     setAudioStatus("Finalizing recording...", "");
     try {
       mediaRecorder.stop();
+      // Firefox should dispatch onstop after its final dataavailable event.
+      // Periodic chunks let us recover if that event is delayed or lost.
+      recordingFinalizeWatchdog = setTimeout(function(){
+        if(!recordingFinalized){
+          setAudioStatus("Firefox is taking too long to finalize; recovering recorded audio...", "");
+          finalizeRecordedClip();
+        }
+      }, 2500);
     } catch(err) {
       recordBtn.disabled = false;
       recordBtn.textContent = "● Record clip";
@@ -3101,37 +3145,11 @@ audioField.appendChild(
         setAudioStatus("The browser couldn't finalize the recording" + (detail ? ": " + detail : ".") + " Please try again.", "error");
       };
 
-      mediaRecorder.onstop = function(){
-        stopRecordingTimer();
-        setAudioStatus("Preparing audio clip...", "");
+      mediaRecorder.onstop = finalizeRecordedClip;
 
-        // A browser/device may already have ended the stream. Cleanup must
-        // never prevent the final dataavailable chunks from being analyzed.
-        if(mediaStream){
-          mediaStream.getTracks().forEach(function(track){ track.stop(); });
-          mediaStream = null;
-        }
-
-        var elapsedSeconds = recordStartTime
-          ? (Date.now() - recordStartTime) / 1000
-          : 0;
-        var blob = new Blob(recordChunks, { type: "audio/webm" });
-
-        recordBtn.textContent = "● Record clip";
-        recordBtn.disabled = false;
-
-        if(elapsedSeconds < MIN_CLIP_SECONDS){
-          setAudioStatus("Recording was only " + elapsedSeconds.toFixed(1) + "s — needs at least " + MIN_CLIP_SECONDS + "s. Try again.", "error");
-          return;
-        }
-        if(!blob.size){
-          setAudioStatus("The browser returned an empty recording. Please try again or upload an audio file.", "error");
-          return;
-        }
-        finishClip(blob, elapsedSeconds);
-      };
-
-      mediaRecorder.start();
+      recordingFinalized = false;
+      clearTimeout(recordingFinalizeWatchdog);
+      mediaRecorder.start(1000);
       recordStartTime = Date.now();
       recordBtn.disabled = true;
       recordBtn.textContent = "■ Stop";
