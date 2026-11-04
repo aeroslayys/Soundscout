@@ -1,21 +1,16 @@
 import { useMemo } from 'react';
-import { Linking, Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAppTheme } from '@/context/theme';
-import { API_URL } from '@/constants/api';
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const { colors: C, resolved } = useAppTheme();
   const s = useMemo(() => createStyles(C), [C]);
 
-  const explore = async () => {
-    try {
-      await Linking.openURL(API_URL);
-    } catch {
-      // Keep the welcome screen usable if the browser cannot be opened.
-    }
+  const openAuth = (next: 'map' | 'add-venue') => {
+    router.push(`/auth?next=${next}` as never);
   };
 
   return (
@@ -29,7 +24,7 @@ export default function WelcomeScreen() {
 
         <View style={s.hero}>
           <Text style={s.eyebrow}>SOUND-AWARE PLACES</Text>
-          <Text style={s.title}>Know the sound{ '\n' }before you go.</Text>
+          <Text style={s.title}>Know the sound{ '\\n' }before you go.</Text>
           <Text style={s.subtitle}>
             Explore sound environments, share what you experience, and make more informed decisions about where to go.
           </Text>
@@ -38,11 +33,12 @@ export default function WelcomeScreen() {
         <View style={s.actions}>
           <Pressable
             accessibilityRole="button"
-            onPress={() => router.push('/auth?next=add-venue' as never)}
+            accessibilityLabel="Contribute to SoundScout"
+            onPress={() => openAuth('add-venue')}
             style={({ pressed }) => [s.actionCard, s.primaryCard, pressed && s.pressed]}>
             <View style={s.actionIcon}><Text style={s.iconText}>⌖</Text></View>
             <View style={s.actionCopy}>
-              <Text style={s.primaryTitle}>Mark a location</Text>
+              <Text style={s.primaryTitle}>Contribute</Text>
               <Text style={s.primaryDescription}>Add a venue or share a sound observation.</Text>
             </View>
             <Text style={s.arrow}>↗</Text>
@@ -50,12 +46,13 @@ export default function WelcomeScreen() {
 
           <Pressable
             accessibilityRole="button"
-            onPress={explore}
+            accessibilityLabel="Explore venues in SoundScout"
+            onPress={() => openAuth('map')}
             style={({ pressed }) => [s.actionCard, s.secondaryCard, pressed && s.pressed]}>
             <View style={s.secondaryIcon}><Text style={s.secondaryIconText}>⌕</Text></View>
             <View style={s.actionCopy}>
-              <Text style={s.secondaryTitle}>Explore SoundScout</Text>
-              <Text style={s.secondaryDescription}>Browse the map and community reports on the website. No sign-in required.</Text>
+              <Text style={s.secondaryTitle}>Explore venues</Text>
+              <Text style={s.secondaryDescription}>Browse the native map and community sound reports.</Text>
             </View>
             <Text style={s.secondaryArrow}>↗</Text>
           </Pressable>
@@ -63,7 +60,7 @@ export default function WelcomeScreen() {
 
         <View style={s.footer}>
           <Text style={s.footerText}>Already have an account?</Text>
-          <Pressable onPress={() => router.push('/auth' as never)} hitSlop={10}>
+          <Pressable onPress={() => openAuth('map')} hitSlop={10}>
             <Text style={s.signIn}>Sign in</Text>
           </Pressable>
         </View>
