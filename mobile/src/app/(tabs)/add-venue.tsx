@@ -35,7 +35,7 @@ export default function AddVenueScreen() {
     if (query.trim().length < 3) return;
     setSearching(true); setSuggestions([]); setStatus('');
     try {
-      const { response: res, data } = await apiRequestJson<any[]>('Location search', `${API_URL}/api/venues/search-location?q=${encodeURIComponent(query.trim())}`);
+      const { response: res, data } = await apiRequestJson<any>('Location search', `${API_URL}/api/venues/search-location?q=${encodeURIComponent(query.trim())}`);
       console.info('[SoundScout perf] location search results:', Array.isArray(data) ? data.length : 'invalid');
       if (!res.ok) throw new Error(data.error || 'Location search failed.');
       setSuggestions(data);
