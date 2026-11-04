@@ -446,3 +446,9 @@ body{font-family:'Inter',sans-serif;}
   .topbar{flex-wrap:wrap;}
   .topbar-actions{margin-left:auto;}
 }
+
+
+.email-preferences{margin:18px 0;}
+.email-preference-toggle{display:flex;align-items:flex-start;gap:10px;color:var(--ink-soft);font-size:13px;line-height:1.5;}
+.email-preference-toggle input{margin-top:3px;accent-color:var(--quiet);}
+#announcementPreferenceStatus{min-height:18px;margin:9px 0 0 25px;color:var(--muted);font-size:11px;}
