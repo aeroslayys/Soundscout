@@ -450,9 +450,17 @@ router.get('/audit', async (req, res) => {
 router.get('/announcements/recipients', async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT COUNT(*)::int AS total FROM users WHERE announcement_opt_in = TRUE AND is_suspended = FALSE'
+      `SELECT
+        COUNT(*) FILTER (WHERE announcement_opt_in = TRUE)::int AS opted_in,
+        COUNT(*)::int AS one_time_eligible
+       FROM users
+       WHERE is_suspended = FALSE
+         AND announcement_unsubscribed_at IS NULL`
     );
-    res.json({ recipients: result.rows[0].total });
+    res.json({
+      recipients: result.rows[0].opted_in,
+      oneTimeEligible: result.rows[0].one_time_eligible
+    });
   } catch (err) {
     console.error('Announcement recipient count error:', err);
     res.status(500).json({ error: 'Could not count announcement recipients.' });
@@ -480,6 +488,7 @@ router.get('/announcements/history', async (req, res) => {
 router.post('/announcements', async (req, res) => {
   const subject = typeof req.body?.subject === 'string' ? req.body.subject.trim() : '';
   const body = typeof req.body?.body === 'string' ? req.body.body.trim() : '';
+  const includeNonOptedIn = req.body?.includeNonOptedIn === true;
   if (subject.length < 3 || subject.length > 180) return res.status(400).json({ error: 'Subject must be between 3 and 180 characters.' });
   if (body.length < 10 || body.length > 20000) return res.status(400).json({ error: 'Message must be between 10 and 20,000 characters.' });
 
@@ -489,9 +498,15 @@ router.post('/announcements', async (req, res) => {
   let campaign;
   try {
     const recipients = await pool.query(
-      'SELECT id, email, announcement_unsubscribe_token FROM users WHERE announcement_opt_in = TRUE AND is_suspended = FALSE ORDER BY created_at ASC'
+      `SELECT id, email, announcement_unsubscribe_token
+       FROM users
+       WHERE is_suspended = FALSE
+         AND announcement_unsubscribed_at IS NULL
+         AND (announcement_opt_in = TRUE OR $1 = TRUE)
+       ORDER BY created_at ASC`,
+      [includeNonOptedIn]
     );
-    if (!recipients.rowCount) return res.status(409).json({ error: 'There are no users currently opted in to announcements.' });
+    if (!recipients.rowCount) return res.status(409).json({ error: 'There are no eligible recipients for this announcement.' });
 
     const created = await pool.query(
       'INSERT INTO announcement_campaigns (subject, body, created_by) VALUES ($1, $2, $3) RETURNING id',
