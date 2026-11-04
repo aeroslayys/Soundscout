@@ -358,8 +358,10 @@ async function loadUsers() {
         (u.suspended
           ? '<button class="success-btn" data-action="unsuspend-user" data-id="' + escapeHtml(u.id) + '">Restore access</button>'
           : '<button class="danger-btn" data-action="suspend-user" data-id="' + escapeHtml(u.id) + '">Suspend</button>');
+      const signupSource = u.signup_platform === "web" ? "Website" : u.signup_platform === "android" ? "Android app" : "Unknown";
       return '<article class="record-row"><div class="record-main"><strong>' + escapeHtml(u.name) + '</strong><p>' + escapeHtml(u.email) + '</p>' +
         '<p>Joined ' + escapeHtml(formatDate(u.created_at)) + ' · Age ' + escapeHtml(u.age) + ' · Sensitivity ' + escapeHtml(u.sensitivity) + '</p>' +
+        '<p>Signup source: <span class="status-pill">' + escapeHtml(signupSource) + '</span></p>'
         '<p><span class="status-pill ' + (u.suspended ? 'status-deleted' : 'status-approved') + '">' + (u.suspended ? 'suspended' : 'active') + '</span>' +
         (u.suspended ? ' · ' + escapeHtml(u.suspension_reason || "No reason recorded") : '') + '</p><small>ID: ' + escapeHtml(u.id) + '</small></div><div class="record-actions">' + action + '</div></article>';
     }).join("");
