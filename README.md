@@ -66,8 +66,9 @@ SoundScout is not intended to replace general-purpose maps, navigation, or revie
   - **4 — Calm**
   - **5 — Silent**
 - Use **Quiet Near Me** to focus on calmer places around you.
-- Search for venues and explore their available sound information.
+- Filter venues by category and available accessibility facilities.
 - View a sound heatmap to understand reported patterns across an area.
+- Explore clustered venue markers and open venue details without leaving the map.
 
 ### Understand a venue's sound environment
 
@@ -76,23 +77,37 @@ SoundScout is not intended to replace general-purpose maps, navigation, or revie
 - View average recorded-level information for venues.
 - Optionally submit a short ambient recording for analysis.
 - See sound-level information derived from recordings, including mean and maximum digital recording levels.
+- Use audio-assisted rating suggestions as a starting point, then adjust the rating before submitting.
 
 ### Share useful venue information
 
 - Submit quietness ratings and sound observations.
+- Add a venue by searching for its location, confirming its exact map pin, selecting its category, and providing accessibility details.
+- Submit a new venue together with its initial quietness rating.
+- New venue submissions enter a pending review state and appear on the public map after admin approval.
 - Contribute information that helps other people decide where to go.
-- Add or consult venue details such as accessibility and gender-neutral toilet availability.
 
 ### Manage your account and community
 
-- Sign in using passwordless email verification codes.
+- Sign in or create an account using passwordless email verification codes.
+- Complete the app's welcome flow and continue to venue discovery or contribution.
 - Maintain a user profile.
 - Flag community content for review.
 - Benefit from venue approval and moderation workflows that help maintain the quality of community information.
 
 ### Mobile and web
 
-SoundScout includes a browser-based experience and a mobile application built with React Native and Expo. The Android application is available as an APK build. iOS distribution is not currently published.
+SoundScout includes a browser-based experience and a native Android application built with React Native and Expo.
+
+The Android app includes:
+- A dedicated welcome and sign-in entry point.
+- Native map discovery, venue markers, clustering, heatmap visualization, and venue detail sheets.
+- Quiet Near Me and category/accessibility filters.
+- Venue search and a guided add-venue flow with map pin confirmation.
+- Audio recording and optional audio-assisted quietness ratings.
+- Theme-aware screens and native navigation.
+
+The Android application is distributed as an APK through the [GitHub Releases page](https://github.com/aeroslayys/Soundscout/releases). iOS distribution is not currently published.
 
 ## A note about audio measurements
 
@@ -108,7 +123,7 @@ A submitted clip is temporarily processed for analysis and deleted after analysi
 
 ## Current project status
 
-SoundScout is under active development. The project includes venue discovery, community sound ratings and reports, optional audio analysis, user accounts, accessibility information, moderation tools, a web experience, and an Android mobile build.
+SoundScout is under active development. The project includes venue discovery, community sound ratings and reports, optional audio analysis, passwordless user accounts, accessibility information, venue submission and approval, moderation tools, a web experience, and a native Android build.
 
 The usefulness of SoundScout improves as more people contribute accurate, recent observations. Venue conditions can change by day, time, event, and crowd size, so community contributions are most helpful when they reflect when the observation was made.
 
