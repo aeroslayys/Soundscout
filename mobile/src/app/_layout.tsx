@@ -16,17 +16,20 @@ function AppNavigation() {
 
   useEffect(() => {
     if (!ready) return;
+
     const inAuthScreen = segments[0] === 'auth';
     const inWelcomeScreen = segments[0] === 'welcome';
+    const destination = params.next === 'add-venue'
+      ? '/(tabs)/add-venue'
+      : '/(tabs)/map';
 
     if (!token && !inAuthScreen && !inWelcomeScreen) {
       router.replace('/welcome' as never);
-    } else if (token && (inAuthScreen || inWelcomeScreen)) {
-      if (inAuthScreen && params.next === 'add-venue') {
-        router.replace('/(tabs)/add-venue' as never);
-      } else {
-        router.replace('/(tabs)' as never);
-      }
+      return;
+    }
+
+    if (token && (inAuthScreen || inWelcomeScreen)) {
+      router.replace(destination as never);
     }
   }, [token, ready, segments, router, params.next]);
 
