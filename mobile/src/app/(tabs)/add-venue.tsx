@@ -37,7 +37,7 @@ export default function AddVenueScreen() {
     try {
       const res = await fetch(`${API_URL}/api/venues/search-location?q=${encodeURIComponent(query.trim())}`);
       const data = await res.json();
-      if (__DEV__) console.info('[SoundScout perf] location search:', Date.now() - searchStartedAt, 'ms; HTTP', res.status, '; results', Array.isArray(data) ? data.length : 'invalid');
+      console.info('[SoundScout perf] location search:', Date.now() - searchStartedAt, 'ms; HTTP', res.status, '; results', Array.isArray(data) ? data.length : 'invalid');
       if (!res.ok) throw new Error(data.error || 'Location search failed.');
       setSuggestions(data);
       if (!data.length) setStatus('No matching places found.');
@@ -62,7 +62,7 @@ export default function AddVenueScreen() {
         })
       });
       const data = await res.json();
-      if (__DEV__) console.info('[SoundScout perf] add venue submission:', Date.now() - submitStartedAt, 'ms; HTTP', res.status);
+      console.info('[SoundScout perf] add venue submission:', Date.now() - submitStartedAt, 'ms; HTTP', res.status);
       if (!res.ok) throw new Error(data.error || 'Could not submit venue.');
       Alert.alert('Venue submitted','Your venue and first rating have been submitted for admin approval. It will appear on the public map after approval.');
       setName(''); setCategory('cafe'); setAccess(false); setToilet(false); setMeasuredDb(null); setScore(3); setStatus('');
