@@ -35,6 +35,7 @@ const newUserFields = document.getElementById('newUserFields');
 const nameInput = document.getElementById('nameInput');
 const ageInput = document.getElementById('ageInput');
 const sensitivityScale = document.getElementById('sensitivityScale');
+const announcementOptIn = document.getElementById('announcementOptIn');
 
 function isValidEmail(email){
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -67,7 +68,7 @@ function startResendCooldown(){
 async function requestOtp(email){
   const res = await fetch(`${API_BASE}/request-otp`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-SoundScout-Platform': 'web' },
     body: JSON.stringify({ email }),
   });
   const data = await res.json();
@@ -171,12 +172,13 @@ verifyBtn.addEventListener('click', async () => {
     payload.name = nameInput.value.trim();
     payload.age = Number(ageInput.value);
     payload.sensitivity = selectedSensitivity;
+    payload.announcementOptIn = Boolean(announcementOptIn && announcementOptIn.checked);
   }
 
   try{
     const res = await fetch(`${API_BASE}/verify-otp`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-SoundScout-Platform': 'web' },
       body: JSON.stringify(payload),
     });
     const data = await res.json();
@@ -215,5 +217,6 @@ backBtn.addEventListener('click', () => {
   sensitivityScale.querySelectorAll('.sens-opt').forEach(o => o.classList.remove('active'));
   nameInput.value = '';
   ageInput.value = '';
+  if (announcementOptIn) announcementOptIn.checked = false;
   setStatus(verifyStatus, '', '');
 });
