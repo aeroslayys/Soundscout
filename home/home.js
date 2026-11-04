@@ -3099,6 +3099,18 @@ audioField.appendChild(
 
       recordTimerInterval = setInterval(function(){
         var elapsed = (Date.now() - recordStartTime) / 1000;
+
+        // Keep the maximum-duration check in the active timer as well as
+        // the timeout below. This is a second stop path if the timeout is
+        // delayed by browser scheduling/throttling.
+        if(elapsed >= MAX_CLIP_SECONDS){
+          recordTimerLabel.textContent = MAX_CLIP_SECONDS.toFixed(1) + "s";
+          if(mediaRecorder && mediaRecorder.state === "recording"){
+            mediaRecorder.stop();
+          }
+          return;
+        }
+
         recordTimerLabel.textContent = elapsed.toFixed(1) + "s";
         if(elapsed >= MIN_CLIP_SECONDS){
           recordBtn.disabled = false;
