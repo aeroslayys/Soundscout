@@ -6,6 +6,7 @@ import AudioCapture from '@/components/audio-capture';
 import { useAuth } from '@/context/auth';
 import { palettes, useAppTheme } from '@/context/theme';
 import { API_URL } from '@/constants/api';
+import { apiRequestJson } from '@/utils/api';
 const START: Region = { latitude:12.0022, longitude:79.8100, latitudeDelta:0.018, longitudeDelta:0.018 };
 const CATEGORIES = ['cafe','restaurant','library','gym','coworking'];
 
@@ -35,10 +36,8 @@ export default function AddVenueScreen() {
     setSearching(true); setSuggestions([]); setStatus('');
     const searchStartedAt = Date.now();
     try {
-      const res = await fetch(`${API_URL}/api/venues/search-location?q=${encodeURIComponent(query.trim())}`);
-      const data = await res.json();
-      console.info('[SoundScout perf] location search:', Date.now() - searchStartedAt, 'ms; HTTP', res.status, '; results', Array.isArray(data) ? data.length : 'invalid');
-      console.info('[SoundScout perf] location server timing:', res.headers.get('server-timing') || 'not provided', '; cache', res.headers.get('x-soundscout-cache') || 'unknown');
+      const { response: res, data } = await apiRequestJson<any[]>('Location search', `${API_URL}/api/venues/search-location?q=${encodeURIComponent(query.trim())}`);
+      console.info('[SoundScout perf] location search results:', Array.isArray(data) ? data.length : 'invalid');
       if (!res.ok) throw new Error(data.error || 'Location search failed.');
       setSuggestions(data);
       if (!data.length) setStatus('No matching places found.');
@@ -54,7 +53,7 @@ export default function AddVenueScreen() {
     setSubmitting(true);
     const submitStartedAt = Date.now();
     try {
-      const res = await fetch(`${API_URL}/api/venues`, {
+      const { response: res, data } = await apiRequestJson<{ error?: string }>('Add venue submission', `${API_URL}/api/venues`, {
         method:'POST',
         headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${token}` },
         body:JSON.stringify({
@@ -62,8 +61,6 @@ export default function AddVenueScreen() {
           score, access, toilet, measured_db:measuredDb, had_audio_clip:measuredDb !== null
         })
       });
-      const data = await res.json();
-      console.info('[SoundScout perf] add venue submission:', Date.now() - submitStartedAt, 'ms; HTTP', res.status);
       if (!res.ok) throw new Error(data.error || 'Could not submit venue.');
       Alert.alert('Venue submitted','Your venue and first rating have been submitted for admin approval. It will appear on the public map after approval.');
       setName(''); setCategory('cafe'); setAccess(false); setToilet(false); setMeasuredDb(null); setScore(3); setStatus('');
