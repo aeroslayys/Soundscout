@@ -157,7 +157,14 @@ const token = jwt.sign(
   }
 });
 
-router.get('/unsubscribe/:token', async (req, res) => {
+
+router.get('/unsubscribe/:token', (req, res) => {
+  const token = String(req.params.token || '');
+  if (!/^[a-f0-9]{64}$/i.test(token)) return res.status(400).send('Invalid unsubscribe link.');
+  res.type('html').send(`<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Unsubscribe · SoundScout</title><body style="font:16px Arial,sans-serif;max-width:520px;margin:12vh auto;padding:24px;color:#202b29"><h1>Unsubscribe from SoundScout updates?</h1><p>Confirm below to stop receiving optional product announcements.</p><form method="post"><button style="padding:12px 18px;border:0;border-radius:8px;background:#1e3937;color:white;font-size:15px">Confirm unsubscribe</button></form></body></html>`);
+});
+
+router.post('/unsubscribe/:token', async (req, res) => {
   const token = String(req.params.token || '');
   if (!/^[a-f0-9]{64}$/i.test(token)) return res.status(400).send('Invalid unsubscribe link.');
   try {
@@ -172,5 +179,6 @@ router.get('/unsubscribe/:token', async (req, res) => {
     res.status(500).send('Could not process your request. Please try again later.');
   }
 });
+
 
 module.exports = router;
