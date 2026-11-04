@@ -19,6 +19,7 @@ import { useAuth } from '@/context/auth';
 import AudioCapture from '@/components/audio-capture';
 
 import { API_URL } from '@/constants/api';
+import { apiRequestJson } from '@/utils/api';
 
 type Rating = {
   id: string;
@@ -37,6 +38,8 @@ type Venue = {
   access?: boolean;
   toilet?: boolean;
   ratings?: Rating[];
+  average_score?: number | null;
+  rating_count?: number;
 };
 
 const COLORS = {
@@ -63,7 +66,9 @@ const HEAT_GRADIENT = {
   colorMapSize: 256,
 };
 
-function averageRating(ratings: Rating[] = []) {
+function averageRating(venue: Venue) {
+  if (venue.average_score != null && Number.isFinite(Number(venue.average_score))) return Number(venue.average_score);
+  const ratings = venue.ratings ?? [];
   if (!ratings.length) return null;
   return ratings.reduce((sum, rating) => sum + Number(rating.score), 0) / ratings.length;
 }
@@ -85,30 +90,46 @@ type VenueCluster = {
   longitude: number;
 };
 
-function distanceMeters(a: Venue, b: Venue) {
-  const latitude = (Number(a.lat) + Number(b.lat)) / 2;
-  const latitudeDistance = (Number(a.lat) - Number(b.lat)) * 111_320;
-  const longitudeDistance =
-    (Number(a.lng) - Number(b.lng)) * 111_320 * Math.cos((latitude * Math.PI) / 180);
-  return Math.hypot(latitudeDistance, longitudeDistance);
+function venuesInViewport(venues: Venue[], region: Region): Venue[] {
+  // Include a modest buffer around the visible map so markers do not pop in
+  // exactly at the screen edge while the user pans.
+  const latitudeBuffer = region.latitudeDelta * 0.65;
+  const longitudeBuffer = region.longitudeDelta * 0.65;
+  const minLatitude = region.latitude - latitudeBuffer;
+  const maxLatitude = region.latitude + latitudeBuffer;
+  const minLongitude = region.longitude - longitudeBuffer;
+  const maxLongitude = region.longitude + longitudeBuffer;
+
+  return venues.filter((venue) => {
+    const latitude = Number(venue.lat);
+    const longitude = Number(venue.lng);
+    return latitude >= minLatitude && latitude <= maxLatitude &&
+      longitude >= minLongitude && longitude <= maxLongitude;
+  });
 }
 
 function clusterVenues(venues: Venue[], region: Region): VenueCluster[] {
-  // The clustering radius shrinks as the user zooms in, so individual venues
-  // become selectable naturally at street level.
+  // Bucket points into a spatial grid. This avoids repeatedly scanning every
+  // existing cluster (quadratic for widely spread venue sets).
   const radius = Math.max(25, Math.min(250, region.longitudeDelta * 111_320 * 0.025));
-  const groups: Venue[][] = [];
+  const latitudeCell = radius / 111_320;
+  const meanLatitude = region.latitude * Math.PI / 180;
+  const longitudeCell = radius / Math.max(1, 111_320 * Math.abs(Math.cos(meanLatitude)));
+  const groups = new Map<string, Venue[]>();
 
-  venues.forEach((venue) => {
-    const nearbyGroup = groups.find((group) =>
-      group.some((member) => distanceMeters(venue, member) <= radius)
-    );
-    if (nearbyGroup) nearbyGroup.push(venue);
-    else groups.push([venue]);
-  });
+  for (const venue of venues) {
+    const latitude = Number(venue.lat);
+    const longitude = Number(venue.lng);
+    const row = Math.floor(latitude / latitudeCell);
+    const column = Math.floor(longitude / longitudeCell);
+    const key = `${row}:${column}`;
+    const group = groups.get(key);
+    if (group) group.push(venue);
+    else groups.set(key, [venue]);
+  }
 
-  return groups.map((group) => ({
-    id: group.map((venue) => venue.id).sort().join('-'),
+  return Array.from(groups.entries()).map(([id, group]) => ({
+    id,
     venues: group,
     latitude: group.reduce((sum, venue) => sum + Number(venue.lat), 0) / group.length,
     longitude: group.reduce((sum, venue) => sum + Number(venue.lng), 0) / group.length,
@@ -151,9 +172,8 @@ export default function MapScreen() {
   const fetchVenues = useCallback(async () => {
     try {
       setError('');
-      const response = await fetch(`${API_URL}/api/venues`);
+      const { response, data } = await apiRequestJson<Venue[]>('Map venue summary', `${API_URL}/api/venues/summary`);
       if (!response.ok) throw new Error(`Server returned HTTP ${response.status}`);
-      const data: Venue[] = await response.json();
       setVenues(data.filter((venue) =>
         Number.isFinite(Number(venue.lat)) && Number.isFinite(Number(venue.lng))
       ));
@@ -191,10 +211,10 @@ export default function MapScreen() {
     };
     return filteredVenues
       .filter((venue) => {
-        const score = averageRating(venue.ratings);
+        const score = averageRating(venue);
         return score !== null && score >= 4 && distance(venue) <= 3000;
       })
-      .sort((a, b) => (averageRating(b.ratings) ?? 0) - (averageRating(a.ratings) ?? 0));
+      .sort((a, b) => (averageRating(b) ?? 0) - (averageRating(a) ?? 0));
   }, [filteredVenues, quietNearMe, userLocation]);
 
   const toggleQuietNearMe = async () => {
@@ -217,22 +237,27 @@ export default function MapScreen() {
     setQuietNearMe(true);
   };
 
-  const heatPoints = useMemo(
-    () => visibleVenues.flatMap((venue) => {
-      const score = averageRating(venue.ratings);
+  const mapVenues = useMemo(
+    () => venuesInViewport(visibleVenues, region),
+    [visibleVenues, region]
+  );
+
+  const heatPoints = useMemo(() => {
+    if (!heatmapEnabled || Platform.OS !== 'android') return [];
+    return mapVenues.flatMap((venue) => {
+      const score = averageRating(venue);
       if (score === null) return [];
       return [{
         latitude: Number(venue.lat),
         longitude: Number(venue.lng),
         weight: Math.max(0.2, Math.min(1, (6 - score) / 5)),
       }];
-    }),
-    [visibleVenues]
-  );
+    });
+  }, [heatmapEnabled, mapVenues]);
 
   const clusters = useMemo(
-    () => clusterVenues(visibleVenues, region),
-    [visibleVenues, region]
+    () => clusterVenues(mapVenues, region),
+    [mapVenues, region]
   );
 
   const zoomIntoCluster = (cluster: VenueCluster) => {
@@ -254,7 +279,7 @@ export default function MapScreen() {
     }
     setRatingBusy(true);
     try {
-      const response = await fetch(`${API_URL}/api/venues/${selected.id}/ratings`, {
+      const { response, data } = await apiRequestJson<{ rating: any; error?: string }>('Venue rating submission', `${API_URL}/api/venues/${selected.id}/ratings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -262,18 +287,36 @@ export default function MapScreen() {
         },
         body: JSON.stringify({ score: ratingScore, measured_db: ratingMeasuredDb, had_audio_clip: ratingHasAudio }),
       });
-      const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Could not save rating.');
-      const refreshed = await fetch(`${API_URL}/api/venues`);
-      if (refreshed.ok) {
-        const list: Venue[] = await refreshed.json();
-        const valid = list.filter((venue) =>
-          Number.isFinite(Number(venue.lat)) && Number.isFinite(Number(venue.lng))
-        );
-        setVenues(valid);
-        const updated = valid.find((venue) => venue.id === selected.id);
-        if (updated) setSelected(updated);
-      }
+
+      // The POST response already contains the saved rating. Update the local
+      // map state instead of downloading the entire venue summary again.
+      const saved = data.rating;
+      const newRating: Rating = {
+        id: String(saved.id),
+        score: Number(saved.score),
+        time: saved.time_of_day,
+        measured_db: saved.measured_db == null ? null : Number(saved.measured_db),
+        timestamp: saved.submitted_at ? new Date(saved.submitted_at).getTime() : Date.now(),
+      };
+      const updateVenue = (venue: Venue): Venue => {
+        if (venue.id !== selected.id) return venue;
+        const previousCount = venue.rating_count ?? venue.ratings?.length ?? 0;
+        const previousAverage = Number(venue.average_score);
+        const average = Number.isFinite(previousAverage) && previousCount > 0
+          ? ((previousAverage * previousCount) + newRating.score) / (previousCount + 1)
+          : newRating.score;
+        const ratings = [newRating, ...(venue.ratings ?? [])];
+        return {
+          ...venue,
+          ratings: ratings.slice(0, 3),
+          rating_count: previousCount + 1,
+          average_score: average,
+        };
+      };
+      const updatedSelected = updateVenue(selected);
+      setVenues((current) => current.map(updateVenue));
+      setSelected(updatedSelected);
       setRatingExpanded(false);
       Alert.alert('Rating submitted', 'Your quietness rating has been added.');
     } catch (err) {
@@ -345,8 +388,8 @@ export default function MapScreen() {
           />
         ) : null}
 
-        {heatmapEnabled && Platform.OS !== 'android' ? filteredVenues.map((venue) => {
-          const score = averageRating(venue.ratings);
+        {heatmapEnabled && Platform.OS !== 'android' ? mapVenues.map((venue) => {
+          const score = averageRating(venue);
           if (score === null) return null;
           const weight = Math.max(0.2, Math.min(1, (6 - score) / 5));
           return (
@@ -364,7 +407,7 @@ export default function MapScreen() {
         {clusters.map((cluster) => {
           if (cluster.venues.length === 1) {
             const venue = cluster.venues[0];
-            const score = averageRating(venue.ratings);
+            const score = averageRating(venue);
             return (
               <Marker
                 key={venue.id}
@@ -468,7 +511,7 @@ export default function MapScreen() {
         >
           <View style={styles.sheetHandle} />
           <View style={styles.sheetHeading}>
-            <View style={[styles.soundDot, { backgroundColor: soundColor(averageRating(selected.ratings)) }]} />
+            <View style={[styles.soundDot, { backgroundColor: soundColor(averageRating(selected)) }]} />
             <View style={styles.selectedInfo}>
               <Text style={styles.selectedName}>{selected.name}</Text>
               <Text style={styles.selectedMeta}>{selected.category.toUpperCase()}</Text>
@@ -479,15 +522,15 @@ export default function MapScreen() {
           </View>
           <View style={styles.scoreRow}>
             <Text style={styles.scoreValue}>
-              {averageRating(selected.ratings) === null ? '—' : averageRating(selected.ratings)!.toFixed(1)}
+              {averageRating(selected) === null ? '—' : averageRating(selected)!.toFixed(1)}
             </Text>
             <View style={styles.scoreCaption}>
               <Text style={styles.scoreLabel}>
-                {averageRating(selected.ratings) === null ? 'Not rated yet' :
-                  averageRating(selected.ratings)! >= 4 ? 'Calm / Silent' :
-                  averageRating(selected.ratings)! >= 3 ? 'Moderate' : 'Lively / Loud'}
+                {averageRating(selected) === null ? 'Not rated yet' :
+                  averageRating(selected)! >= 4 ? 'Calm / Silent' :
+                  averageRating(selected)! >= 3 ? 'Moderate' : 'Lively / Loud'}
               </Text>
-              <Text style={styles.sheetMuted}>{selected.ratings?.length ?? 0} community ratings</Text>
+              <Text style={styles.sheetMuted}>{selected.rating_count ?? selected.ratings?.length ?? 0} community ratings</Text>
             </View>
             <View style={styles.facilityPills}>
               <Text style={styles.facilityText}>{selected.access ? '♿ Accessible' : 'Access unknown'}</Text>

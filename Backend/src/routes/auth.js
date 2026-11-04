@@ -27,6 +27,14 @@ function isValidEmail(email) {
 // Sends a fresh OTP by email. Tells the frontend whether this email is new
 // (so it knows to show the name/age/sensitivity fields) or returning.
 router.post('/request-otp', async (req, res) => {
+  const routeStartedAt = Date.now();
+  const stageTimings = {};
+  const recordStage = (name, startedAt) => { stageTimings[name] = Date.now() - startedAt; };
+  const sendTimingHeader = () => {
+    stageTimings.total = Date.now() - routeStartedAt;
+    res.setHeader('Server-Timing', Object.entries(stageTimings).map(([name, duration]) => `${name};dur=${duration}`).join(', '));
+    console.info('[SoundScout perf] OTP request:', Object.entries(stageTimings).map(([name, duration]) => `${name} ${duration}ms`).join('; '));
+  };
   const { email } = req.body;
 
   if (!isValidEmail(email)) {
@@ -41,25 +49,35 @@ router.post('/request-otp', async (req, res) => {
   }
 
   try {
+    let stageStartedAt = Date.now();
     const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    recordStage('user_lookup', stageStartedAt);
     const isNewUser = existingUser.rowCount === 0;
     const purpose = isNewUser ? 'signup' : 'login';
 
     const code = generateOtp();
+    stageStartedAt = Date.now();
     const codeHash = await bcrypt.hash(code, 10);
+    recordStage('bcrypt_hash', stageStartedAt);
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
+    stageStartedAt = Date.now();
     await pool.query(
       `INSERT INTO otp_codes (email, code_hash, purpose, expires_at)
        VALUES ($1, $2, $3, $4)`,
       [email, codeHash, purpose, expiresAt]
     );
+    recordStage('otp_insert', stageStartedAt);
 
+    stageStartedAt = Date.now();
     await sendOtpEmail(email, code, { isNewUser });
+    recordStage('email_send', stageStartedAt);
     lastSentAt.set(cooldownKey, Date.now());
+    sendTimingHeader();
 
     return res.json({ isNewUser, expiresInMinutes: OTP_EXPIRY_MINUTES });
   } catch (err) {
+    sendTimingHeader();
     console.error('request-otp error:', err);
     return res.status(500).json({ error: 'Could not send verification code. Try again shortly.' });
   }

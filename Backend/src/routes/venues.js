@@ -4,6 +4,20 @@ const pool = require('../db');
 
 const router = express.Router();
 
+// Short-lived process-local cache for repeated venue lookups.
+const locationSearchCache = new Map();
+const LOCATION_CACHE_TTL_MS = 5 * 60 * 1000;
+const LOCATION_CACHE_MAX_ENTRIES = 100;
+
+function pruneLocationSearchCache(now) {
+  for (const [key, entry] of locationSearchCache) {
+    if (entry.expiresAt <= now) locationSearchCache.delete(key);
+  }
+  while (locationSearchCache.size > LOCATION_CACHE_MAX_ENTRIES) {
+    locationSearchCache.delete(locationSearchCache.keys().next().value);
+  }
+}
+
 
 // ==========================================
 // Authentication middleware
@@ -109,6 +123,47 @@ router.get('/', async (req, res) => {
 
 
 // ==========================================
+
+/* Lightweight venue summaries for the native map. */
+router.get('/summary', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT v.id, v.name, v.category,
+        ST_Y(v.location::geometry) AS lat,
+        ST_X(v.location::geometry) AS lng,
+        v.access, v.toilet,
+        COALESCE(stats.rating_count, 0)::int AS rating_count,
+        stats.average_score,
+        COALESCE(recent.ratings, '[]'::json) AS ratings
+      FROM venues v
+      LEFT JOIN LATERAL (
+        SELECT COUNT(*) AS rating_count, AVG(r.score)::float AS average_score
+        FROM ratings r
+        WHERE r.venue_id = v.id AND r.deleted_at IS NULL
+      ) stats ON TRUE
+      LEFT JOIN LATERAL (
+        SELECT json_agg(json_build_object(
+          'id', latest.id, 'score', latest.score,
+          'time', latest.time_of_day, 'measured_db', latest.measured_db,
+          'timestamp', EXTRACT(EPOCH FROM latest.submitted_at) * 1000
+        ) ORDER BY latest.submitted_at DESC) AS ratings
+        FROM (
+          SELECT r.id, r.score, r.time_of_day, r.measured_db, r.submitted_at
+          FROM ratings r
+          WHERE r.venue_id = v.id AND r.deleted_at IS NULL
+          ORDER BY r.submitted_at DESC LIMIT 3
+        ) latest
+      ) recent ON TRUE
+      WHERE v.deleted_at IS NULL AND v.approval_status = 'approved'
+      ORDER BY v.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Failed to load venue summaries:', error);
+    res.status(500).json({ error: 'Could not load venue summaries.' });
+  }
+});
+
 // SEARCH LOCATION
 // GET /api/venues/search-location?q=Auroville
 //
@@ -117,59 +172,54 @@ router.get('/', async (req, res) => {
 // ==========================================
 
 router.get('/search-location', async (req, res) => {
-
   const query = String(req.query.q || '').trim();
+  if (query.length < 3) return res.json([]);
 
-  if (query.length < 3) {
-    return res.json([]);
+  const cacheKey = query.toLocaleLowerCase();
+  const now = Date.now();
+  pruneLocationSearchCache(now);
+  const cached = locationSearchCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    console.info('[SoundScout perf] location search: cache hit');
+    res.setHeader('X-SoundScout-Cache', 'HIT');
+    return res.json(cached.results);
   }
 
+  const requestStarted = process.hrtime.bigint();
   try {
-
-    const url =
-      'https://nominatim.openstreetmap.org/search' +
-      '?format=jsonv2' +
-      '&limit=5' +
-      '&q=' + encodeURIComponent(query);
-
+    const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q=' + encodeURIComponent(query);
     const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'SoundScout/1.0'
-      }
+      headers: { 'User-Agent': 'SoundScout/1.0' },
+      signal: AbortSignal.timeout(12000),
     });
-
-    if (!response.ok) {
-      throw new Error(
-        'Nominatim returned HTTP ' + response.status
-      );
-    }
+    if (!response.ok) throw new Error('Nominatim returned HTTP ' + response.status);
 
     const data = await response.json();
+    const results = data.map((place) => ({
+      display_name: place.display_name,
+      lat: parseFloat(place.lat),
+      lng: parseFloat(place.lon),
+    }));
 
-    const results = data.map(function(place) {
-      return {
-        display_name: place.display_name,
-        lat: parseFloat(place.lat),
-        lng: parseFloat(place.lon)
-      };
+    const upstreamMs = Number(process.hrtime.bigint() - requestStarted) / 1e6;
+    locationSearchCache.set(cacheKey, {
+      results,
+      expiresAt: Date.now() + LOCATION_CACHE_TTL_MS,
     });
+    pruneLocationSearchCache(Date.now());
 
-    res.json(results);
-
+    console.info('[SoundScout perf] location search: Nominatim', upstreamMs.toFixed(1), 'ms; results', results.length);
+    res.setHeader('Server-Timing', `nominatim;dur=${upstreamMs.toFixed(1)}`);
+    res.setHeader('X-SoundScout-Cache', 'MISS');
+    return res.json(results);
   } catch (error) {
-
-    console.error('Location search failed:', error);
-
-    res.status(500).json({
-      error: 'Location search failed.'
+    console.error('[SoundScout perf] location search failed:', error.message);
+    return res.status(error.name === 'TimeoutError' ? 504 : 502).json({
+      error: error.name === 'TimeoutError' ? 'Location search timed out. Please try again.' : 'Location search failed.',
     });
-
   }
-
 });
 
-
-// ==========================================
 // CREATE VENUE
 // POST /api/venues
 //
@@ -596,5 +646,32 @@ function getCurrentTimeBucket() {
 
 }
 
+
+
+/* Full rating history is loaded only when a user opens a venue. */
+router.get('/:id', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT v.id, v.name, v.category,
+        ST_Y(v.location::geometry) AS lat,
+        ST_X(v.location::geometry) AS lng,
+        v.access, v.toilet,
+        COALESCE(json_agg(json_build_object(
+          'id', r.id, 'score', r.score, 'time', r.time_of_day,
+          'measured_db', r.measured_db,
+          'timestamp', EXTRACT(EPOCH FROM r.submitted_at) * 1000
+        ) ORDER BY r.submitted_at DESC) FILTER (WHERE r.id IS NOT NULL), '[]'::json) AS ratings
+      FROM venues v
+      LEFT JOIN ratings r ON r.venue_id = v.id AND r.deleted_at IS NULL
+      WHERE v.id = $1 AND v.deleted_at IS NULL AND v.approval_status = 'approved'
+      GROUP BY v.id, v.name, v.category, v.location, v.access, v.toilet
+    `, [req.params.id]);
+    if (!result.rowCount) return res.status(404).json({ error: 'Venue not found.' });
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Failed to load venue:', error);
+    res.status(500).json({ error: 'Could not load venue.' });
+  }
+});
 
 module.exports = router;

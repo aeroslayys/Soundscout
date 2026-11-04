@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { API_URL } from '@/constants/api';
+import { apiRequestJson } from '@/utils/api';
 
 type Rating = {
   id: string;
@@ -132,13 +133,12 @@ export default function HomeScreen() {
     try {
       setError('');
 
-      const response = await fetch(`${API_URL}/api/venues`);
+      const { response, data } = await apiRequestJson<Venue[]>('Home venue list', `${API_URL}/api/venues`);
 
       if (!response.ok) {
         throw new Error(`Server returned HTTP ${response.status}`);
       }
 
-      const data: Venue[] = await response.json();
       setVenues(data);
     } catch (err) {
       setError(

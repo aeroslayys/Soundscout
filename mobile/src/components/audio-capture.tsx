@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import { RecordingPresets, requestRecordingPermissionsAsync, setAudioModeAsync, useAudioRecorder, useAudioRecorderState } from 'expo-audio';
-import * as FileSystem from 'expo-file-system/legacy';
+import { File, UploadType } from 'expo-file-system';
+import * as LegacyFileSystem from 'expo-file-system/legacy';
 import { API_URL } from '@/constants/api';
 const C = { surface:'#252830', text:'#F4F4F5', muted:'#92959F', accent:'#B8F36B', danger:'#FF7474' };
 export default function AudioCapture({ onAnalyzed }: { onAnalyzed: (db:number, score:number) => void }) {
@@ -15,16 +16,65 @@ export default function AudioCapture({ onAnalyzed }: { onAnalyzed: (db:number, s
     if (finishing.current || !state.isRecording) return;
     finishing.current = true;
     try {
+      const stopStartedAt = Date.now();
       await recorder.stop();
+      console.info('[SoundScout perf] audio recorder stop:', Date.now() - stopStartedAt, 'ms');
       if (Date.now() - startedAt < 5000) { setMessage('Recording too short. Record for at least 5 seconds.'); return; }
       const uri = recorder.uri;
       if (!uri) throw new Error('Recording file was not created.');
+      const fileInfo = await LegacyFileSystem.getInfoAsync(uri);
+      console.info('[SoundScout perf] audio file size:', fileInfo.exists && 'size' in fileInfo ? fileInfo.size : 'unknown', 'bytes');
       setBusy(true); setMessage('Analyzing ambient sound…');
-      const response = await FileSystem.uploadAsync(API_URL + '/api/audio/analyze', uri, {
-        httpMethod:'POST', uploadType:FileSystem.FileSystemUploadType.MULTIPART,
-        fieldName:'clip', mimeType:'audio/mp4',
+      const uploadStartedAt = Date.now();
+      let firstUploadProgressAt: number | null = null;
+      let lastUploadProgressAt: number | null = null;
+      const uploadFile = new File(uri);
+      const uploadTask = uploadFile.createUploadTask(API_URL + '/api/audio/analyze', {
+        httpMethod: 'POST',
+        uploadType: UploadType.MULTIPART,
+        fieldName: 'clip',
+        mimeType: 'audio/mp4',
+        onProgress: ({ bytesSent, totalBytes }) => {
+          const now = Date.now();
+          if (firstUploadProgressAt === null) firstUploadProgressAt = now;
+          lastUploadProgressAt = now;
+          const percent = totalBytes > 0 ? Math.round((bytesSent / totalBytes) * 100) : 0;
+          console.info(
+            '[SoundScout perf] audio upload progress:',
+            percent + '%;',
+            bytesSent,
+            '/',
+            totalBytes,
+            'bytes'
+          );
+        },
       });
+
+      let response;
+      try {
+        response = await uploadTask.uploadAsync();
+      } finally {
+        uploadTask.release();
+      }
+
+      const uploadFinishedAt = Date.now();
+      console.info(
+        '[SoundScout perf] audio upload + server response:',
+        uploadFinishedAt - uploadStartedAt,
+        'ms; HTTP',
+        response.status
+      );
+      console.info(
+        '[SoundScout perf] audio upload progress timing:',
+        firstUploadProgressAt === null ? 'no progress callback' : (firstUploadProgressAt - uploadStartedAt) + ' ms to first progress',
+        '; last progress',
+        lastUploadProgressAt === null ? 'not available' : (lastUploadProgressAt - uploadStartedAt) + ' ms'
+      );
+      const serverTiming = Object.entries(response.headers || {}).find(([name]) => name.toLowerCase() === 'server-timing')?.[1];
+      console.info('[SoundScout perf] audio server timing:', serverTiming || 'not provided');
+      const parseStartedAt = Date.now();
       const data = JSON.parse(response.body);
+      console.info('[SoundScout perf] audio response parse:', Date.now() - parseStartedAt, 'ms');
       if (response.status < 200 || response.status >= 300) throw new Error(data.error || 'Audio analysis failed.');
       onAnalyzed(Number(data.mean_volume_dbfs),Number(data.suggested_score));
       setMessage('Measured ' + Number(data.mean_volume_dbfs).toFixed(1) + ' dBFS · suggested ' + data.suggested_score + '/5. Audio is not stored.');
