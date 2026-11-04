@@ -30,6 +30,7 @@ export default function AudioCapture({ onAnalyzed }: { onAnalyzed: (db:number, s
         fieldName:'clip', mimeType:'audio/mp4',
       });
       console.info('[SoundScout perf] audio upload + server response:', Date.now() - uploadStartedAt, 'ms; HTTP', response.status);
+      console.info('[SoundScout perf] audio server timing:', response.headers?.['server-timing'] || 'not provided');
       const parseStartedAt = Date.now();
       const data = JSON.parse(response.body);
       console.info('[SoundScout perf] audio response parse:', Date.now() - parseStartedAt, 'ms');
