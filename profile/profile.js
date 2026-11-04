@@ -113,6 +113,49 @@
     window.location.href = LOGIN_PAGE_URL;
   });
 
+  var announcementPreference = document.getElementById("announcementPreference");
+  var announcementPreferenceStatus = document.getElementById("announcementPreferenceStatus");
+  fetch(API_BASE + "/users/me/preferences", {
+    headers: { "Authorization": "Bearer " + token }
+  }).then(function(response) {
+    if (!response.ok) throw new Error("Could not load email preferences.");
+    return response.json();
+  }).then(function(data) {
+    announcementPreference.checked = data.announcementOptIn === true;
+  }).catch(function(error) {
+    announcementPreferenceStatus.textContent = error.message;
+  });
+
+  announcementPreference.addEventListener("change", function() {
+    var subscribed = announcementPreference.checked;
+    announcementPreference.disabled = true;
+    announcementPreferenceStatus.textContent = "Saving…";
+    fetch(API_BASE + "/users/me/preferences/announcements", {
+      method: "PATCH",
+      headers: {
+        "Authorization": "Bearer " + token,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ subscribed: subscribed })
+    }).then(function(response) {
+      return response.json().then(function(data) {
+        if (!response.ok) throw new Error(data.error || "Could not update email preferences.");
+        return data;
+      });
+    }).then(function(data) {
+      announcementPreference.checked = data.announcementOptIn === true;
+      announcementPreferenceStatus.textContent = data.announcementOptIn
+        ? "You're subscribed to SoundScout product updates."
+        : "You're unsubscribed from product updates.";
+    }).catch(function(error) {
+      announcementPreference.checked = !subscribed;
+      announcementPreferenceStatus.textContent = error.message;
+    }).finally(function() {
+      announcementPreference.disabled = false;
+    });
+  });
+
+
   // ==========================================
 // Load venues created by this user
 // ==========================================
