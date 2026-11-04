@@ -151,33 +151,6 @@ router.get('/summary', async (req, res) => {
   }
 });
 
-/* Full rating history is loaded only for an opened venue. */
-router.get('/:id', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT v.id, v.name, v.category,
-        ST_Y(v.location::geometry) AS lat,
-        ST_X(v.location::geometry) AS lng,
-        v.access, v.toilet,
-        COALESCE(json_agg(json_build_object(
-          'id', r.id, 'score', r.score, 'time', r.time_of_day,
-          'measured_db', r.measured_db,
-          'timestamp', EXTRACT(EPOCH FROM r.submitted_at) * 1000
-        ) ORDER BY r.submitted_at DESC) FILTER (WHERE r.id IS NOT NULL), '[]'::json) AS ratings
-      FROM venues v
-      LEFT JOIN ratings r ON r.venue_id = v.id AND r.deleted_at IS NULL
-      WHERE v.id = $1 AND v.deleted_at IS NULL AND v.approval_status = 'approved'
-      GROUP BY v.id, v.name, v.category, v.location, v.access, v.toilet
-    `, [req.params.id]);
-    if (!result.rowCount) return res.status(404).json({ error: 'Venue not found.' });
-    res.set('Cache-Control', 'public, max-age=15, stale-while-revalidate=60');
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('Failed to load venue:', error);
-    res.status(500).json({ error: 'Could not load venue.' });
-  }
-});
-
 // SEARCH LOCATION
 // GET /api/venues/search-location?q=Auroville
 //
@@ -664,6 +637,34 @@ function getCurrentTimeBucket() {
   return 'night';
 
 }
+
+
+/* Full rating history is loaded only for an opened venue. */
+router.get('/:id', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT v.id, v.name, v.category,
+        ST_Y(v.location::geometry) AS lat,
+        ST_X(v.location::geometry) AS lng,
+        v.access, v.toilet,
+        COALESCE(json_agg(json_build_object(
+          'id', r.id, 'score', r.score, 'time', r.time_of_day,
+          'measured_db', r.measured_db,
+          'timestamp', EXTRACT(EPOCH FROM r.submitted_at) * 1000
+        ) ORDER BY r.submitted_at DESC) FILTER (WHERE r.id IS NOT NULL), '[]'::json) AS ratings
+      FROM venues v
+      LEFT JOIN ratings r ON r.venue_id = v.id AND r.deleted_at IS NULL
+      WHERE v.id = $1 AND v.deleted_at IS NULL AND v.approval_status = 'approved'
+      GROUP BY v.id, v.name, v.category, v.location, v.access, v.toilet
+    `, [req.params.id]);
+    if (!result.rowCount) return res.status(404).json({ error: 'Venue not found.' });
+    res.set('Cache-Control', 'public, max-age=15, stale-while-revalidate=60');
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Failed to load venue:', error);
+    res.status(500).json({ error: 'Could not load venue.' });
+  }
+});
 
 
 module.exports = router;
