@@ -30,7 +30,8 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
       ],
-      "package": "com.soundscout.mobile"
+      "package": "com.soundscout.mobile",
+      "runtimeVersion": "1.0.0"
     },
     "web": {
       "output": "static",
@@ -67,6 +68,14 @@
       },
       "eas": {
         "projectId": "066ded37-d9d2-42e1-8495-741741039e20"
+      }
+    },
+    "updates": {
+      "url": "https://u.expo.dev/066ded37-d9d2-42e1-8495-741741039e20",
+      "enabled": true,
+      "checkAutomatically": "ON_LOAD",
+      "requestHeaders": {
+        "expo-channel-name": "production"
       }
     }
   }
