@@ -39,4 +39,35 @@ async function sendOtpEmail(toEmail, code, { isNewUser }) {
   });
 }
 
-module.exports = { sendOtpEmail };
+
+function escapeHtml(value) {
+  return String(value == null ? '' : value)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+}
+
+async function sendAnnouncementEmail(toEmail, { subject, body, unsubscribeUrl }) {
+  const safeBody = escapeHtml(body).replace(/\r?\n/g, '<br>');
+  const safeUrl = escapeHtml(unsubscribeUrl);
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;color:#202B29">
+      <h2 style="margin:0 0 20px;color:#1E3937">SoundScout</h2>
+      <div style="font-size:15px;line-height:1.7">${safeBody}</div>
+      <hr style="border:0;border-top:1px solid #e5e9e7;margin:28px 0 16px">
+      <p style="font-size:12px;color:#71807b">You're receiving product updates because you opted in to SoundScout announcements.
+        <a href="${safeUrl}" style="color:#356b5d">Unsubscribe</a>
+      </p>
+    </div>
+  `;
+  const text = body + '\n\n---\nYou are receiving SoundScout product updates because you opted in. Unsubscribe: ' + unsubscribeUrl;
+  await transport.sendMail({
+    from: `"${fromName}" <${fromEmail}>`,
+    to: toEmail,
+    subject,
+    text,
+    html,
+    headers: { 'List-Unsubscribe': `<${unsubscribeUrl}>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' },
+  });
+}
+
+module.exports = { sendOtpEmail, sendAnnouncementEmail };
