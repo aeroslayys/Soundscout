@@ -24,7 +24,7 @@ export default function WelcomeScreen() {
 
         <View style={s.hero}>
           <Text style={s.eyebrow}>SOUND-AWARE PLACES</Text>
-          <Text style={s.title}>Know the sound{ '\\n' }before you go.</Text>
+          <Text style={s.title}>Know the sound{ '\n' }before you go.</Text>
           <Text style={s.subtitle}>
             Explore sound environments, share what you experience, and make more informed decisions about where to go.
           </Text>
