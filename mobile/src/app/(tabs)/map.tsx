@@ -289,16 +289,31 @@ export default function MapScreen() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Could not save rating.');
-      const refreshed = await fetch(`${API_URL}/api/venues/summary`);
-      if (refreshed.ok) {
-        const list: Venue[] = await refreshed.json();
-        const valid = list.filter((venue) =>
-          Number.isFinite(Number(venue.lat)) && Number.isFinite(Number(venue.lng))
-        );
-        setVenues(valid);
-        const updated = valid.find((venue) => venue.id === selected.id);
-        if (updated) setSelected(updated);
-      }
+
+      // The POST response already contains the saved rating. Update the local
+      // map state instead of downloading the entire venue summary again.
+      const saved = data.rating;
+      const newRating: Rating = {
+        id: String(saved.id),
+        score: Number(saved.score),
+        time: saved.time_of_day,
+        measured_db: saved.measured_db == null ? null : Number(saved.measured_db),
+        timestamp: saved.submitted_at ? new Date(saved.submitted_at).getTime() : Date.now(),
+      };
+      const updateVenue = (venue: Venue): Venue => {
+        if (venue.id !== selected.id) return venue;
+        const ratings = [newRating, ...(venue.ratings ?? [])];
+        const average = ratings.reduce((sum, rating) => sum + Number(rating.score), 0) / ratings.length;
+        return {
+          ...venue,
+          ratings: ratings.slice(0, 3),
+          rating_count: (venue.rating_count ?? venue.ratings?.length ?? 0) + 1,
+          average_score: average,
+        };
+      };
+      const updatedSelected = updateVenue(selected);
+      setVenues((current) => current.map(updateVenue));
+      setSelected(updatedSelected);
       setRatingExpanded(false);
       Alert.alert('Rating submitted', 'Your quietness rating has been added.');
     } catch (err) {
