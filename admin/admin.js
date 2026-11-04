@@ -388,8 +388,14 @@ async function setUserSuspension(id, suspended) {
 async function loadAnnouncements() {
   try {
     const data = await api("/admin/announcements/recipients");
-    document.getElementById("announcementRecipientCount").textContent = (Number(data.recipients) || 0) + " opted-in recipients";
-    document.getElementById("sendAnnouncementBtn").disabled = !Number(data.recipients);
+    const includeNonOptedIn = document.getElementById("announcementIncludeNonOptedIn").checked;
+    const optedIn = Number(data.recipients) || 0;
+    const eligible = Number(data.oneTimeEligible) || 0;
+    const count = includeNonOptedIn ? eligible : optedIn;
+    document.getElementById("announcementRecipientCount").textContent = includeNonOptedIn
+      ? count + " eligible recipients (all active users who haven't unsubscribed)"
+      : optedIn + " opted-in recipients";
+    document.getElementById("sendAnnouncementBtn").disabled = !count;
     const history = await api("/admin/announcements/history");
     const items = history.items || [];
     document.getElementById("announcementHistory").innerHTML = items.length ? items.map(function (item) {
@@ -412,12 +418,17 @@ async function publishUpdate() {
   const subject = document.getElementById("announcementSubject").value.trim();
   const body = document.getElementById("announcementBody").value.trim();
   if (subject.length < 3 || body.length < 10) return showToast("Add a subject and message first.", true);
-  if (!window.confirm("Publish this update to " + document.getElementById("announcementRecipientCount").textContent + "?")) return;
+  const includeNonOptedIn = document.getElementById("announcementIncludeNonOptedIn").checked;
+  const audienceDescription = document.getElementById("announcementRecipientCount").textContent;
+  const confirmation = includeNonOptedIn
+    ? "This is a ONE-TIME broad announcement to " + audienceDescription + ". People who previously unsubscribed and suspended accounts are excluded. Continue?"
+    : "Publish this update to " + audienceDescription + "?";
+  if (!window.confirm(confirmation)) return;
   const button = document.getElementById("sendAnnouncementBtn");
   button.disabled = true;
   button.textContent = "Sending…";
   try {
-    const result = await api("/admin/announcements", { method: "POST", body: { subject: subject, body: body } });
+    const result = await api("/admin/announcements", { method: "POST", body: { subject: subject, body: body, includeNonOptedIn: includeNonOptedIn } });
     showToast(result.sent + " delivered, " + result.failed + " failed.");
     document.getElementById("announcementSubject").value = "";
     document.getElementById("announcementBody").value = "";
@@ -427,6 +438,7 @@ async function publishUpdate() {
   button.textContent = "Send announcement";
 }
 document.getElementById("refreshAnnouncementCount").addEventListener("click", loadAnnouncements);
+document.getElementById("announcementIncludeNonOptedIn").addEventListener("change", loadAnnouncements);
 document.getElementById("refreshAnnouncementHistory").addEventListener("click", loadAnnouncements);
 document.getElementById("announcementSubject").addEventListener("input", updateAnnouncementPreview);
 document.getElementById("announcementBody").addEventListener("input", updateAnnouncementPreview);
