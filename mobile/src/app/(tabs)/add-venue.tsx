@@ -34,7 +34,6 @@ export default function AddVenueScreen() {
   const searchLocation = async () => {
     if (query.trim().length < 3) return;
     setSearching(true); setSuggestions([]); setStatus('');
-    const searchStartedAt = Date.now();
     try {
       const { response: res, data } = await apiRequestJson<any[]>('Location search', `${API_URL}/api/venues/search-location?q=${encodeURIComponent(query.trim())}`);
       console.info('[SoundScout perf] location search results:', Array.isArray(data) ? data.length : 'invalid');
@@ -51,7 +50,6 @@ export default function AddVenueScreen() {
     if (!locationConfirmed) return Alert.alert('Location required','Search for the venue, then tap the map or drag the pin to confirm its exact location.');
     if (measuredDb === null && score < 1) return;
     setSubmitting(true);
-    const submitStartedAt = Date.now();
     try {
       const { response: res, data } = await apiRequestJson<{ error?: string }>('Add venue submission', `${API_URL}/api/venues`, {
         method:'POST',
