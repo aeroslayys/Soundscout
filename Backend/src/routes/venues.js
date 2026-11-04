@@ -4,6 +4,21 @@ const pool = require('../db');
 
 const router = express.Router();
 
+// Short-lived process-local cache for repeated venue lookups.
+const locationSearchCache = new Map();
+const LOCATION_CACHE_TTL_MS = 5 * 60 * 1000;
+const LOCATION_CACHE_MAX_ENTRIES = 100;
+
+function pruneLocationSearchCache(now) {
+  for (const [key, entry] of locationSearchCache) {
+    if (entry.expiresAt <= now) locationSearchCache.delete(key);
+  }
+  while (locationSearchCache.size > LOCATION_CACHE_MAX_ENTRIES) {
+    locationSearchCache.delete(locationSearchCache.keys().next().value);
+  }
+}
+
+
 
 // ==========================================
 // Authentication middleware
@@ -158,59 +173,54 @@ router.get('/summary', async (req, res) => {
 // ==========================================
 
 router.get('/search-location', async (req, res) => {
-
   const query = String(req.query.q || '').trim();
+  if (query.length < 3) return res.json([]);
 
-  if (query.length < 3) {
-    return res.json([]);
+  const cacheKey = query.toLocaleLowerCase();
+  const now = Date.now();
+  pruneLocationSearchCache(now);
+  const cached = locationSearchCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    console.info('[SoundScout perf] location search: cache hit');
+    res.setHeader('X-SoundScout-Cache', 'HIT');
+    return res.json(cached.results);
   }
 
+  const requestStarted = process.hrtime.bigint();
   try {
-
-    const url =
-      'https://nominatim.openstreetmap.org/search' +
-      '?format=jsonv2' +
-      '&limit=5' +
-      '&q=' + encodeURIComponent(query);
-
+    const url = 'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&q=' + encodeURIComponent(query);
     const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'SoundScout/1.0'
-      }
+      headers: { 'User-Agent': 'SoundScout/1.0' },
+      signal: AbortSignal.timeout(12000),
     });
-
-    if (!response.ok) {
-      throw new Error(
-        'Nominatim returned HTTP ' + response.status
-      );
-    }
+    if (!response.ok) throw new Error('Nominatim returned HTTP ' + response.status);
 
     const data = await response.json();
+    const results = data.map((place) => ({
+      display_name: place.display_name,
+      lat: parseFloat(place.lat),
+      lng: parseFloat(place.lon),
+    }));
 
-    const results = data.map(function(place) {
-      return {
-        display_name: place.display_name,
-        lat: parseFloat(place.lat),
-        lng: parseFloat(place.lon)
-      };
+    const upstreamMs = Number(process.hrtime.bigint() - requestStarted) / 1e6;
+    locationSearchCache.set(cacheKey, {
+      results,
+      expiresAt: Date.now() + LOCATION_CACHE_TTL_MS,
     });
+    pruneLocationSearchCache(Date.now());
 
-    res.json(results);
-
+    console.info('[SoundScout perf] location search: Nominatim', upstreamMs.toFixed(1), 'ms; results', results.length);
+    res.setHeader('Server-Timing', `nominatim;dur=${upstreamMs.toFixed(1)}`);
+    res.setHeader('X-SoundScout-Cache', 'MISS');
+    return res.json(results);
   } catch (error) {
-
-    console.error('Location search failed:', error);
-
-    res.status(500).json({
-      error: 'Location search failed.'
+    console.error('[SoundScout perf] location search failed:', error.message);
+    return res.status(error.name === 'TimeoutError' ? 504 : 502).json({
+      error: error.name === 'TimeoutError' ? 'Location search timed out. Please try again.' : 'Location search failed.',
     });
-
   }
-
 });
 
-
-// ==========================================
 // CREATE VENUE
 // POST /api/venues
 //
