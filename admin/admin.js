@@ -384,6 +384,54 @@ async function setUserSuspension(id, suspended) {
   } catch (err) { showToast(err.message, true); }
 }
 
+
+async function loadAnnouncements() {
+  try {
+    const data = await api("/admin/announcements/recipients");
+    document.getElementById("announcementRecipientCount").textContent = (Number(data.recipients) || 0) + " opted-in recipients";
+    document.getElementById("sendAnnouncementBtn").disabled = !Number(data.recipients);
+    const history = await api("/admin/announcements/history");
+    const items = history.items || [];
+    document.getElementById("announcementHistory").innerHTML = items.length ? items.map(function (item) {
+      return '<article class="record-row"><div class="record-main"><strong>' + escapeHtml(item.subject) + '</strong><p>' +
+        escapeHtml(formatDate(item.completed_at || item.created_at)) + '</p><p>' + escapeHtml(item.sent) +
+        ' sent · ' + escapeHtml(item.failed) + ' failed</p></div></article>';
+    }).join("") : '<p class="empty-state">No announcements yet.</p>';
+  } catch (err) {
+    document.getElementById("announcementRecipientCount").textContent = err.message;
+    document.getElementById("announcementHistory").textContent = err.message;
+    document.getElementById("sendAnnouncementBtn").disabled = true;
+  }
+}
+function updateAnnouncementPreview() {
+  document.getElementById("announcementPreview").textContent =
+    (document.getElementById("announcementSubject").value || "Email subject") + "\n\n" +
+    (document.getElementById("announcementBody").value || "Your preview will appear here.");
+}
+async function publishUpdate() {
+  const subject = document.getElementById("announcementSubject").value.trim();
+  const body = document.getElementById("announcementBody").value.trim();
+  if (subject.length < 3 || body.length < 10) return showToast("Add a subject and message first.", true);
+  if (!window.confirm("Publish this update to " + document.getElementById("announcementRecipientCount").textContent + "?")) return;
+  const button = document.getElementById("sendAnnouncementBtn");
+  button.disabled = true;
+  button.textContent = "Sending…";
+  try {
+    const result = await api("/admin/announcements", { method: "POST", body: { subject: subject, body: body } });
+    showToast(result.sent + " delivered, " + result.failed + " failed.");
+    document.getElementById("announcementSubject").value = "";
+    document.getElementById("announcementBody").value = "";
+    updateAnnouncementPreview();
+  } catch (err) { showToast(err.message, true); }
+  await loadAnnouncements();
+  button.textContent = "Send announcement";
+}
+document.getElementById("refreshAnnouncementCount").addEventListener("click", loadAnnouncements);
+document.getElementById("refreshAnnouncementHistory").addEventListener("click", loadAnnouncements);
+document.getElementById("announcementSubject").addEventListener("input", updateAnnouncementPreview);
+document.getElementById("announcementBody").addEventListener("input", updateAnnouncementPreview);
+document.getElementById("sendAnnouncementBtn").addEventListener("click", publishUpdate);
+
 async function loadAudit() {
   showLoading("auditList", "Loading audit log…");
   const search = document.getElementById("auditSearch").value.trim();
