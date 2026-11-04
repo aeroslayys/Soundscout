@@ -37,6 +37,8 @@ type Venue = {
   access?: boolean;
   toilet?: boolean;
   ratings?: Rating[];
+  average_score?: number | null;
+  rating_count?: number;
 };
 
 const COLORS = {
@@ -63,7 +65,9 @@ const HEAT_GRADIENT = {
   colorMapSize: 256,
 };
 
-function averageRating(ratings: Rating[] = []) {
+function averageRating(venue: Venue) {
+  if (venue.average_score != null && Number.isFinite(Number(venue.average_score))) return Number(venue.average_score);
+  const ratings = venue.ratings ?? [];
   if (!ratings.length) return null;
   return ratings.reduce((sum, rating) => sum + Number(rating.score), 0) / ratings.length;
 }
@@ -151,7 +155,7 @@ export default function MapScreen() {
   const fetchVenues = useCallback(async () => {
     try {
       setError('');
-      const response = await fetch(`${API_URL}/api/venues`);
+      const response = await fetch(`${API_URL}/api/venues/summary`);
       if (!response.ok) throw new Error(`Server returned HTTP ${response.status}`);
       const data: Venue[] = await response.json();
       setVenues(data.filter((venue) =>
@@ -191,10 +195,10 @@ export default function MapScreen() {
     };
     return filteredVenues
       .filter((venue) => {
-        const score = averageRating(venue.ratings);
+        const score = averageRating(venue);
         return score !== null && score >= 4 && distance(venue) <= 3000;
       })
-      .sort((a, b) => (averageRating(b.ratings) ?? 0) - (averageRating(a.ratings) ?? 0));
+      .sort((a, b) => (averageRating(b) ?? 0) - (averageRating(a) ?? 0));
   }, [filteredVenues, quietNearMe, userLocation]);
 
   const toggleQuietNearMe = async () => {
@@ -219,7 +223,7 @@ export default function MapScreen() {
 
   const heatPoints = useMemo(
     () => visibleVenues.flatMap((venue) => {
-      const score = averageRating(venue.ratings);
+      const score = averageRating(venue);
       if (score === null) return [];
       return [{
         latitude: Number(venue.lat),
@@ -264,7 +268,7 @@ export default function MapScreen() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Could not save rating.');
-      const refreshed = await fetch(`${API_URL}/api/venues`);
+      const refreshed = await fetch(`${API_URL}/api/venues/summary`);
       if (refreshed.ok) {
         const list: Venue[] = await refreshed.json();
         const valid = list.filter((venue) =>
@@ -346,7 +350,7 @@ export default function MapScreen() {
         ) : null}
 
         {heatmapEnabled && Platform.OS !== 'android' ? filteredVenues.map((venue) => {
-          const score = averageRating(venue.ratings);
+          const score = averageRating(venue);
           if (score === null) return null;
           const weight = Math.max(0.2, Math.min(1, (6 - score) / 5));
           return (
@@ -364,7 +368,7 @@ export default function MapScreen() {
         {clusters.map((cluster) => {
           if (cluster.venues.length === 1) {
             const venue = cluster.venues[0];
-            const score = averageRating(venue.ratings);
+            const score = averageRating(venue);
             return (
               <Marker
                 key={venue.id}
@@ -468,7 +472,7 @@ export default function MapScreen() {
         >
           <View style={styles.sheetHandle} />
           <View style={styles.sheetHeading}>
-            <View style={[styles.soundDot, { backgroundColor: soundColor(averageRating(selected.ratings)) }]} />
+            <View style={[styles.soundDot, { backgroundColor: soundColor(averageRating(selected)) }]} />
             <View style={styles.selectedInfo}>
               <Text style={styles.selectedName}>{selected.name}</Text>
               <Text style={styles.selectedMeta}>{selected.category.toUpperCase()}</Text>
@@ -479,15 +483,15 @@ export default function MapScreen() {
           </View>
           <View style={styles.scoreRow}>
             <Text style={styles.scoreValue}>
-              {averageRating(selected.ratings) === null ? '—' : averageRating(selected.ratings)!.toFixed(1)}
+              {averageRating(selected) === null ? '—' : averageRating(selected)!.toFixed(1)}
             </Text>
             <View style={styles.scoreCaption}>
               <Text style={styles.scoreLabel}>
-                {averageRating(selected.ratings) === null ? 'Not rated yet' :
-                  averageRating(selected.ratings)! >= 4 ? 'Calm / Silent' :
-                  averageRating(selected.ratings)! >= 3 ? 'Moderate' : 'Lively / Loud'}
+                {averageRating(selected) === null ? 'Not rated yet' :
+                  averageRating(selected)! >= 4 ? 'Calm / Silent' :
+                  averageRating(selected)! >= 3 ? 'Moderate' : 'Lively / Loud'}
               </Text>
-              <Text style={styles.sheetMuted}>{selected.ratings?.length ?? 0} community ratings</Text>
+              <Text style={styles.sheetMuted}>{selected.rating_count ?? selected.ratings?.length ?? 0} community ratings</Text>
             </View>
             <View style={styles.facilityPills}>
               <Text style={styles.facilityText}>{selected.access ? '♿ Accessible' : 'Access unknown'}</Text>
