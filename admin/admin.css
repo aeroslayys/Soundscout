@@ -1212,3 +1212,17 @@ input::placeholder,textarea::placeholder{color:#777C87;}
 .admin-brand h1,.panel-heading h2,.section-card h3{font-family:'Inter',sans-serif;font-weight:800;letter-spacing:-.035em;}
 .admin-user button,.nav-tab,.secondary-btn{color:var(--ink-soft);}
 .admin-user button:hover,.secondary-btn:hover{border-color:var(--quiet);color:var(--quiet);}
+
+
+/* Email announcements */
+.announcement-composer input,.announcement-composer textarea{
+  display:block;width:100%;box-sizing:border-box;margin:7px 0 16px;padding:12px;
+  border:1px solid var(--border-strong);border-radius:9px;background:var(--surface);
+  color:var(--ink);font:13px 'Inter',sans-serif;
+}
+.announcement-composer textarea{resize:vertical;line-height:1.6;min-height:180px;}
+.announcement-preview{border:1px solid var(--border);border-radius:10px;padding:15px;margin:12px 0 18px;background:var(--bg);font-size:12px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere;}
+.announcement-preview>strong{display:block;margin-bottom:8px;color:var(--muted);font:10px 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.08em;}
+.announcement-preview #announcementPreview{color:var(--ink-soft);}
+.announcement-consent{display:flex;align-items:flex-start;gap:9px;margin-top:16px;color:var(--muted);font-size:11px;line-height:1.5;}
+.announcement-consent input{margin-top:2px;accent-color:var(--quiet);}
