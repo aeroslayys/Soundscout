@@ -1,5 +1,6 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const pool = require('../db');
 
 const router = express.Router();
@@ -195,5 +196,40 @@ router.get(
 
   }
 );
+
+
+router.get('/me/preferences', requireAuth, async (req, res) => {
+  try {
+    const result = await pool.query('SELECT announcement_opt_in FROM users WHERE id = $1', [req.userId]);
+    if (!result.rowCount) return res.status(404).json({ error: 'Account not found.' });
+    res.json({ announcementOptIn: result.rows[0].announcement_opt_in });
+  } catch (err) {
+    console.error('User preference fetch error:', err);
+    res.status(500).json({ error: 'Could not load email preferences.' });
+  }
+});
+
+router.patch('/me/preferences/announcements', requireAuth, async (req, res) => {
+  if (typeof req.body?.subscribed !== 'boolean') {
+    return res.status(400).json({ error: 'A subscribed boolean is required.' });
+  }
+  try {
+    const token = crypto.randomBytes(32).toString('hex');
+    const result = await pool.query(
+      `UPDATE users
+       SET announcement_opt_in = $2,
+           announcement_unsubscribed_at = CASE WHEN $2 THEN NULL ELSE NOW() END,
+           announcement_unsubscribe_token = CASE WHEN $2 AND announcement_unsubscribe_token IS NULL THEN $3 ELSE announcement_unsubscribe_token END
+       WHERE id = $1
+       RETURNING announcement_opt_in`,
+      [req.userId, req.body.subscribed, token]
+    );
+    if (!result.rowCount) return res.status(404).json({ error: 'Account not found.' });
+    res.json({ announcementOptIn: result.rows[0].announcement_opt_in });
+  } catch (err) {
+    console.error('User preference update error:', err);
+    res.status(500).json({ error: 'Could not update email preferences.' });
+  }
+});
 
 module.exports = router;
