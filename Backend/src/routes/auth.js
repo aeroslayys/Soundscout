@@ -112,11 +112,15 @@ router.post('/verify-otp', async (req, res) => {
         return res.status(400).json({ error: 'Sensitivity must be between 1 and 5.' });
       }
 
+      const signupPlatformHeader = String(req.get('X-SoundScout-Platform') || '').toLowerCase();
+      const signupPlatform = ['web', 'android'].includes(signupPlatformHeader) ? signupPlatformHeader : 'unknown';
+      const announcementOptIn = req.body.announcementOptIn === true;
+      const unsubscribeToken = crypto.randomBytes(32).toString('hex');
       const created = await pool.query(
-        `INSERT INTO users (email, name, age, sensitivity)
-         VALUES ($1, $2, $3, $4)
-         RETURNING id, email, name, age, sensitivity`,
-        [email, name, age, sensitivity]
+        `INSERT INTO users (email, name, age, sensitivity, signup_platform, announcement_opt_in, announcement_unsubscribe_token)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING id, email, name, age, sensitivity, signup_platform, announcement_opt_in`,
+        [email, name, age, sensitivity, signupPlatform, announcementOptIn, unsubscribeToken]
       );
       user = created.rows[0];
     }
@@ -150,6 +154,22 @@ const token = jwt.sign(
   } catch (err) {
     console.error('verify-otp error:', err);
     return res.status(500).json({ error: 'Could not verify code. Try again.' });
+  }
+});
+
+router.get('/unsubscribe/:token', async (req, res) => {
+  const token = String(req.params.token || '');
+  if (!/^[a-f0-9]{64}$/i.test(token)) return res.status(400).send('Invalid unsubscribe link.');
+  try {
+    const result = await pool.query(
+      'UPDATE users SET announcement_opt_in = FALSE, announcement_unsubscribed_at = NOW() WHERE announcement_unsubscribe_token = $1 RETURNING id',
+      [token]
+    );
+    if (!result.rowCount) return res.status(200).send('This unsubscribe link is invalid or has already been used.');
+    res.status(200).send('You have been unsubscribed from SoundScout product announcements.');
+  } catch (err) {
+    console.error('Announcement unsubscribe error:', err);
+    res.status(500).send('Could not process your request. Please try again later.');
   }
 });
 
