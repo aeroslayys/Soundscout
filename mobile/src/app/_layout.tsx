@@ -18,7 +18,7 @@ function AppNavigation() {
     if (!ready) return;
 
     const inAuthScreen = segments[0] === 'auth';
-    const inWelcomeScreen = segments[0] === 'welcome';
+    const inWelcomeScreen = (segments[0] as string) === 'welcome';
     const destination = params.next === 'add-venue'
       ? '/(tabs)/add-venue'
       : '/(tabs)/map';
