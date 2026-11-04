@@ -1,0 +1,43 @@
+name: Publish SoundScout Production OTA
+
+on:
+  push:
+    branches:
+      - feature/react-native-app
+    paths:
+      - "mobile/src/**"
+      - "mobile/assets/**"
+      - ".github/workflows/soundscout-production-ota.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: soundscout-production-ota
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    name: Publish Android production update to EAS
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish production OTA update
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          UPDATE_MESSAGE: ${{ github.event.head_commit.message || 'Manual Android production OTA publication' }}
+        run: npx eas-cli@latest update --branch production --platform android --message "$UPDATE_MESSAGE"
