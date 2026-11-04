@@ -8,7 +8,7 @@ import { API_URL } from '@/constants/api';
 import { apiRequestJson } from '@/utils/api';
 const OTP_DRAFT_KEY = 'soundscout.auth.otp-draft';
 
-type OtpDraft = { email: string; code: string; name: string; age: string; sensitivity: string; newUser: boolean; sent: boolean };
+type OtpDraft = { email: string; code: string; name: string; age: string; sensitivity: string; announcementOptIn: boolean; newUser: boolean; sent: boolean };
 
 const C = { bg: '#101114', surface: '#1B1D22', text: '#F4F4F5', muted: '#92959F', accent: '#B8F36B', border: '#30323A' };
 
@@ -19,6 +19,7 @@ export default function AuthScreen() {
   const [name, setName] = useState('');
   const [age, setAge] = useState('');
   const [sensitivity, setSensitivity] = useState('3');
+  const [announcementOptIn, setAnnouncementOptIn] = useState(false);
   const [newUser, setNewUser] = useState(false);
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -38,6 +39,7 @@ export default function AuthScreen() {
         setName(draft.name ?? '');
         setAge(draft.age ?? '');
         setSensitivity(draft.sensitivity ?? '3');
+        setAnnouncementOptIn(Boolean(draft.announcementOptIn));
         setNewUser(Boolean(draft.newUser));
         setSent(Boolean(draft.sent));
       })
@@ -48,16 +50,16 @@ export default function AuthScreen() {
 
   useEffect(() => {
     if (!draftReady) return;
-    const draft: OtpDraft = { email, code, name, age, sensitivity, newUser, sent };
+    const draft: OtpDraft = { email, code, name, age, sensitivity, announcementOptIn, newUser, sent };
     SecureStore.setItemAsync(OTP_DRAFT_KEY, JSON.stringify(draft))
       .catch((e) => console.warn('Could not save OTP form:', e));
-  }, [draftReady, email, code, name, age, sensitivity, newUser, sent]);
+  }, [draftReady, email, code, name, age, sensitivity, announcementOptIn, newUser, sent]);
 
   const requestCode = async () => {
     if (!email.trim()) return setError('Enter your email address.');
     setBusy(true); setError('');
     try {
-      const { response: res, data } = await apiRequestJson<any>('OTP request', API_URL + '/api/auth/request-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim() }) });
+      const { response: res, data } = await apiRequestJson<any>('OTP request', API_URL + '/api/auth/request-otp', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-SoundScout-Platform': 'android' }, body: JSON.stringify({ email: email.trim() }) });
       if (!res.ok) throw new Error(data.error || 'Could not send code.');
       setNewUser(Boolean(data.isNewUser)); setSent(true);
     } catch (e) { setError(e instanceof Error ? e.message : 'Request failed.'); }
@@ -69,7 +71,7 @@ export default function AuthScreen() {
     if (newUser && (!name.trim() || !age.trim())) return setError('Enter your name and age to create an account.');
     setBusy(true); setError('');
     try {
-      const { response: res, data } = await apiRequestJson<any>('OTP verification', API_URL + '/api/auth/verify-otp', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim(), code: code.trim(), ...(newUser ? { name: name.trim(), age: Number(age), sensitivity: Number(sensitivity) } : {}) }) });
+      const { response: res, data } = await apiRequestJson<any>('OTP verification', API_URL + '/api/auth/verify-otp', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-SoundScout-Platform': 'android' }, body: JSON.stringify({ email: email.trim(), code: code.trim(), ...(newUser ? { name: name.trim(), age: Number(age), sensitivity: Number(sensitivity), announcementOptIn } : {}) }) });
       if (!res.ok) throw new Error(data.error || 'Verification failed.');
       if (!data.token) throw new Error('Authentication token was not returned.');
       await SecureStore.deleteItemAsync(OTP_DRAFT_KEY);
@@ -84,11 +86,11 @@ export default function AuthScreen() {
     <Text style={s.brand}>SOUNDSCOUT</Text><Text style={s.title}>Welcome</Text>
     <Text style={s.subtitle}>Sign in or create an account to explore venues and contribute ratings.</Text>
     <TextInput value={email} onChangeText={setEmail} placeholder="Email address" placeholderTextColor={C.muted} keyboardType="email-address" autoCapitalize="none" style={s.input} />
-    {sent && newUser ? <><TextInput value={name} onChangeText={setName} placeholder="Your name" placeholderTextColor={C.muted} style={s.input} /><TextInput value={age} onChangeText={setAge} placeholder="Age" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} /><TextInput value={sensitivity} onChangeText={setSensitivity} placeholder="Sound sensitivity (1–5)" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} /></> : null}
+    {sent && newUser ? <><TextInput value={name} onChangeText={setName} placeholder="Your name" placeholderTextColor={C.muted} style={s.input} /><TextInput value={age} onChangeText={setAge} placeholder="Age" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} /><TextInput value={sensitivity} onChangeText={setSensitivity} placeholder="Sound sensitivity (1–5)" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} /><Pressable accessibilityRole="checkbox" accessibilityState={{ checked: announcementOptIn }} onPress={() => setAnnouncementOptIn((value) => !value)} style={s.consent}><View style={[s.checkbox, announcementOptIn && s.checkboxChecked]}>{announcementOptIn ? <Text style={s.checkmark}>✓</Text> : null}</View><Text style={s.consentText}>Email me occasional SoundScout product updates. I can unsubscribe anytime.</Text></Pressable></> : null}
     {sent ? <TextInput value={code} onChangeText={setCode} placeholder="Email verification code" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} /> : null}
     <Pressable disabled={busy} onPress={sent ? verify : requestCode} style={s.button}>{busy ? <ActivityIndicator color={C.bg} /> : <Text style={s.buttonText}>{sent ? 'VERIFY & CONTINUE' : 'CONTINUE WITH EMAIL'}</Text>}</Pressable>
     {sent ? <Pressable onPress={requestCode} style={s.resend}><Text style={s.resendText}>Resend code</Text></Pressable> : null}
     {error ? <Text style={s.error}>{error}</Text> : null}
   </View></SafeAreaView>;
 }
-const s = StyleSheet.create({ safe:{flex:1,backgroundColor:C.bg},content:{flex:1,justifyContent:'center',padding:26},brand:{color:C.accent,fontSize:11,fontWeight:'900',letterSpacing:3},title:{color:C.text,fontSize:34,fontWeight:'900',marginTop:14},subtitle:{color:C.muted,fontSize:14,lineHeight:22,marginTop:8,marginBottom:24},input:{color:C.text,backgroundColor:C.surface,borderColor:C.border,borderWidth:1,borderRadius:11,padding:14,marginTop:10},button:{backgroundColor:C.accent,borderRadius:11,minHeight:48,alignItems:'center',justifyContent:'center',marginTop:18},buttonText:{color:C.bg,fontSize:11,fontWeight:'900',letterSpacing:1},resend:{alignItems:'center',padding:14},resendText:{color:C.muted,fontSize:12,textDecorationLine:'underline'},error:{color:'#F08A8A',marginTop:14,fontSize:12} });
+const s = StyleSheet.create({ safe:{flex:1,backgroundColor:C.bg},content:{flex:1,justifyContent:'center',padding:26},brand:{color:C.accent,fontSize:11,fontWeight:'900',letterSpacing:3},title:{color:C.text,fontSize:34,fontWeight:'900',marginTop:14},subtitle:{color:C.muted,fontSize:14,lineHeight:22,marginTop:8,marginBottom:24},input:{color:C.text,backgroundColor:C.surface,borderColor:C.border,borderWidth:1,borderRadius:11,padding:14,marginTop:10},button:{backgroundColor:C.accent,borderRadius:11,minHeight:48,alignItems:'center',justifyContent:'center',marginTop:18},buttonText:{color:C.bg,fontSize:11,fontWeight:'900',letterSpacing:1},consent:{flexDirection:'row',alignItems:'center',gap:10,marginTop:14},checkbox:{width:19,height:19,borderRadius:5,borderWidth:1,borderColor:C.muted,alignItems:'center',justifyContent:'center'},checkboxChecked:{backgroundColor:C.accent,borderColor:C.accent},checkmark:{color:C.bg,fontSize:13,fontWeight:'900',lineHeight:16},consentText:{color:C.muted,fontSize:11,lineHeight:17,flex:1},resend:{alignItems:'center',padding:14},resendText:{color:C.muted,fontSize:12,textDecorationLine:'underline'},error:{color:'#F08A8A',marginTop:14,fontSize:12} });
