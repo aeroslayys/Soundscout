@@ -17,22 +17,22 @@ export default function AudioCapture({ onAnalyzed }: { onAnalyzed: (db:number, s
     try {
       const stopStartedAt = Date.now();
       await recorder.stop();
-      if (__DEV__) console.info('[SoundScout perf] audio recorder stop:', Date.now() - stopStartedAt, 'ms');
+      console.info('[SoundScout perf] audio recorder stop:', Date.now() - stopStartedAt, 'ms');
       if (Date.now() - startedAt < 5000) { setMessage('Recording too short. Record for at least 5 seconds.'); return; }
       const uri = recorder.uri;
       if (!uri) throw new Error('Recording file was not created.');
       const fileInfo = await FileSystem.getInfoAsync(uri);
-      if (__DEV__) console.info('[SoundScout perf] audio file size:', fileInfo.exists && 'size' in fileInfo ? fileInfo.size : 'unknown', 'bytes');
+      console.info('[SoundScout perf] audio file size:', fileInfo.exists && 'size' in fileInfo ? fileInfo.size : 'unknown', 'bytes');
       setBusy(true); setMessage('Analyzing ambient sound…');
       const uploadStartedAt = Date.now();
       const response = await FileSystem.uploadAsync(API_URL + '/api/audio/analyze', uri, {
         httpMethod:'POST', uploadType:FileSystem.FileSystemUploadType.MULTIPART,
         fieldName:'clip', mimeType:'audio/mp4',
       });
-      if (__DEV__) console.info('[SoundScout perf] audio upload + server response:', Date.now() - uploadStartedAt, 'ms; HTTP', response.status);
+      console.info('[SoundScout perf] audio upload + server response:', Date.now() - uploadStartedAt, 'ms; HTTP', response.status);
       const parseStartedAt = Date.now();
       const data = JSON.parse(response.body);
-      if (__DEV__) console.info('[SoundScout perf] audio response parse:', Date.now() - parseStartedAt, 'ms');
+      console.info('[SoundScout perf] audio response parse:', Date.now() - parseStartedAt, 'ms');
       if (response.status < 200 || response.status >= 300) throw new Error(data.error || 'Audio analysis failed.');
       onAnalyzed(Number(data.mean_volume_dbfs),Number(data.suggested_score));
       setMessage('Measured ' + Number(data.mean_volume_dbfs).toFixed(1) + ' dBFS · suggested ' + data.suggested_score + '/5. Audio is not stored.');
