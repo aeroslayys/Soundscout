@@ -41,7 +41,7 @@ router.post('/analyze', (req, res) => {
 
     execFile(
       'ffmpeg',
-      ['-nostdin', '-hide_banner', '-v', 'error', '-i', inputPath, '-af', 'volumedetect', '-f', 'null', '-'],
+      ['-nostdin', '-hide_banner', '-v', 'info', '-i', inputPath, '-af', 'volumedetect', '-f', 'null', '-'],
       { timeout: 20000, maxBuffer: 1024 * 1024 },
       (err, stdout, stderr) => {
         const analysisMs = elapsedMs(analysisStarted);
