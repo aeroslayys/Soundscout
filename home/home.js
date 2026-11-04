@@ -3045,9 +3045,24 @@ audioField.appendChild(
     autoStopTimeout = null;
   }
 
+  function stopActiveRecording(){
+    if(!mediaRecorder || mediaRecorder.state !== "recording") return;
+    stopRecordingTimer();
+    recordBtn.disabled = true;
+    recordBtn.textContent = "Finalizing...";
+    setAudioStatus("Finalizing recording...", "");
+    try {
+      mediaRecorder.stop();
+    } catch(err) {
+      recordBtn.disabled = false;
+      recordBtn.textContent = "● Record clip";
+      setAudioStatus("Couldn't stop the recording: " + (err.message || "unknown browser error") + ".", "error");
+    }
+  }
+
   recordBtn.addEventListener("click", function(){
     if(mediaRecorder && mediaRecorder.state === "recording"){
-      mediaRecorder.stop();
+      stopActiveRecording();
       return;
     }
 
@@ -3130,9 +3145,7 @@ audioField.appendChild(
         // delayed by browser scheduling/throttling.
         if(elapsed >= MAX_CLIP_SECONDS){
           recordTimerLabel.textContent = MAX_CLIP_SECONDS.toFixed(1) + "s";
-          if(mediaRecorder && mediaRecorder.state === "recording"){
-            mediaRecorder.stop();
-          }
+          stopActiveRecording();
           return;
         }
 
@@ -3144,7 +3157,7 @@ audioField.appendChild(
       }, 100);
 
       autoStopTimeout = setTimeout(function(){
-        if(mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
+        stopActiveRecording();
       }, MAX_CLIP_SECONDS * 1000);
 
     }).catch(function(err){
