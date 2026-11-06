@@ -11,7 +11,9 @@ const APP_SHELL = [
   "/profile/profile.css",
   "/profile/profile.js",
   "/manifest.webmanifest",
-  "/pwa/icon.svg",\n  "/pwa/install-prompt.css",\n  "/pwa/install-prompt.js"
+  "/pwa/icon.svg",
+  "/pwa/install-prompt.css",
+  "/pwa/install-prompt.js"
 ];
 
 self.addEventListener("install", (event) => {
