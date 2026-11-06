@@ -3366,6 +3366,22 @@ locationSelectedDisplay.style.color = "#5B6472";
 
 
   // Mobile app-style navigation. Desktop keeps the existing split layout.
+  // Compact, collapsible map filter menu on mobile.
+  var mobileFilters = document.querySelector("#sidebar .filters");
+  if(mobileFilters){
+    var filterToggle = document.createElement("button");
+    filterToggle.type = "button";
+    filterToggle.className = "mobile-filter-toggle";
+    filterToggle.setAttribute("aria-expanded", "true");
+    filterToggle.innerHTML = '<span>Filters</span><span class="chevron" aria-hidden="true">⌃</span>';
+    filterToggle.addEventListener("click", function(){
+      var collapsed = document.getElementById("sidebar").classList.toggle("menu-collapsed");
+      filterToggle.setAttribute("aria-expanded", String(!collapsed));
+      filterToggle.querySelector("span").textContent = collapsed ? "Filters" : "Hide filters";
+    });
+    mobileFilters.insertBefore(filterToggle, mobileFilters.firstChild);
+  }
+
   var mobileNav = document.getElementById("mobileBottomNav");
   var mobileTab = "map";
   function setMobileTab(tab){
