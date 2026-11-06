@@ -452,3 +452,13 @@ body{font-family:'Inter',sans-serif;}
 .email-preference-toggle{display:flex;align-items:flex-start;gap:10px;color:var(--ink-soft);font-size:13px;line-height:1.5;}
 .email-preference-toggle input{margin-top:3px;accent-color:var(--quiet);}
 #announcementPreferenceStatus{min-height:18px;margin:9px 0 0 25px;color:var(--muted);font-size:11px;}
+
+@media(max-width:600px){
+  body{padding-bottom:calc(72px + env(safe-area-inset-bottom));}
+  .profile-bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:1000;display:grid;grid-template-columns:repeat(3,1fr);
+    height:calc(64px + env(safe-area-inset-bottom));padding:6px 12px calc(6px + env(safe-area-inset-bottom));
+    background:var(--surface);border-top:1px solid var(--border);box-shadow:0 -8px 24px rgba(0,0,0,.08);}
+  .profile-bottom-nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);text-decoration:none;border-radius:12px;font-size:21px;}
+  .profile-bottom-nav a small{font-size:10px;font-weight:600;}
+  .profile-bottom-nav a.active{color:var(--accent);background:var(--surface-soft);}
+}
