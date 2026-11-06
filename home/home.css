@@ -1275,3 +1275,41 @@ button,
 :root[data-theme="dark"] .popup-body [style*="border-top"],
 :root[data-theme="dark"] .popup-body [style*="border-bottom"]{border-color:var(--border) !important;}
 :root[data-theme="dark"] .popup-body [style*="background:var(--bg)"]{background:var(--surface-soft) !important;}
+
+
+/* Android-style mobile navigation: desktop remains unchanged. */
+.mobile-bottom-nav{display:none;}
+@media(max-width:760px){
+  body{display:block;position:relative;}
+  #sidebar{display:none !important;}
+  #map{display:block;width:100%;height:100dvh;min-height:100dvh;}
+  body[data-mobile-tab="venues"] #sidebar{
+    display:flex !important;position:absolute;inset:0 0 calc(64px + env(safe-area-inset-bottom));
+    width:100%;height:auto;min-width:0;z-index:20;border:0;overflow:hidden;
+  }
+  body[data-mobile-tab="venues"] #sidebar .sidebar-header{
+    display:flex;flex-direction:column;gap:8px;padding:16px 16px 10px;border-right:0;
+    border-bottom:1px solid var(--border);overflow:visible;
+  }
+  body[data-mobile-tab="venues"] #sidebar .brand{display:flex;}
+  body[data-mobile-tab="venues"] #sidebar .tagline{display:block;margin:0;}
+  body[data-mobile-tab="venues"] #sidebar .filters{
+    display:block;padding:12px 16px;overflow:visible;border-bottom:1px solid var(--border);
+  }
+  body[data-mobile-tab="venues"] #sidebar .list-meta{display:block;padding:10px 16px 4px;font-size:10px;}
+  body[data-mobile-tab="venues"] #sidebar #venue-list{display:block;flex:1;min-height:0;overflow-y:auto;padding:4px 10px 18px;}
+  body[data-mobile-tab="venues"] #map{display:none;}
+  .mobile-bottom-nav{
+    position:fixed;display:grid;grid-template-columns:repeat(3,1fr);align-items:stretch;
+    left:0;right:0;bottom:0;z-index:1000;height:calc(64px + env(safe-area-inset-bottom));
+    padding:6px 12px calc(6px + env(safe-area-inset-bottom));
+    background:var(--surface);border-top:1px solid var(--border);
+    box-shadow:0 -8px 24px rgba(0,0,0,.08);
+  }
+  .mobile-bottom-nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    color:var(--muted);text-decoration:none;border-radius:12px;font-size:21px;}
+  .mobile-bottom-nav a small{font-size:10px;font-weight:600;letter-spacing:.01em;}
+  .mobile-bottom-nav a.active{color:var(--quiet-deep);background:var(--surface-soft);}
+  body[data-mobile-tab="venues"] .mobile-bottom-nav{z-index:1001;}
+  .modal-overlay{z-index:1100;}
+}
