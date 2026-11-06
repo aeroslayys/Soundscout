@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="profile.css">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#101918">
+<link rel="icon" type="image/svg+xml" href="/pwa/icon.svg">
 </head>
 <body>
 
@@ -80,5 +83,15 @@
 </nav>
 
 <script src="profile.js"></script>
+
+<script>
+if ("serviceWorker" in navigator && window.isSecureContext) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch((error) => {
+      console.warn("SoundScout offline support could not be enabled:", error);
+    });
+  });
+}
+</script>
 </body>
 </html>
