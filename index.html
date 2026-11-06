@@ -8,6 +8,25 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="login.css">
 <link rel="manifest" href="/manifest.webmanifest">
+<script>
+/* Keep an existing SoundScout session when the installed PWA launches. */
+(function () {
+  try {
+    var token = localStorage.getItem("soundscout_token");
+    var userRaw = localStorage.getItem("soundscout_user");
+    if (!token || !userRaw) return;
+
+    var user = JSON.parse(userRaw);
+    if (!user || typeof user !== "object") return;
+
+    window.location.replace(
+      user.admin === true ? "/admin/admin.html" : "/home/home.html"
+    );
+  } catch (error) {
+    console.warn("Could not restore the saved SoundScout session:", error);
+  }
+})();
+</script>
 <meta name="theme-color" content="#101918">
 <link rel="icon" type="image/svg+xml" href="/pwa/icon.svg">
 <link rel="stylesheet" href="/pwa/install-prompt.css">
