@@ -16,3 +16,7 @@
 .data-callout .data-callout-note{font-size:11px}
 .data-callout-actions{display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-top:18px}
 @media(max-width:650px){.data-callout{grid-template-columns:1fr;gap:13px;margin:30px 0 0;padding:23px 21px}.data-callout-mark{width:36px;height:36px;font-size:22px}.data-callout h2{font-size:clamp(26px,7.5vw,33px);letter-spacing:-.7px}.data-callout-actions{align-items:flex-start;gap:14px;flex-direction:column}.data-callout-actions .button{max-width:100%;text-align:center}}
+
+/* Phone-first PWA guidance */
+.hero-footnote{max-width:560px;line-height:1.7}
+@media(max-width:650px){.hero-actions{align-items:stretch}.hero-actions .button{width:100%;justify-content:center;text-align:center}.hero-footnote{font-size:9px}}
