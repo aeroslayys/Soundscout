@@ -3364,6 +3364,38 @@ locationSelectedDisplay.style.color = "#5B6472";
       });
   }
 
+
+  // Mobile app-style navigation. Desktop keeps the existing split layout.
+  var mobileNav = document.getElementById("mobileBottomNav");
+  var mobileTab = "map";
+  function setMobileTab(tab){
+    mobileTab = tab;
+    document.body.setAttribute("data-mobile-tab", tab);
+    mobileNav.querySelectorAll("[data-mobile-tab]").forEach(function(link){
+      var active = link.getAttribute("data-mobile-tab") === tab;
+      link.classList.toggle("active", active);
+      if(active) link.setAttribute("aria-current", "page");
+      else link.removeAttribute("aria-current");
+    });
+    if(tab === "map"){
+      window.setTimeout(function(){ if(map) map.invalidateSize({animate:false}); }, 80);
+    }
+  }
+  mobileNav.querySelectorAll("[data-mobile-tab]").forEach(function(link){
+    link.addEventListener("click", function(event){
+      var tab = link.getAttribute("data-mobile-tab");
+      if(tab === "ratings") return;
+      event.preventDefault();
+      setMobileTab(tab);
+      history.replaceState(null, "", tab === "venues" ? "#venues" : "#map");
+    });
+  });
+  if(window.location.hash === "#venues") setMobileTab("venues");
+  window.addEventListener("resize", function(){
+    if(window.innerWidth > 760){ document.body.removeAttribute("data-mobile-tab"); }
+    else setMobileTab(mobileTab);
+  });
+
   renderChips();
   loadVenues();
 })();
