@@ -42,17 +42,18 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/api/")) return;
 
   if (request.mode === "navigate") {
+    const isAppShellPage = APP_SHELL.includes(url.pathname);
     event.respondWith(
       fetch(request)
         .then((response) => {
-          if (response && response.ok) {
+          if (isAppShellPage && response && response.ok) {
             const copy = response.clone();
             caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
           }
           return response;
         })
         .catch(async () => {
-          return (await caches.match(request)) ||
+          return (isAppShellPage && (await caches.match(request))) ||
             (await caches.match("/index.html")) ||
             Response.error();
         })
