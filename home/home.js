@@ -1570,10 +1570,24 @@ if(measuredDb !== null){
     state.selected = id;
     renderList();
     var v = venues.find(function(x){ return x.id === id; });
-    if(v){
-      if(flyTo) map.flyTo([v.lat, v.lng], 15, {duration:0.6});
-      if(markers[id]) markers[id].openPopup();
+    if(!v) return;
+
+    // Selecting a venue from the mobile list should open the exact same map
+    // marker popup as tapping its pin on the Map tab.
+    if(window.innerWidth <= 760 && document.body.getAttribute("data-mobile-tab") === "venues"){
+      setMobileTab("map");
+      history.replaceState(null, "", "#map");
+      window.setTimeout(function(){
+        if(!map) return;
+        map.invalidateSize({animate:false});
+        if(flyTo) map.flyTo([v.lat, v.lng], 15, {duration:0.6});
+        if(markers[id]) markers[id].openPopup();
+      }, 180);
+      return;
     }
+
+    if(flyTo) map.flyTo([v.lat, v.lng], 15, {duration:0.6});
+    if(markers[id]) markers[id].openPopup();
   }
 
   document.getElementById("search-input").addEventListener("input", function(e){
@@ -1710,8 +1724,13 @@ themeToggle.addEventListener(
 
     // Leaflet needs a size refresh after the theme/layout repaint on mobile.
     window.setTimeout(function(){
-      if(map) map.invalidateSize({animate:false});
-    }, 120);
+      if(map){
+        map.invalidateSize({animate:false, pan:false});
+        map.eachLayer(function(layer){
+          if(layer && layer.redraw) layer.redraw();
+        });
+      }
+    }, 180);
 
   }
 );
@@ -3418,7 +3437,9 @@ locationSelectedDisplay.style.color = "#5B6472";
       else link.removeAttribute("aria-current");
     });
     if(tab === "map"){
-      window.setTimeout(function(){ if(map) map.invalidateSize({animate:false}); }, 80);
+      window.setTimeout(function(){
+        if(map) map.invalidateSize({animate:false, pan:false});
+      }, 180);
     }
   }
   mobileNav.querySelectorAll("[data-mobile-tab]").forEach(function(link){
