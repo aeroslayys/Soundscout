@@ -453,7 +453,7 @@ body{font-family:'Inter',sans-serif;}
 .email-preference-toggle input{margin-top:3px;accent-color:var(--quiet);}
 #announcementPreferenceStatus{min-height:18px;margin:9px 0 0 25px;color:var(--muted);font-size:11px;}
 
-@media(max-width:600px){
+@media(max-width:760px){
   body{padding-bottom:calc(72px + env(safe-area-inset-bottom));}
   .profile-bottom-nav{position:fixed;left:0;right:0;bottom:0;z-index:1000;display:grid;grid-template-columns:repeat(3,1fr);
     height:calc(64px + env(safe-area-inset-bottom));padding:6px 12px calc(6px + env(safe-area-inset-bottom));
