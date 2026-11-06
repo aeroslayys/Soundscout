@@ -1497,57 +1497,7 @@ button,
   body[data-mobile-tab="venues"] #sidebar .brand{width:max-content!important;max-width:100%!important;}
   body[data-mobile-tab="venues"] #theme-toggle,body[data-mobile-tab="venues"] #account-btn{display:inline-flex!important;}
 
-  /* Map filters are a horizontal chip row, not a vertical stack. */
-  #sidebar .search-box{top:64px!important;left:14px!important;width:calc(100% - 28px)!important;}
-  #sidebar .filters{
-    top:116px!important;left:14px!important;right:14px!important;width:auto!important;max-width:none!important;
-    display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:7px!important;
-    padding:0!important;border:0!important;background:transparent!important;pointer-events:none!important;
-  }
-  #sidebar .mobile-filter-toggle{
-    display:flex!important;align-self:flex-end!important;align-items:center!important;justify-content:center!important;
-    width:auto!important;min-width:100px!important;min-height:34px!important;padding:7px 13px!important;
-    border-radius:20px!important;background:var(--surface)!important;color:var(--ink)!important;
-    border:1px solid var(--border-strong)!important;pointer-events:auto!important;
-  }
-  #sidebar .chip-row{
-    display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:7px!important;
-    width:100%!important;overflow-x:auto!important;overflow-y:hidden!important;padding:2px 0 7px!important;
-    margin:0!important;scrollbar-width:none!important;-webkit-overflow-scrolling:touch;pointer-events:auto!important;
-  }
-  #sidebar .chip-row::-webkit-scrollbar{display:none!important;}
-  #sidebar .chip{
-    display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;
-    width:auto!important;min-width:0!important;min-height:36px!important;padding:8px 14px!important;
-    border-radius:22px!important;background:var(--surface)!important;color:var(--ink-soft)!important;
-    border:1px solid var(--border-strong)!important;font-size:12px!important;box-shadow:none!important;
-  }
-  #sidebar .chip.active{background:var(--action)!important;color:var(--on-action)!important;border-color:var(--action)!important;}
-  #sidebar .toggle-row{
-    display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;gap:6px 12px!important;
-    margin:0!important;padding:8px 10px!important;border:1px solid var(--border)!important;border-radius:14px!important;
-    background:var(--surface)!important;pointer-events:auto!important;
-  }
-  #sidebar .toggle-row label{
-    display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:6px!important;
-    min-height:26px!important;padding:2px 0!important;border:0!important;background:transparent!important;
-    color:var(--ink-soft)!important;font-size:10px!important;text-align:left!important;box-shadow:none!important;
-  }
-  #sidebar.menu-collapsed .filters .chip-row,#sidebar.menu-collapsed .filters .toggle-row{display:none!important;}
-  #sidebar.menu-collapsed .filters{top:116px!important;}
-  #sidebar.menu-collapsed .mobile-filter-toggle{align-self:flex-end!important;}
-  body[data-mobile-tab="venues"] #sidebar .filters{
-    position:relative!important;inset:auto!important;top:auto!important;left:auto!important;right:auto!important;
-    display:block!important;width:100%!important;padding:12px 16px!important;background:var(--bg)!important;
-    border-bottom:1px solid var(--border)!important;pointer-events:auto!important;
-  }
-  body[data-mobile-tab="venues"] #sidebar .mobile-filter-toggle{display:none!important;}
-  body[data-mobile-tab="venues"] #sidebar .chip-row{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;overflow-x:auto!important;}
-  body[data-mobile-tab="venues"] #sidebar .toggle-row{display:flex!important;flex-direction:column!important;align-items:stretch!important;
-    padding:4px 0 0!important;border:0!important;background:transparent!important;}
-  body[data-mobile-tab="venues"] #sidebar .toggle-row label{font-size:12px!important;min-height:24px!important;}
-  body[data-mobile-tab="venues"] #sidebar #venue-list{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
-    -webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;padding-bottom:24px!important;}
+  /* Leave homepage/map filters on their existing layout. */
 
   /* Ensure text and controls always follow the selected theme. */
   :root[data-theme="light"] body,:root[data-theme="light"] #sidebar,:root[data-theme="light"] .modal{
@@ -1581,4 +1531,57 @@ button,
   .modal-actions{position:sticky!important;bottom:calc(-24px - env(safe-area-inset-bottom))!important;
     margin:18px -18px -24px!important;padding:12px 18px calc(14px + env(safe-area-inset-bottom))!important;
     background:var(--surface)!important;border-top:1px solid var(--border)!important;}
+}
+
+
+/* Add Venue category selector: one horizontal, swipeable row like Android. */
+@media(max-width:760px){
+  #fields-new-venue .category-native-select{display:none!important;}
+  #fields-new-venue .category-choice-row{
+    display:flex;flex-direction:row;flex-wrap:nowrap;gap:8px;width:100%;
+    overflow-x:auto;overflow-y:hidden;padding:2px 1px 9px;margin-top:8px;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch;
+  }
+  #fields-new-venue .category-choice-row::-webkit-scrollbar{display:none;}
+  #fields-new-venue .category-choice{
+    flex:0 0 auto;min-height:42px;padding:9px 14px;border:1px solid var(--border-strong);
+    border-radius:15px;background:var(--surface);color:var(--ink-soft);
+    font:700 12px/1 Inter,sans-serif;white-space:nowrap;cursor:pointer;
+  }
+  #fields-new-venue .category-choice[aria-pressed="true"]{
+    background:var(--action);border-color:var(--action);color:var(--on-action);
+  }
+  .modal-overlay{padding:0!important;align-items:stretch!important;}
+  .modal{
+    box-sizing:border-box;width:100%!important;max-width:none!important;height:100dvh!important;
+    max-height:100dvh!important;overflow-y:auto!important;overflow-x:hidden!important;
+    overscroll-behavior:contain!important;border:0!important;border-radius:0!important;
+    padding:calc(28px + env(safe-area-inset-top)) 18px calc(22px + env(safe-area-inset-bottom))!important;
+    background:var(--bg)!important;
+  }
+  .modal h2{font-size:30px!important;line-height:1.12!important;margin:10px 0 12px!important;}
+  .modal .sub{font-size:14px!important;line-height:1.55!important;margin:0 0 26px!important;}
+  #fields-new-venue{display:flex;flex-direction:column;gap:0;}
+  .modal .field{min-width:0;margin:0 0 20px!important;}
+  .modal .field label{display:block;margin:0 0 9px!important;font-size:12px!important;letter-spacing:.1em!important;}
+  .modal .field input[type="text"],.modal .field select{
+    box-sizing:border-box;width:100%!important;min-height:52px!important;padding:12px 14px!important;
+    border-radius:13px!important;background:var(--surface)!important;color:var(--ink)!important;
+    border:1px solid var(--border-strong)!important;font-size:16px!important;
+  }
+  #location-search-field{order:3;margin-top:0!important;}
+  #location-search-input{box-sizing:border-box;width:100%!important;min-height:52px!important;padding:12px 14px!important;
+    border-radius:13px!important;background:var(--surface)!important;color:var(--ink)!important;border:1px solid var(--border-strong)!important;}
+  #location-search-results{position:relative!important;z-index:20!important;max-height:180px!important;overflow-y:auto!important;
+    background:var(--surface)!important;color:var(--ink)!important;border-color:var(--border-strong)!important;}
+  #location-search-results>*{color:var(--ink)!important;border-color:var(--border)!important;}
+  #location-selected-display{font-size:12px!important;line-height:1.45!important;color:var(--muted)!important;}
+  #adjust-pin-btn{min-height:42px!important;padding:10px 13px!important;border-radius:12px!important;
+    background:var(--surface-soft)!important;color:var(--quiet-deep)!important;border:1px solid var(--border-strong)!important;}
+  .modal .checkbox-field{display:flex;align-items:center;gap:10px;margin:0 0 13px!important;}
+  .modal .checkbox-field label{font-size:13px!important;letter-spacing:0!important;text-transform:none!important;color:var(--ink-soft)!important;}
+  .modal-actions{position:sticky!important;bottom:calc(-22px - env(safe-area-inset-bottom))!important;
+    display:flex;gap:10px;margin:20px -18px -22px!important;padding:12px 18px calc(16px + env(safe-area-inset-bottom))!important;
+    background:var(--bg)!important;border-top:1px solid var(--border)!important;}
+  .modal-actions button{flex:1;min-height:48px!important;border-radius:13px!important;font-size:14px!important;}
 }
