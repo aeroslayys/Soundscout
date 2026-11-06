@@ -1454,3 +1454,9 @@ button,
   .btn-secondary{background:#252830;color:#D5D7DC;border-color:#41444E;}
   .btn-primary{background:#B8F36B;color:#101114;border-color:#B8F36B;font-weight:800;}
 }
+
+
+@media(max-width:760px){
+  .mobile-bottom-nav a svg{width:25px;height:25px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;}
+  .mobile-bottom-nav a:nth-child(3) svg{fill:none;}
+}
