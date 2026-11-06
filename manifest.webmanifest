@@ -3,7 +3,7 @@
   "name": "SoundScout",
   "short_name": "SoundScout",
   "description": "Know how quiet a place really is before you get there.",
-  "start_url": "/index.html",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "any",
