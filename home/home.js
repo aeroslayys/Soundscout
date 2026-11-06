@@ -1722,7 +1722,15 @@ themeToggle.addEventListener(
 
     updateThemeButton();
 
-    // Theme changes affect page controls only; leave the Leaflet map untouched.
+    // Keep the existing OSM tiles unchanged, but recalculate Leaflet's viewport
+    // after the theme transition in case mobile browser layout metrics shift.
+    if(map && window.innerWidth <= 760){
+      window.requestAnimationFrame(function(){
+        window.requestAnimationFrame(function(){
+          map.invalidateSize({animate:false, pan:false});
+        });
+      });
+    }
 
   }
 );
