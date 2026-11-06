@@ -1822,3 +1822,55 @@ button,
     border-radius:15px!important;
   }
 }
+
+
+/* Final theme and venue-navigation corrections for mobile. */
+@media(max-width:760px){
+  /* Keep the Leaflet canvas and OSM tiles visible after returning from Venues
+     or changing the theme. */
+  body[data-mobile-tab="map"] #map{
+    display:block!important;
+    visibility:visible!important;
+    opacity:1!important;
+    z-index:1!important;
+  }
+  body[data-mobile-tab="map"] #map .leaflet-pane,
+  body[data-mobile-tab="map"] #map .leaflet-tile-pane,
+  body[data-mobile-tab="map"] #map .leaflet-tile-container,
+  body[data-mobile-tab="map"] #map .leaflet-tile{
+    visibility:visible!important;
+    opacity:1!important;
+  }
+  body[data-mobile-tab="map"] #sidebar{pointer-events:none!important;}
+  body[data-mobile-tab="map"] #sidebar .mobile-filter-toggle{pointer-events:auto!important;}
+  :root[data-theme="light"] #sidebar .mobile-filter-toggle{
+    background:#fff!important;
+    color:#20251D!important;
+    border:1px solid #DDE2D5!important;
+    box-shadow:0 4px 14px rgba(0,0,0,.12)!important;
+  }
+  :root[data-theme="light"] #sidebar .mobile-filter-toggle .chevron{color:#638D35!important;}
+
+  /* The SoundScout brand row can scroll horizontally instead of clipping
+     the account and theme controls on narrow screens. */
+  #sidebar .sidebar-header{max-width:100%!important;}
+  #sidebar .brand{
+    box-sizing:border-box!important;
+    max-width:calc(100vw - 28px)!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    scrollbar-width:none!important;
+    -webkit-overflow-scrolling:touch!important;
+    touch-action:pan-x!important;
+  }
+  #sidebar .brand::-webkit-scrollbar{display:none!important;}
+  #sidebar .brand h1{flex:0 0 auto!important;}
+  #sidebar .brand #theme-toggle,
+  #sidebar .brand #account-btn{flex:0 0 36px!important;}
+
+  /* Venue list cards are real navigation: select the matching marker popup. */
+  body[data-mobile-tab="venues"] #sidebar #venue-list{
+    overscroll-behavior-y:contain!important;
+    touch-action:pan-y!important;
+  }
+}
