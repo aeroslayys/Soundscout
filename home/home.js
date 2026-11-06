@@ -1722,15 +1722,7 @@ themeToggle.addEventListener(
 
     updateThemeButton();
 
-    // Leaflet needs a size refresh after the theme/layout repaint on mobile.
-    window.setTimeout(function(){
-      if(map){
-        map.invalidateSize({animate:false, pan:false});
-        map.eachLayer(function(layer){
-          if(layer && layer.redraw) layer.redraw();
-        });
-      }
-    }, 180);
+    // Theme changes affect page controls only; leave the Leaflet map untouched.
 
   }
 );
