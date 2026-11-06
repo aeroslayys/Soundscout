@@ -1378,7 +1378,7 @@ button,
 
   #sidebar .filters{position:absolute;top:70px;right:10px;width:142px;max-width:42vw;padding:0;border:0;background:transparent;
     display:flex;flex-direction:column;gap:8px;overflow:visible;pointer-events:auto;}
-  #sidebar .search-box{position:fixed;top:14px;left:14px;width:calc(100% - 166px);margin:0;pointer-events:auto;}
+  #sidebar .search-box{position:fixed;top:64px;left:14px;width:calc(100% - 166px);margin:0;pointer-events:auto;}
   #sidebar .search-box input{min-height:40px;padding:8px 10px 8px 32px;border:1px solid rgba(255,255,255,.12);
     border-radius:22px;background:rgba(27,29,34,.94);color:#F4F4F5;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.2);}
   #sidebar .search-box input::placeholder{color:#92959F;}
