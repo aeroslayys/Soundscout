@@ -1534,8 +1534,10 @@ button,
 }
 
 
-/* Add Venue category selector: one horizontal, swipeable row like Android. */
+/* Add Venue category selector: keep desktop unchanged; use horizontal choices on mobile. */
+.category-choice-row{display:none;}
 @media(max-width:760px){
+  #fields-new-venue .category-choice-row{display:flex;}
   #fields-new-venue .category-native-select{display:none!important;}
   #fields-new-venue .category-choice-row{
     display:flex;flex-direction:row;flex-wrap:nowrap;gap:8px;width:100%;
