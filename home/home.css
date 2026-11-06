@@ -1478,160 +1478,107 @@ button,
 }
 @media (min-width:761px){.mobile-filter-toggle{display:none!important;}}
 
-/* Final mobile fixes: shared controls, expanded filters and reliable venue scrolling. */
-@media(max-width:760px){
-  #sidebar .sidebar-header{max-width:calc(100% - 112px)!important;width:auto!important;}
-  #sidebar .brand{max-width:100%!important;overflow:visible!important;}
-  #sidebar .brand h1{font-size:17px!important;white-space:nowrap;}
-  #sidebar .brand .dot{flex:0 0 8px;}
-  #sidebar .add-btn{z-index:510!important;left:16px!important;bottom:calc(84px + env(safe-area-inset-bottom))!important;}
-  #sidebar .sidebar-header #theme-toggle,#sidebar .sidebar-header #account-btn{position:fixed!important;top:14px!important;z-index:650!important;width:42px!important;height:42px!important;display:flex!important;background:var(--surface)!important;color:var(--quiet-deep)!important;border:1px solid var(--border-strong)!important;}
-  #sidebar .sidebar-header #theme-toggle{right:66px!important;}
-  #sidebar .sidebar-header #account-btn{right:14px!important;}
-  body[data-mobile-tab=venues] #theme-toggle,body[data-mobile-tab=venues] #account-btn{display:flex!important;}
-  body[data-mobile-tab=venues] #sidebar{overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
-  body[data-mobile-tab=venues] #sidebar .sidebar-header,body[data-mobile-tab=venues] #sidebar .filters,body[data-mobile-tab=venues] #sidebar .list-meta{flex:0 0 auto!important;}
-  body[data-mobile-tab=venues] #sidebar #venue-list{flex:0 0 auto!important;min-height:0!important;overflow:visible!important;padding-bottom:calc(92px + env(safe-area-inset-bottom))!important;touch-action:pan-y;}
-  body[data-mobile-tab=venues] #sidebar .mobile-filter-toggle{display:none!important;}
-  #sidebar .mobile-filter-toggle{color:var(--ink)!important;background:var(--surface)!important;border-color:var(--border-strong)!important;}
-}
 
-/* Mobile polish: app-like map filters, inline brand actions, and readable light mode. */
+
+/* Stable mobile layout overrides — keep map, venues and modal in separate flows. */
 @media(max-width:760px){
-  /* Keep theme/account actions beside the SoundScout wordmark. */
-  #sidebar .sidebar-header{max-width:none!important;width:auto!important;right:14px!important;}
-  #sidebar .brand{
-    display:flex!important;align-items:center!important;gap:8px!important;
-    width:max-content!important;max-width:calc(100vw - 28px)!important;
-    min-height:48px;padding:7px 10px 7px 13px!important;
-    overflow:visible!important;
-  }
-  #sidebar .brand h1{flex:0 0 auto!important;font-size:17px!important;color:var(--ink)!important;}
+  /* Place theme and account actions in the SoundScout brand row. */
+  #sidebar .brand{width:max-content!important;max-width:calc(100vw - 28px)!important;overflow:visible!important;flex-wrap:nowrap!important;}
+  #sidebar .brand h1{white-space:nowrap!important;font-size:17px!important;}
   #sidebar .brand #theme-toggle,#sidebar .brand #account-btn{
-    position:static!important;inset:auto!important;display:inline-flex!important;
-    flex:0 0 38px!important;width:38px!important;height:38px!important;
-    margin:0!important;border-radius:50%!important;
-    background:var(--surface-soft)!important;color:var(--quiet-deep)!important;
-    border:1px solid var(--border-strong)!important;box-shadow:none!important;
+    position:static!important;inset:auto!important;display:inline-flex!important;flex:0 0 36px!important;
+    width:36px!important;height:36px!important;margin:0!important;padding:0!important;border-radius:50%!important;
+    align-items:center!important;justify-content:center!important;background:var(--surface)!important;
+    color:var(--quiet-deep)!important;border:1px solid var(--border-strong)!important;box-shadow:none!important;
   }
-  #sidebar .brand #account-btn{margin-left:0!important;}
-  #sidebar .brand .dot{flex:0 0 8px!important;}
-  body[data-mobile-tab="venues"] #sidebar .sidebar-header{padding:16px 14px 12px!important;}
-  body[data-mobile-tab="venues"] #sidebar .brand{width:100%!important;max-width:100%!important;background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;}
-  body[data-mobile-tab="venues"] #sidebar .brand h1{font-size:22px!important;}
-  body[data-mobile-tab="venues"] #sidebar .brand #theme-toggle,
-  body[data-mobile-tab="venues"] #sidebar .brand #account-btn{display:inline-flex!important;}
+  #sidebar .brand #account-btn{font-size:12px!important;}
+  #sidebar .brand #theme-toggle{font-size:16px!important;}
+  body[data-mobile-tab="venues"] #sidebar .sidebar-header{padding:18px 16px 12px!important;}
+  body[data-mobile-tab="venues"] #sidebar .brand{width:max-content!important;max-width:100%!important;}
+  body[data-mobile-tab="venues"] #theme-toggle,body[data-mobile-tab="venues"] #account-btn{display:inline-flex!important;}
 
-  /* Map search and filters: horizontal chips, like the Android app. */
-  #sidebar .search-box{top:70px!important;left:14px!important;width:calc(100% - 28px)!important;}
-  #sidebar .search-box input{min-height:44px!important;background:var(--surface)!important;color:var(--ink)!important;border-color:var(--border-strong)!important;}
+  /* Map filters are a horizontal chip row, not a vertical stack. */
+  #sidebar .search-box{top:64px!important;left:14px!important;width:calc(100% - 28px)!important;}
   #sidebar .filters{
-    top:124px!important;left:14px!important;right:14px!important;
-    width:auto!important;max-width:none!important;padding:0!important;
-    display:flex!important;flex-direction:column!important;gap:9px!important;
-    background:transparent!important;pointer-events:none!important;
+    top:116px!important;left:14px!important;right:14px!important;width:auto!important;max-width:none!important;
+    display:flex!important;flex-direction:column!important;align-items:stretch!important;gap:7px!important;
+    padding:0!important;border:0!important;background:transparent!important;pointer-events:none!important;
   }
   #sidebar .mobile-filter-toggle{
-    align-self:flex-end!important;width:auto!important;min-width:112px!important;
-    padding:9px 15px!important;background:var(--surface)!important;
-    color:var(--ink)!important;border:1px solid var(--border-strong)!important;
-    pointer-events:auto!important;
+    display:flex!important;align-self:flex-end!important;align-items:center!important;justify-content:center!important;
+    width:auto!important;min-width:100px!important;min-height:34px!important;padding:7px 13px!important;
+    border-radius:20px!important;background:var(--surface)!important;color:var(--ink)!important;
+    border:1px solid var(--border-strong)!important;pointer-events:auto!important;
   }
   #sidebar .chip-row{
-    display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;
-    gap:7px!important;margin:0!important;padding:10px!important;
-    border:1px solid var(--border)!important;border-radius:16px!important;
-    background:color-mix(in srgb,var(--surface) 94%,transparent)!important;
-    box-shadow:0 8px 22px rgba(0,0,0,.12)!important;pointer-events:auto!important;
+    display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;gap:7px!important;
+    width:100%!important;overflow-x:auto!important;overflow-y:hidden!important;padding:2px 0 7px!important;
+    margin:0!important;scrollbar-width:none!important;-webkit-overflow-scrolling:touch;pointer-events:auto!important;
   }
+  #sidebar .chip-row::-webkit-scrollbar{display:none!important;}
   #sidebar .chip{
-    display:inline-flex!important;align-items:center!important;justify-content:center!important;
-    width:auto!important;min-width:0!important;min-height:36px!important;flex:0 0 auto!important;
-    padding:8px 13px!important;border-radius:20px!important;
-    background:var(--surface-soft)!important;color:var(--ink-soft)!important;
-    border:1px solid var(--border-strong)!important;font-size:11px!important;
-    box-shadow:none!important;
+    display:inline-flex!important;align-items:center!important;justify-content:center!important;flex:0 0 auto!important;
+    width:auto!important;min-width:0!important;min-height:36px!important;padding:8px 14px!important;
+    border-radius:22px!important;background:var(--surface)!important;color:var(--ink-soft)!important;
+    border:1px solid var(--border-strong)!important;font-size:12px!important;box-shadow:none!important;
   }
   #sidebar .chip.active{background:var(--action)!important;color:var(--on-action)!important;border-color:var(--action)!important;}
   #sidebar .toggle-row{
-    display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
-    gap:7px!important;padding:0 10px 10px!important;
-    border:1px solid var(--border)!important;border-top:0!important;
-    border-radius:0 0 16px 16px!important;margin-top:-9px!important;
-    background:color-mix(in srgb,var(--surface) 94%,transparent)!important;
-    pointer-events:auto!important;
+    display:flex!important;flex-direction:row!important;flex-wrap:wrap!important;gap:6px 12px!important;
+    margin:0!important;padding:8px 10px!important;border:1px solid var(--border)!important;border-radius:14px!important;
+    background:var(--surface)!important;pointer-events:auto!important;
   }
   #sidebar .toggle-row label{
-    display:flex!important;justify-content:flex-start!important;min-height:38px!important;
-    padding:5px 6px!important;background:transparent!important;border:0!important;
-    color:var(--ink-soft)!important;font-size:10px!important;text-align:left!important;
-    box-shadow:none!important;
+    display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:6px!important;
+    min-height:26px!important;padding:2px 0!important;border:0!important;background:transparent!important;
+    color:var(--ink-soft)!important;font-size:10px!important;text-align:left!important;box-shadow:none!important;
   }
-  #sidebar .toggle-row input{flex:0 0 auto!important;}
-  #sidebar.menu-collapsed .filters .chip-row,
-  #sidebar.menu-collapsed .filters .toggle-row{display:none!important;}
+  #sidebar.menu-collapsed .filters .chip-row,#sidebar.menu-collapsed .filters .toggle-row{display:none!important;}
+  #sidebar.menu-collapsed .filters{top:116px!important;}
   #sidebar.menu-collapsed .mobile-filter-toggle{align-self:flex-end!important;}
-  body[data-mobile-tab="venues"] #sidebar .filters{position:relative!important;inset:auto!important;width:100%!important;padding:12px 14px!important;display:block!important;background:var(--bg)!important;pointer-events:auto!important;}
+  body[data-mobile-tab="venues"] #sidebar .filters{
+    position:relative!important;inset:auto!important;top:auto!important;left:auto!important;right:auto!important;
+    display:block!important;width:100%!important;padding:12px 16px!important;background:var(--bg)!important;
+    border-bottom:1px solid var(--border)!important;pointer-events:auto!important;
+  }
   body[data-mobile-tab="venues"] #sidebar .mobile-filter-toggle{display:none!important;}
-  body[data-mobile-tab="venues"] #sidebar .chip-row{display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;padding:0 0 5px!important;border:0!important;background:transparent!important;box-shadow:none!important;}
-  body[data-mobile-tab="venues"] #sidebar .toggle-row{display:flex!important;flex-direction:column!important;padding:0!important;border:0!important;background:transparent!important;margin:8px 0 0!important;}
-  body[data-mobile-tab="venues"] #sidebar .toggle-row label{font-size:12px!important;min-height:26px!important;}
+  body[data-mobile-tab="venues"] #sidebar .chip-row{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;overflow-x:auto!important;}
+  body[data-mobile-tab="venues"] #sidebar .toggle-row{display:flex!important;flex-direction:column!important;align-items:stretch!important;
+    padding:4px 0 0!important;border:0!important;background:transparent!important;}
+  body[data-mobile-tab="venues"] #sidebar .toggle-row label{font-size:12px!important;min-height:24px!important;}
+  body[data-mobile-tab="venues"] #sidebar #venue-list{flex:1 1 auto!important;min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;padding-bottom:24px!important;}
 
-  /* Light theme: explicitly theme every text/control surface, including map overlays. */
-  :root[data-theme="light"] body,
-  :root[data-theme="light"] #sidebar,
-  :root[data-theme="light"] .modal{background:var(--bg)!important;color:var(--ink)!important;}
-  :root[data-theme="light"] #sidebar .brand h1,
-  :root[data-theme="light"] .tagline,
-  :root[data-theme="light"] .list-meta,
-  :root[data-theme="light"] .venue-name,
-  :root[data-theme="light"] .venue-cat,
-  :root[data-theme="light"] .toggle-row label,
-  :root[data-theme="light"] .field label,
-  :root[data-theme="light"] .modal h2,
-  :root[data-theme="light"] .modal .sub{color:var(--ink)!important;}
-  :root[data-theme="light"] .tagline,
-  :root[data-theme="light"] .list-meta,
-  :root[data-theme="light"] .venue-cat,
+  /* Ensure text and controls always follow the selected theme. */
+  :root[data-theme="light"] body,:root[data-theme="light"] #sidebar,:root[data-theme="light"] .modal{
+    background:var(--bg)!important;color:var(--ink)!important;
+  }
+  :root[data-theme="light"] .brand h1,:root[data-theme="light"] .tagline,:root[data-theme="light"] .venue-name,
+  :root[data-theme="light"] .field label,:root[data-theme="light"] .modal h2{color:var(--ink)!important;}
+  :root[data-theme="light"] .tagline,:root[data-theme="light"] .venue-cat,:root[data-theme="light"] .list-meta,
   :root[data-theme="light"] .modal .sub{color:var(--muted)!important;}
-  :root[data-theme="light"] .add-btn,
-  :root[data-theme="light"] .btn-primary{background:var(--action)!important;color:#20251D!important;border-color:var(--action)!important;}
-  :root[data-theme="light"] .search-box input,
-  :root[data-theme="light"] .field input[type="text"],
-  :root[data-theme="light"] .field select{background:var(--surface-soft)!important;color:var(--ink)!important;border-color:var(--border-strong)!important;}
-  :root[data-theme="light"] .search-box input::placeholder,
-  :root[data-theme="light"] .field input::placeholder{color:var(--muted)!important;opacity:1;}
-  :root[data-theme="light"] .chip{background:var(--surface)!important;color:var(--ink-soft)!important;border-color:var(--border-strong)!important;}
-  :root[data-theme="light"] .chip.active{background:var(--action)!important;color:#20251D!important;border-color:var(--action)!important;}
-  :root[data-theme="light"] .toggle-row label{color:var(--ink-soft)!important;}
+  :root[data-theme="light"] .search-box input,:root[data-theme="light"] .field input,
+  :root[data-theme="light"] .field select{background:var(--surface)!important;color:var(--ink)!important;border-color:var(--border-strong)!important;}
+  :root[data-theme="light"] .search-box input::placeholder,:root[data-theme="light"] .field input::placeholder{color:var(--muted)!important;opacity:1;}
   :root[data-theme="light"] .venue-card{background:var(--surface)!important;color:var(--ink)!important;border-color:var(--border)!important;}
-  :root[data-theme="light"] .venue-name{color:var(--ink)!important;}
-  :root[data-theme="light"] .venue-cat,
-  :root[data-theme="light"] .db-reading{color:var(--muted)!important;}
-  :root[data-theme="light"] .tag-pill{color:var(--ink-soft)!important;border-color:var(--border-strong)!important;}
   :root[data-theme="light"] .mobile-bottom-nav{background:var(--surface)!important;border-color:var(--border)!important;}
   :root[data-theme="light"] .mobile-bottom-nav a{color:var(--muted)!important;}
   :root[data-theme="light"] .mobile-bottom-nav a.active{color:var(--quiet-deep)!important;background:var(--surface-soft)!important;}
   :root[data-theme="light"] .leaflet-control-zoom a{background:#fff!important;color:#20251D!important;border-color:var(--border)!important;}
-  :root[data-theme="light"] .leaflet-control-attribution{background:rgba(255,255,255,.82)!important;color:#596052!important;}
+  :root[data-theme="light"] .leaflet-control-attribution{background:rgba(255,255,255,.85)!important;color:#596052!important;}
   :root[data-theme="light"] .leaflet-control-attribution a{color:#638D35!important;}
-  :root[data-theme="light"] .leaflet-popup-content-wrapper,
-  :root[data-theme="light"] .leaflet-popup-tip{background:#fff!important;color:#20251D!important;}
-  :root[data-theme="light"] .popup-body h3,
-  :root[data-theme="light"] .popup-body{color:#20251D!important;}
+  :root[data-theme="light"] .leaflet-popup-content-wrapper,:root[data-theme="light"] .leaflet-popup-tip{background:#fff!important;color:#20251D!important;}
+  :root[data-theme="light"] .popup-body,:root[data-theme="light"] .popup-body h3{color:#20251D!important;}
   :root[data-theme="light"] .popup-body p{color:#596052!important;}
-  :root[data-theme="light"] .popup-rate-btn,
-  :root[data-theme="light"] .btn-secondary{background:var(--surface-soft)!important;color:var(--ink)!important;border-color:var(--border-strong)!important;}
 
-  /* Full-screen add-venue form, with safe-area spacing and legible location controls. */
-  .modal-overlay{padding:0!important;}
-  .modal{padding:calc(24px + env(safe-area-inset-top)) 18px calc(22px + env(safe-area-inset-bottom))!important;}
-  .modal h2{margin-top:8px!important;}
-  .modal .sub{margin-bottom:24px!important;}
-  #location-search-field{margin-top:22px!important;}
-  #location-search-input{width:100%!important;min-height:50px!important;padding:12px!important;border-radius:12px!important;font-size:16px!important;}
-  #location-search-results{background:var(--surface)!important;border-color:var(--border-strong)!important;color:var(--ink)!important;z-index:20;}
-  #location-search-results>*{color:var(--ink)!important;border-color:var(--border)!important;}
-  #location-selected-display{color:var(--muted)!important;line-height:1.45!important;}
-  #adjust-pin-btn,#done-pin-btn{min-height:42px!important;background:var(--surface-soft)!important;color:var(--ink)!important;border:1px solid var(--border-strong)!important;border-radius:10px!important;}
+  /* Add-venue form: scrollable full-screen sheet, with fixed safe-area footer. */
+  .modal-overlay{align-items:stretch!important;justify-content:stretch!important;padding:0!important;}
+  .modal{width:100%!important;max-width:none!important;height:100dvh!important;max-height:100dvh!important;
+    overflow-y:auto!important;overscroll-behavior:contain!important;border-radius:0!important;
+    padding:calc(26px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom))!important;}
+  .modal .field{min-width:0!important;}
+  .modal .field input[type="text"],.modal .field select{width:100%!important;min-height:50px!important;font-size:16px!important;}
+  .modal-actions{position:sticky!important;bottom:calc(-24px - env(safe-area-inset-bottom))!important;
+    margin:18px -18px -24px!important;padding:12px 18px calc(14px + env(safe-area-inset-bottom))!important;
+    background:var(--surface)!important;border-top:1px solid var(--border)!important;}
 }
