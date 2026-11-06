@@ -1316,35 +1316,18 @@ button,
    Mobile website — align the browser experience with Android
    ========================================================= */
 @media (max-width:760px){
-  :root{
-    color-scheme:dark;
-    --bg:#101114;
-    --surface:#1B1D22;
-    --surface-soft:#252830;
-    --ink:#F4F4F5;
-    --ink-soft:#D5D7DC;
-    --muted:#92959F;
-    --border:#30323A;
-    --border-strong:#41444E;
-    --quiet:#B8F36B;
-    --quiet-deep:#B8F36B;
-    --loud:#FF7474;
-    --loud-deep:#FF8B8B;
-    --focus:#B8F36B;
-    --action:#B8F36B;
-    --action-hover:#C8FA83;
-    --on-action:#101114;
-  }
-  html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#101114;}
-  body{display:block;position:relative;min-height:100dvh;height:100dvh;background:#101114;color:var(--ink);}
+  :root[data-theme="dark"]{color-scheme:dark;--bg:#101114;--surface:#1B1D22;--surface-soft:#252830;--ink:#F4F4F5;--ink-soft:#D5D7DC;--muted:#92959F;--border:#30323A;--border-strong:#41444E;--quiet:#B8F36B;--quiet-deep:#B8F36B;--loud:#FF7474;--loud-deep:#FF8B8B;--focus:#B8F36B;--action:#B8F36B;--action-hover:#C8FA83;--on-action:#101114;}
+  :root[data-theme="light"]{color-scheme:light;--bg:#F4F5F1;--surface:#FFFFFF;--surface-soft:#F0F2EB;--ink:#20251D;--ink-soft:#596052;--muted:#747B70;--border:#DDE2D5;--border-strong:#C9D1C2;--quiet:#638D35;--quiet-deep:#638D35;--loud:#C85D55;--loud-deep:#B84E46;--focus:#638D35;--action:#B8F36B;--action-hover:#A9E85A;--on-action:#20251D;}
+  html,body{width:100%;height:100%;margin:0;overflow:hidden;background:var(--bg);}
+  body{display:block;position:relative;min-height:100dvh;height:100dvh;background:var(--bg);color:var(--ink);}
   #map{
     display:block!important;position:fixed!important;inset:0 0 calc(68px + env(safe-area-inset-bottom)) 0;
     width:100%!important;height:auto!important;min-height:0!important;z-index:1;background:#15252b;
   }
   /* The existing OSM tiles stay on Leaflet; this gives them the app's dark-map feel. */
-  .leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.78) contrast(1.08) saturate(.72);}
+  .leaflet-tile-pane{filter:none!important;}
   .leaflet-control-zoom{margin:14px!important;border:0!important;box-shadow:0 4px 18px rgba(0,0,0,.3);}
-  .leaflet-control-zoom a{background:#1B1D22!important;color:#F4F4F5!important;border-color:#30323A!important;width:38px!important;height:38px!important;line-height:38px!important;}
+  .leaflet-control-zoom a{background:var(--surface)!important;color:#F4F4F5!important;border-color:#30323A!important;width:38px!important;height:38px!important;line-height:38px!important;}
   .leaflet-control-attribution{background:rgba(16,17,20,.75)!important;color:#92959F!important;font-size:8px!important;}
   .leaflet-control-attribution a{color:#B8F36B!important;}
 
@@ -1358,15 +1341,15 @@ button,
     display:flex;flex-direction:column;align-items:flex-start;gap:9px;padding:0;border:0;background:transparent;overflow:visible;pointer-events:none;}
   #sidebar .brand{display:flex;align-items:center;gap:7px;padding:8px 13px;border:1px solid rgba(255,255,255,.1);
     border-radius:24px;background:rgba(16,17,20,.92);box-shadow:0 6px 22px rgba(0,0,0,.25);pointer-events:auto;}
-  #sidebar .brand h1{font-family:Inter,sans-serif;font-size:17px;line-height:1.1;font-weight:800;letter-spacing:-.035em;color:#F4F4F5;}
-  #sidebar .brand .dot{width:8px;height:8px;background:#B8F36B;}
+  #sidebar .brand h1{font-family:Inter,sans-serif;font-size:17px;line-height:1.1;font-weight:800;letter-spacing:-.035em;color:var(--ink);}
+  #sidebar .brand .dot{width:8px;height:8px;background:var(--action);}
   #sidebar .tagline{display:none!important;}
   #sidebar .add-btn{position:fixed;left:16px;bottom:calc(84px + env(safe-area-inset-bottom));width:auto;min-height:42px;
-    padding:0 16px;border:0;border-radius:22px;background:#B8F36B;color:#101114;font-size:12px;font-weight:800;
+    padding:0 16px;border:0;border-radius:22px;background:var(--action);color:#101114;font-size:12px;font-weight:800;
     box-shadow:0 5px 18px rgba(0,0,0,.28);pointer-events:auto;}
   #theme-toggle,#account-btn{position:static!important;display:inline-flex!important;align-items:center;justify-content:center;
     width:38px!important;height:38px!important;margin:0!important;border:1px solid #30323A!important;border-radius:50%;
-    background:#1B1D22!important;color:#B8F36B!important;box-shadow:0 4px 16px rgba(0,0,0,.25);pointer-events:auto;}
+    background:var(--surface)!important;color:#B8F36B!important;box-shadow:0 4px 16px rgba(0,0,0,.25);pointer-events:auto;}
   #sidebar .sidebar-header #theme-toggle{position:fixed!important;top:14px;right:62px;}
   #sidebar .sidebar-header #account-btn{position:fixed!important;top:14px;right:14px;}
   #locate-me-btn,#quiet-near-btn{position:fixed!important;left:16px;bottom:calc(136px + env(safe-area-inset-bottom));width:auto!important;
@@ -1380,19 +1363,19 @@ button,
     display:flex;flex-direction:column;gap:8px;overflow:visible;pointer-events:auto;}
   #sidebar .search-box{position:fixed;top:64px;left:14px;width:calc(100% - 166px);margin:0;pointer-events:auto;}
   #sidebar .search-box input{min-height:40px;padding:8px 10px 8px 32px;border:1px solid rgba(255,255,255,.12);
-    border-radius:22px;background:rgba(27,29,34,.94);color:#F4F4F5;font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.2);}
-  #sidebar .search-box input::placeholder{color:#92959F;}
+    border-radius:22px;background:rgba(27,29,34,.94);color:var(--ink);font-size:13px;box-shadow:0 4px 16px rgba(0,0,0,.2);}
+  #sidebar .search-box input::placeholder{color:var(--muted);}
   #sidebar .search-box svg{left:11px;width:14px;height:14px;stroke:#92959F;}
   #sidebar .chip-row{display:flex;flex-direction:column;flex-wrap:nowrap;gap:7px;margin:0;padding:0;overflow:visible;}
   #sidebar .chip{display:block;width:100%;min-height:38px;padding:8px 10px;border:1px solid rgba(255,255,255,.12);
-    border-radius:22px;background:rgba(16,17,20,.92);color:#F4F4F5;text-align:center;font-size:11px;font-weight:700;
+    border-radius:22px;background:rgba(16,17,20,.92);color:var(--ink);text-align:center;font-size:11px;font-weight:700;
     box-shadow:0 4px 14px rgba(0,0,0,.22);}
-  #sidebar .chip.active{background:#B8F36B;border-color:#B8F36B;color:#101114;}
+  #sidebar .chip.active{background:var(--action);border-color:var(--quiet-deep);color:#101114;}
   #sidebar .toggle-row{display:flex;flex-direction:column;gap:7px;margin:0;}
   #sidebar .toggle-row label{display:flex;align-items:center;justify-content:center;min-height:36px;padding:7px 9px;
-    border:1px solid rgba(255,255,255,.12);border-radius:22px;background:rgba(16,17,20,.92);color:#F4F4F5;
+    border:1px solid rgba(255,255,255,.12);border-radius:22px;background:rgba(16,17,20,.92);color:var(--ink);
     font-size:10px;font-weight:700;line-height:1.2;text-align:center;box-shadow:0 4px 14px rgba(0,0,0,.22);}
-  #sidebar .toggle-row input{width:13px;height:13px;accent-color:#B8F36B;}
+  #sidebar .toggle-row input{width:13px;height:13px;accent-color:var(--quiet-deep);}
   #sidebar .list-meta,#sidebar #venue-list{display:none!important;}
 
   /* Venues tab is a full-height, scrollable app screen. */
@@ -1400,59 +1383,59 @@ button,
   body[data-mobile-tab="venues"] #sidebar{
     position:fixed!important;inset:0 0 calc(68px + env(safe-area-inset-bottom)) 0!important;
     display:flex!important;flex-direction:column;width:100%!important;height:auto!important;
-    overflow:hidden!important;background:#101114!important;pointer-events:auto;
+    overflow:hidden!important;background:var(--bg)!important;pointer-events:auto;
   }
   body[data-mobile-tab="venues"] #sidebar .sidebar-header{
     position:relative;inset:auto;width:100%;max-width:none;display:flex;flex-direction:column;align-items:stretch;
-    gap:8px;padding:22px 16px 14px;background:#101114;border-bottom:1px solid #30323A;pointer-events:auto;
+    gap:8px;padding:22px 16px 14px;background:var(--bg);border-bottom:1px solid var(--border);pointer-events:auto;
   }
   body[data-mobile-tab="venues"] #sidebar .brand{padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;}
   body[data-mobile-tab="venues"] #sidebar .brand h1{font-size:23px;}
-  body[data-mobile-tab="venues"] #sidebar .tagline{display:block!important;font-size:12px;margin:0;color:#92959F;}
+  body[data-mobile-tab="venues"] #sidebar .tagline{display:block!important;font-size:12px;margin:0;color:var(--muted);}
   body[data-mobile-tab="venues"] #sidebar .add-btn{position:static;width:100%;min-height:48px;border-radius:14px;margin:4px 0 0;box-shadow:none;}
   body[data-mobile-tab="venues"] #theme-toggle,body[data-mobile-tab="venues"] #account-btn{display:none!important;}
   body[data-mobile-tab="venues"] #locate-me-btn,body[data-mobile-tab="venues"] #quiet-near-btn{position:static!important;width:100%!important;min-height:44px!important;box-shadow:none;}
   body[data-mobile-tab="venues"] #sidebar .filters{position:relative;inset:auto;width:100%;max-width:none;display:block;padding:12px 16px;
-    border-bottom:1px solid #30323A;background:#101114;overflow:visible;}
+    border-bottom:1px solid var(--border);background:var(--bg);overflow:visible;}
   body[data-mobile-tab="venues"] #sidebar .search-box{position:relative;inset:auto;width:100%;margin:0 0 10px;}
-  body[data-mobile-tab="venues"] #sidebar .search-box input{min-height:46px;border-radius:13px;background:#252830;font-size:15px;box-shadow:none;}
+  body[data-mobile-tab="venues"] #sidebar .search-box input{min-height:46px;border-radius:13px;background:var(--surface-soft);font-size:15px;box-shadow:none;}
   body[data-mobile-tab="venues"] #sidebar .chip-row{display:flex;flex-direction:row;flex-wrap:nowrap;gap:7px;overflow-x:auto;padding-bottom:4px;}
-  body[data-mobile-tab="venues"] #sidebar .chip{width:auto;flex:0 0 auto;min-height:38px;padding:8px 14px;border-radius:22px;background:#1B1D22;
-    color:#D5D7DC;font-size:12px;box-shadow:none;}
-  body[data-mobile-tab="venues"] #sidebar .chip.active{background:#B8F36B;color:#101114;border-color:#B8F36B;}
+  body[data-mobile-tab="venues"] #sidebar .chip{width:auto;flex:0 0 auto;min-height:38px;padding:8px 14px;border-radius:22px;background:var(--surface);
+    color:var(--ink-soft);font-size:12px;box-shadow:none;}
+  body[data-mobile-tab="venues"] #sidebar .chip.active{background:var(--action);color:#101114;border-color:var(--quiet-deep);}
   body[data-mobile-tab="venues"] #sidebar .toggle-row{gap:8px;margin-top:8px;}
   body[data-mobile-tab="venues"] #sidebar .toggle-row label{justify-content:flex-start;min-height:24px;padding:0;border:0;border-radius:0;background:transparent;
-    color:#D5D7DC;font-size:12px;font-weight:500;text-align:left;box-shadow:none;}
-  body[data-mobile-tab="venues"] #sidebar .list-meta{display:block!important;padding:12px 16px 4px;font-size:10px;color:#92959F;}
+    color:var(--ink-soft);font-size:12px;font-weight:500;text-align:left;box-shadow:none;}
+  body[data-mobile-tab="venues"] #sidebar .list-meta{display:block!important;padding:12px 16px 4px;font-size:10px;color:var(--muted);}
   body[data-mobile-tab="venues"] #sidebar #venue-list{display:block!important;flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;
     padding:4px 12px 20px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
-  body[data-mobile-tab="venues"] #sidebar .venue-card{margin:6px 2px;padding:14px 13px;border:1px solid #30323A;border-radius:16px;background:#1B1D22;}
-  body[data-mobile-tab="venues"] #sidebar .venue-name{font-size:14px;color:#F4F4F5;}
-  body[data-mobile-tab="venues"] #sidebar .venue-cat{font-size:11px;color:#92959F;}
-  body[data-mobile-tab="venues"] #sidebar .db-reading{font-size:11px;color:#92959F;}
-  body[data-mobile-tab="venues"] #sidebar .tag-pill{font-size:10px;color:#D5D7DC;border-color:#41444E;}
+  body[data-mobile-tab="venues"] #sidebar .venue-card{margin:6px 2px;padding:14px 13px;border:1px solid var(--border);border-radius:16px;background:var(--surface);}
+  body[data-mobile-tab="venues"] #sidebar .venue-name{font-size:14px;color:var(--ink);}
+  body[data-mobile-tab="venues"] #sidebar .venue-cat{font-size:11px;color:var(--muted);}
+  body[data-mobile-tab="venues"] #sidebar .db-reading{font-size:11px;color:var(--muted);}
+  body[data-mobile-tab="venues"] #sidebar .tag-pill{font-size:10px;color:var(--ink-soft);border-color:#41444E;}
 
   /* Shared Android-style bottom tabs. */
   .mobile-bottom-nav{position:fixed!important;left:0;right:0;bottom:0;z-index:1000;display:grid!important;
     grid-template-columns:repeat(3,1fr);height:calc(68px + env(safe-area-inset-bottom));padding:6px 12px calc(6px + env(safe-area-inset-bottom));
-    background:#101114;border-top:1px solid #30323A;box-shadow:none;}
+    background:var(--bg);border-top:1px solid var(--border);box-shadow:none;}
   .mobile-bottom-nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-radius:14px;
-    color:#92959F;text-decoration:none;font-size:22px;}
+    color:var(--muted);text-decoration:none;font-size:22px;}
   .mobile-bottom-nav a small{font-size:11px;font-weight:600;letter-spacing:0;}
-  .mobile-bottom-nav a.active{background:#252830;color:#B8F36B;}
+  .mobile-bottom-nav a.active{background:var(--surface-soft);color:var(--quiet-deep);}
   .mobile-bottom-nav a span{font-size:24px;line-height:1;}
-  .modal-overlay{z-index:1200;align-items:stretch;justify-content:stretch;padding:0;background:#101114!important;}
-  .modal{width:100%;max-width:none;height:100dvh;max-height:100dvh;overflow-y:auto;border:0;border-radius:0;padding:32px 20px calc(22px + env(safe-area-inset-bottom));background:#101114;}
-  .modal h2{font-family:Inter,sans-serif;font-size:30px;font-weight:800;letter-spacing:-.04em;color:#F4F4F5;}
-  .modal .sub{font-size:14px;line-height:1.55;color:#92959F;}
+  .modal-overlay{z-index:1200;align-items:stretch;justify-content:stretch;padding:0;background:var(--bg)!important;}
+  .modal{width:100%;max-width:none;height:100dvh;max-height:100dvh;overflow-y:auto;border:0;border-radius:0;padding:32px 20px calc(22px + env(safe-area-inset-bottom));background:var(--bg);}
+  .modal h2{font-family:Inter,sans-serif;font-size:30px;font-weight:800;letter-spacing:-.04em;color:var(--ink);}
+  .modal .sub{font-size:14px;line-height:1.55;color:var(--muted);}
   .field{margin-bottom:20px;}
-  .field label{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#B8F36B;}
-  .field input[type="text"],.field select{min-height:52px;padding:12px 14px;border:1px solid #30323A;border-radius:13px;background:#1B1D22;color:#F4F4F5;font-size:16px;}
-  .checkbox-field label{font-size:13px;color:#D5D7DC;}
+  .field label{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--quiet-deep);}
+  .field input[type="text"],.field select{min-height:52px;padding:12px 14px;border:1px solid var(--border);border-radius:13px;background:var(--surface);color:var(--ink);font-size:16px;}
+  .checkbox-field label{font-size:13px;color:var(--ink-soft);}
   .modal-actions{position:sticky;bottom:calc(-22px - env(safe-area-inset-bottom));margin:20px -20px -22px;padding:12px 20px calc(16px + env(safe-area-inset-bottom));
-    background:#1B1D22;border-top:1px solid #30323A;}
-  .btn-secondary{background:#252830;color:#D5D7DC;border-color:#41444E;}
-  .btn-primary{background:#B8F36B;color:#101114;border-color:#B8F36B;font-weight:800;}
+    background:var(--surface);border-top:1px solid var(--border);}
+  .btn-secondary{background:var(--surface-soft);color:var(--ink-soft);border-color:#41444E;}
+  .btn-primary{background:var(--action);color:#101114;border-color:var(--quiet-deep);font-weight:800;}
 }
 
 
@@ -1478,7 +1461,7 @@ button,
     display:flex;align-items:center;justify-content:center;gap:7px;
     width:100%;min-height:36px;padding:7px 10px;
     border:1px solid rgba(255,255,255,.14);border-radius:22px;
-    background:rgba(16,17,20,.94);color:#F4F4F5;
+    background:rgba(16,17,20,.94);color:var(--ink);
     font:700 11px Inter,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.22);
   }
   #sidebar .mobile-filter-toggle .chevron{transition:transform .18s ease;}
@@ -1494,3 +1477,21 @@ button,
   body[data-mobile-tab="venues"] #sidebar .filters .toggle-row{display:revert!important;}
 }
 @media (min-width:761px){.mobile-filter-toggle{display:none!important;}}
+
+/* Final mobile fixes: shared controls, expanded filters and reliable venue scrolling. */
+@media(max-width:760px){
+  #sidebar .sidebar-header{max-width:calc(100% - 112px)!important;width:auto!important;}
+  #sidebar .brand{max-width:100%!important;overflow:visible!important;}
+  #sidebar .brand h1{font-size:17px!important;white-space:nowrap;}
+  #sidebar .brand .dot{flex:0 0 8px;}
+  #sidebar .add-btn{z-index:510!important;left:16px!important;bottom:calc(84px + env(safe-area-inset-bottom))!important;}
+  #sidebar .sidebar-header #theme-toggle,#sidebar .sidebar-header #account-btn{position:fixed!important;top:14px!important;z-index:650!important;width:42px!important;height:42px!important;display:flex!important;background:var(--surface)!important;color:var(--quiet-deep)!important;border:1px solid var(--border-strong)!important;}
+  #sidebar .sidebar-header #theme-toggle{right:66px!important;}
+  #sidebar .sidebar-header #account-btn{right:14px!important;}
+  body[data-mobile-tab=venues] #theme-toggle,body[data-mobile-tab=venues] #account-btn{display:flex!important;}
+  body[data-mobile-tab=venues] #sidebar{overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;}
+  body[data-mobile-tab=venues] #sidebar .sidebar-header,body[data-mobile-tab=venues] #sidebar .filters,body[data-mobile-tab=venues] #sidebar .list-meta{flex:0 0 auto!important;}
+  body[data-mobile-tab=venues] #sidebar #venue-list{flex:0 0 auto!important;min-height:0!important;overflow:visible!important;padding-bottom:calc(92px + env(safe-area-inset-bottom))!important;touch-action:pan-y;}
+  body[data-mobile-tab=venues] #sidebar .mobile-filter-toggle{display:none!important;}
+  #sidebar .mobile-filter-toggle{color:var(--ink)!important;background:var(--surface)!important;border-color:var(--border-strong)!important;}
+}
