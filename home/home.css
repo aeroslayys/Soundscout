@@ -1874,3 +1874,87 @@ button,
     touch-action:pan-y!important;
   }
 }
+
+
+/* Mobile map/theme/header and venue-card navigation fixes. */
+@media(max-width:760px){
+  /* The filter disclosure button follows the active theme in both modes. */
+  #sidebar .mobile-filter-toggle{
+    background:rgba(27,29,34,.96)!important;
+    color:#F4F4F5!important;
+    border:1px solid #41444E!important;
+  }
+  #sidebar .mobile-filter-toggle .chevron{color:#B8F36B!important;}
+  :root[data-theme="light"] #sidebar .mobile-filter-toggle{
+    background:#FFFFFF!important;
+    color:#20251D!important;
+    border:1px solid #C9D1C2!important;
+    box-shadow:0 4px 14px rgba(32,37,29,.14)!important;
+  }
+  :root[data-theme="light"] #sidebar .mobile-filter-toggle .chevron{color:#638D35!important;}
+
+  /* Keep the map mounted and above the page background in light mode.
+     Leaflet is explicitly resized whenever the Map tab becomes visible. */
+  body[data-mobile-tab="map"] #map{
+    display:block!important;
+    position:fixed!important;
+    inset:0 0 calc(68px + env(safe-area-inset-bottom)) 0!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    z-index:1!important;
+    background:#e9eee4!important;
+  }
+  body[data-mobile-tab="map"] #map .leaflet-map-pane,
+  body[data-mobile-tab="map"] #map .leaflet-tile-pane,
+  body[data-mobile-tab="map"] #map .leaflet-overlay-pane,
+  body[data-mobile-tab="map"] #map .leaflet-marker-pane,
+  body[data-mobile-tab="map"] #map .leaflet-popup-pane,
+  body[data-mobile-tab="map"] #map .leaflet-tile{
+    visibility:visible!important;
+    opacity:1!important;
+    filter:none!important;
+  }
+  :root[data-theme="light"] body[data-mobile-tab="map"] #map{background:#e9eee4!important;}
+  :root[data-theme="light"] body[data-mobile-tab="map"] .leaflet-tile-pane{filter:none!important;}
+
+  /* Make the logo + theme + account controls one horizontally scrollable row. */
+  #sidebar .sidebar-header{
+    width:100%!important;
+    max-width:100%!important;
+    box-sizing:border-box!important;
+    overflow:visible!important;
+  }
+  #sidebar .brand{
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    flex-wrap:nowrap!important;
+    width:max-content!important;
+    min-width:max-content!important;
+    max-width:calc(100vw - 28px)!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    gap:9px!important;
+    padding:7px 10px!important;
+    scrollbar-width:none!important;
+    -webkit-overflow-scrolling:touch!important;
+    touch-action:pan-x!important;
+  }
+  #sidebar .brand::-webkit-scrollbar{display:none!important;}
+  #sidebar .brand h1{flex:0 0 auto!important;}
+  #sidebar .brand #theme-toggle,
+  #sidebar .brand #account-btn{
+    position:static!important;
+    flex:0 0 36px!important;
+    width:36px!important;
+    height:36px!important;
+    margin:0!important;
+  }
+  #sidebar .sidebar-header #theme-toggle,
+  #sidebar .sidebar-header #account-btn{
+    position:static!important;
+    top:auto!important;
+    right:auto!important;
+  }
+}
