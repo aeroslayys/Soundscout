@@ -1712,11 +1712,8 @@ themeToggle.addEventListener(
 );
 
 if(sidebarHeader){
-
-  sidebarHeader.appendChild(
-    themeToggle
-  );
-
+  var brandElement = sidebarHeader.querySelector(".brand");
+  (brandElement || sidebarHeader).appendChild(themeToggle);
 }
 
 
@@ -1774,7 +1771,10 @@ if(sidebarHeader){
   accountBtnStyle.textContent = "#account-btn:hover{opacity:0.85;}";
   document.head.appendChild(accountBtnStyle);
 
-  if(sidebarHeader) sidebarHeader.appendChild(accountBtn);
+  if(sidebarHeader){
+    var brandForAccount = sidebarHeader.querySelector(".brand");
+    (brandForAccount || sidebarHeader).appendChild(accountBtn);
+  }
 
   // ---------- Geolocation: "find my location" ----------
   // Uses the browser's built-in navigator.geolocation API — nothing to do
