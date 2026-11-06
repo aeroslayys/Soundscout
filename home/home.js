@@ -2532,7 +2532,8 @@ adjustPinBtn.addEventListener("click", function(){
 
 locationField.appendChild(adjustPinBtn);
   var fieldsNewVenue = document.getElementById("fields-new-venue");
-  fieldsNewVenue.insertBefore(locationField, fieldsNewVenue.firstChild);
+  // Keep the form order aligned with the Android app: name, category, then location.
+  fieldsNewVenue.appendChild(locationField);
 
   function clearLocationResults(){
     locationResults.innerHTML = "";
@@ -3188,6 +3189,22 @@ audioField.appendChild(
     });
   });
 
+  var categorySelect = document.getElementById("venue-category");
+  var categoryChoices = document.querySelectorAll(".category-choice");
+  function syncCategoryChoices(){
+    categoryChoices.forEach(function(choice){
+      var selected = choice.getAttribute("data-category") === categorySelect.value;
+      choice.setAttribute("aria-pressed", selected ? "true" : "false");
+    });
+  }
+  categoryChoices.forEach(function(choice){
+    choice.addEventListener("click", function(){
+      categorySelect.value = choice.getAttribute("data-category");
+      syncCategoryChoices();
+    });
+  });
+  syncCategoryChoices();
+
   var overlay = document.getElementById("modal-overlay");
   var modalMode = "new";
   var ratingTargetId = null;
@@ -3207,6 +3224,7 @@ audioField.appendChild(
       newFields.style.display = "";
       document.getElementById("venue-name").value = "";
       document.getElementById("venue-category").value = "cafe";
+      syncCategoryChoices();
       document.getElementById("venue-access").checked = false;
       document.getElementById("venue-toilet").checked = false;
       resetLocationSearch();
