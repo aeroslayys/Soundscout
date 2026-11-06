@@ -3372,8 +3372,9 @@ locationSelectedDisplay.style.color = "#5B6472";
     var filterToggle = document.createElement("button");
     filterToggle.type = "button";
     filterToggle.className = "mobile-filter-toggle";
+    document.getElementById("sidebar").classList.remove("menu-collapsed");
     filterToggle.setAttribute("aria-expanded", "true");
-    filterToggle.innerHTML = '<span>Filters</span><span class="chevron" aria-hidden="true">⌃</span>';
+    filterToggle.innerHTML = '<span>Hide filters</span><span class="chevron" aria-hidden="true">⌃</span>';
     filterToggle.addEventListener("click", function(){
       var collapsed = document.getElementById("sidebar").classList.toggle("menu-collapsed");
       filterToggle.setAttribute("aria-expanded", String(!collapsed));
