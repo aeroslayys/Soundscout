@@ -1587,3 +1587,238 @@ button,
     background:var(--bg)!important;border-top:1px solid var(--border)!important;}
   .modal-actions button{flex:1;min-height:48px!important;border-radius:13px!important;font-size:14px!important;}
 }
+
+
+/* Final mobile fixes: theme-safe map and a compact, genuinely scrollable Venues screen. */
+@media(max-width:760px){
+  /* Keep the Leaflet map alive and repaint it after a theme switch. */
+  #map{
+    display:block!important;
+    visibility:visible!important;
+    opacity:1!important;
+    background:var(--surface-soft)!important;
+  }
+  #map .leaflet-pane,
+  #map .leaflet-tile-pane,
+  #map .leaflet-tile-container,
+  #map .leaflet-tile{
+    visibility:visible!important;
+    opacity:1!important;
+    filter:none!important;
+  }
+  #map .leaflet-tile{max-width:none!important;}
+  :root[data-theme="light"] #sidebar .brand h1,
+  :root[data-theme="light"] #sidebar .tagline,
+  :root[data-theme="light"] #sidebar .search-box input,
+  :root[data-theme="light"] #sidebar .search-box input::placeholder,
+  :root[data-theme="light"] #sidebar .chip,
+  :root[data-theme="light"] #sidebar .toggle-row label{
+    color:var(--ink)!important;
+  }
+  :root[data-theme="light"] #sidebar .brand,
+  :root[data-theme="light"] #sidebar .search-box input,
+  :root[data-theme="light"] #sidebar .chip,
+  :root[data-theme="light"] #sidebar .toggle-row label{
+    border-color:var(--border)!important;
+  }
+  :root[data-theme="light"] #sidebar .brand{background:rgba(255,255,255,.94)!important;}
+  :root[data-theme="light"] #sidebar .search-box input{background:rgba(255,255,255,.96)!important;}
+  :root[data-theme="light"] #sidebar .chip{background:rgba(255,255,255,.94)!important;}
+  :root[data-theme="light"] #sidebar .chip.active{background:var(--action)!important;color:var(--on-action)!important;}
+  :root[data-theme="light"] #sidebar .toggle-row label{background:rgba(255,255,255,.94)!important;}
+  :root[data-theme="light"] #theme-toggle,
+  :root[data-theme="light"] #account-btn{background:#fff!important;color:var(--quiet-deep)!important;border-color:var(--border)!important;}
+  :root[data-theme="light"] .leaflet-control-zoom a{color:#20251D!important;}
+  :root[data-theme="light"] .leaflet-control-attribution{background:rgba(255,255,255,.9)!important;color:#596052!important;}
+  :root[data-theme="light"] .leaflet-control-attribution a{color:#638D35!important;}
+
+  /* Venues: reserve roughly the top third for branding/search/filters.
+     The remaining area is a dedicated scrolling list. */
+  body[data-mobile-tab="venues"] #sidebar{
+    display:flex!important;
+    flex-direction:column!important;
+    position:fixed!important;
+    inset:0 0 calc(68px + env(safe-area-inset-bottom)) 0!important;
+    width:100%!important;
+    height:auto!important;
+    min-height:0!important;
+    overflow:hidden!important;
+    background:var(--bg)!important;
+    pointer-events:auto!important;
+  }
+  body[data-mobile-tab="venues"] #sidebar .sidebar-header{
+    position:relative!important;
+    flex:0 0 auto!important;
+    display:flex!important;
+    flex-direction:row!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    min-height:58px!important;
+    gap:10px!important;
+    padding:10px 16px 7px!important;
+    overflow:visible!important;
+    border:0!important;
+    background:var(--bg)!important;
+  }
+  body[data-mobile-tab="venues"] #sidebar .brand{
+    display:flex!important;
+    align-items:center!important;
+    flex:1 1 auto!important;
+    min-width:0!important;
+    width:auto!important;
+    gap:7px!important;
+    padding:0!important;
+    border:0!important;
+    border-radius:0!important;
+    background:transparent!important;
+    box-shadow:none!important;
+  }
+  body[data-mobile-tab="venues"] #sidebar .brand h1{font-size:21px!important;line-height:1.1!important;}
+  body[data-mobile-tab="venues"] #sidebar .tagline,
+  body[data-mobile-tab="venues"] #sidebar .add-btn,
+  body[data-mobile-tab="venues"] #sidebar #locate-me-btn,
+  body[data-mobile-tab="venues"] #sidebar #quiet-near-btn{display:none!important;}
+  body[data-mobile-tab="venues"] #sidebar #theme-toggle,
+  body[data-mobile-tab="venues"] #sidebar #account-btn{
+    position:static!important;
+    display:inline-flex!important;
+    flex:0 0 38px!important;
+    width:38px!important;height:38px!important;
+    margin:0!important;
+  }
+  body[data-mobile-tab="venues"] #sidebar .filters{
+    position:relative!important;
+    inset:auto!important;
+    flex:0 0 auto!important;
+    display:flex!important;
+    flex-direction:column!important;
+    gap:8px!important;
+    width:100%!important;
+    max-width:none!important;
+    max-height:calc(33dvh - 58px)!important;
+    min-height:0!important;
+    box-sizing:border-box!important;
+    padding:7px 16px 10px!important;
+    overflow:hidden!important;
+    border:0!important;
+    border-bottom:1px solid var(--border)!important;
+    background:var(--bg)!important;
+  }
+  body[data-mobile-tab="venues"] #sidebar .search-box{
+    position:relative!important;
+    inset:auto!important;
+    flex:0 0 auto!important;
+    width:100%!important;
+    margin:0!important;
+  }
+  body[data-mobile-tab="venues"] #sidebar .search-box input{
+    box-sizing:border-box!important;
+    width:100%!important;
+    min-height:42px!important;
+    padding:9px 12px 9px 36px!important;
+    border-radius:13px!important;
+    background:var(--surface-soft)!important;
+    color:var(--ink)!important;
+    border:1px solid var(--border)!important;
+    font-size:14px!important;
+    box-shadow:none!important;
+  }
+  body[data-mobile-tab="venues"] #sidebar .search-box svg{left:12px!important;}
+  body[data-mobile-tab="venues"] #sidebar .chip-row{
+    display:flex!important;
+    flex:0 0 auto!important;
+    flex-direction:row!important;
+    flex-wrap:nowrap!important;
+    gap:7px!important;
+    width:100%!important;
+    margin:0!important;
+    padding:1px 1px 5px!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    scrollbar-width:none!important;
+    -webkit-overflow-scrolling:touch!important;
+  }
+  body[data-mobile-tab="venues"] #sidebar .chip-row::-webkit-scrollbar{display:none!important;}
+  body[data-mobile-tab="venues"] #sidebar .chip{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    flex:0 0 auto!important;
+    width:auto!important;
+    min-height:34px!important;
+    padding:7px 13px!important;
+    border:1px solid var(--border)!important;
+    border-radius:20px!important;
+    background:var(--surface)!important;
+    color:var(--ink-soft)!important;
+    font-size:11px!important;
+    white-space:nowrap!important;
+    box-shadow:none!important;
+  }
+  body[data-mobile-tab="venues"] #sidebar .chip.active{
+    background:var(--action)!important;
+    color:var(--on-action)!important;
+    border-color:var(--action)!important;
+  }
+  body[data-mobile-tab="venues"] #sidebar .toggle-row{
+    display:flex!important;
+    flex-direction:row!important;
+    flex-wrap:nowrap!important;
+    gap:8px!important;
+    width:100%!important;
+    margin:0!important;
+    overflow-x:auto!important;
+    overflow-y:hidden!important;
+    scrollbar-width:none!important;
+  }
+  body[data-mobile-tab="venues"] #sidebar .toggle-row::-webkit-scrollbar{display:none!important;}
+  body[data-mobile-tab="venues"] #sidebar .toggle-row label{
+    display:flex!important;
+    flex:0 0 auto!important;
+    align-items:center!important;
+    justify-content:flex-start!important;
+    gap:6px!important;
+    min-height:28px!important;
+    padding:5px 9px!important;
+    border:1px solid var(--border)!important;
+    border-radius:18px!important;
+    background:var(--surface)!important;
+    color:var(--ink-soft)!important;
+    font-size:10px!important;
+    line-height:1.15!important;
+    white-space:nowrap!important;
+    box-shadow:none!important;
+  }
+  body[data-mobile-tab="venues"] #sidebar .toggle-row input{width:13px!important;height:13px!important;}
+  body[data-mobile-tab="venues"] #sidebar .list-meta{
+    display:block!important;
+    flex:0 0 auto!important;
+    margin:0!important;
+    padding:8px 16px 4px!important;
+    color:var(--muted)!important;
+    font-size:10px!important;
+  }
+  body[data-mobile-tab="venues"] #sidebar #venue-list{
+    display:block!important;
+    flex:1 1 0%!important;
+    height:0!important;
+    min-height:0!important;
+    width:100%!important;
+    box-sizing:border-box!important;
+    padding:4px 12px calc(20px + env(safe-area-inset-bottom))!important;
+    overflow-y:scroll!important;
+    overflow-x:hidden!important;
+    overscroll-behavior-y:contain!important;
+    -webkit-overflow-scrolling:touch!important;
+    touch-action:pan-y!important;
+  }
+  body[data-mobile-tab="venues"] #sidebar .venue-card{
+    display:block!important;
+    width:auto!important;
+    margin:6px 2px!important;
+    padding:13px!important;
+    background:var(--surface)!important;
+    border:1px solid var(--border)!important;
+    border-radius:15px!important;
+  }
+}
