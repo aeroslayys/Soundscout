@@ -7,7 +7,8 @@
 
   let deferredPrompt = null;
   let promptShown = false;
-  let dismissedAt = 0;\n  try { dismissedAt = Number(localStorage.getItem(STORAGE_KEY) || 0); } catch (_) {}
+  let dismissedAt = 0;
+  try { dismissedAt = Number(localStorage.getItem(STORAGE_KEY) || 0); } catch (_) {}
   if (dismissedAt && Date.now() - dismissedAt < COOLDOWN_MS) return;
 
   const mount = () => {
