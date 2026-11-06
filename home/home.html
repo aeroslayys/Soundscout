@@ -65,8 +65,15 @@
         <input type="text" id="venue-name" placeholder="Blue Hour Café">
       </div>
       <div class="field">
-        <label for="venue-category">Category</label>
-        <select id="venue-category">
+        <label>Category</label>
+        <div class="category-choice-row" role="group" aria-label="Venue category">
+          <button type="button" class="category-choice" data-category="cafe" aria-pressed="true">Café</button>
+          <button type="button" class="category-choice" data-category="restaurant" aria-pressed="false">Restaurant</button>
+          <button type="button" class="category-choice" data-category="library" aria-pressed="false">Library</button>
+          <button type="button" class="category-choice" data-category="gym" aria-pressed="false">Gym</button>
+          <button type="button" class="category-choice" data-category="coworking" aria-pressed="false">Coworking</button>
+        </div>
+        <select id="venue-category" class="category-native-select" aria-hidden="true" tabindex="-1">
           <option value="cafe">Café</option>
           <option value="restaurant">Restaurant</option>
           <option value="library">Library</option>
