@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Venue partner · SoundScout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="partner.css">
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#101114">
+</head>
+<body>
+<header class="topbar"><a href="../home/home.html" class="brand">SoundScout <span>VENUE PARTNER</span></a><div><a href="../profile/profile.html">My account</a><button id="logoutBtn">Log out</button></div></header>
+<main class="wrap">
+  <section class="intro"><p class="eyebrow">BUSINESS TOOLS</p><h1>Venue announcements</h1><p>Share upcoming events and expected conditions with people checking your venue.</p></section>
+  <section class="panel">
+    <div class="panel-head"><div><h2>Your venues</h2><p>Choose which verified venue you're managing.</p></div><span id="venueTimezone"></span></div>
+    <select id="venueSelect"><option>Loading your venues…</option></select>
+  </section>
+  <section class="panel">
+    <div class="panel-head"><div><h2 id="formHeading">Schedule an event</h2><p>These announcements are shown separately from community noise ratings.</p></div></div>
+    <form id="eventForm">
+      <label>Event title<input id="eventTitle" maxlength="160" required placeholder="Live Music Night"></label>
+      <div class="two">
+        <label>Event type<select id="eventType"><option value="live_music">Live music</option><option value="dj_party">DJ / Party</option><option value="special_occasion">Special occasion</option><option value="sports_screening">Sports screening</option><option value="private_event">Private event</option><option value="other">Other</option></select></label>
+        <label>Expected crowd<select id="eventCrowd"><option value="unknown">Not sure</option><option value="low">Low</option><option value="moderate">Moderate</option><option value="high">High</option><option value="very_high">Very high</option></select></label>
+      </div>
+      <div class="two">
+        <label>Starts<input id="eventStart" type="datetime-local" required></label>
+        <label>Ends<input id="eventEnd" type="datetime-local" required></label>
+      </div>
+      <label>Description<textarea id="eventDescription" maxlength="2000" rows="3" placeholder="Optional details for visitors"></textarea></label>
+      <label class="check"><input id="eventAmplified" type="checkbox"> Amplified music or loudspeaker expected</label>
+      <div class="actions"><button class="primary" type="submit" id="saveEvent">Publish announcement</button><button type="button" id="cancelEdit" class="secondary" hidden>Cancel edit</button></div>
+      <p id="formStatus" role="status"></p>
+    </form>
+  </section>
+  <section class="panel"><div class="panel-head"><div><h2>Scheduled announcements</h2><p>Upcoming and past event notices for the selected venue.</p></div><button id="refreshEvents" class="secondary">Refresh</button></div><div id="eventList" class="event-list"><p class="muted">Loading events…</p></div></section>
+  <p class="footnote">Information provided by the venue. Actual sound and crowd conditions may vary. Publishing an event does not create a community rating.</p>
+</main>
+<script src="partner.js"></script>
+</body></html>
