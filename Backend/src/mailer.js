@@ -70,4 +70,26 @@ async function sendAnnouncementEmail(toEmail, { subject, body, unsubscribeUrl })
   });
 }
 
-module.exports = { sendOtpEmail, sendAnnouncementEmail };
+
+async function sendVenuePartnerInvite(toEmail, { venueName, inviteUrl, expiresAt }) {
+  const safeVenue = escapeHtml(venueName);
+  const safeUrl = escapeHtml(inviteUrl);
+  const expiry = new Date(expiresAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' });
+  const html = `
+    <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#202B29">
+      <h2 style="color:#1E3937">SoundScout venue partner invitation</h2>
+      <p>You have been invited to manage announcements for <strong>${safeVenue}</strong> on SoundScout.</p>
+      <p>Sign in or create your SoundScout account using this email address, then accept the invitation:</p>
+      <p><a href="${safeUrl}" style="display:inline-block;padding:12px 18px;border-radius:8px;background:#1E3937;color:white;text-decoration:none">Accept invitation</a></p>
+      <p style="font-size:13px;color:#71807b">This invitation expires on ${escapeHtml(expiry)}. If you were not expecting it, you can ignore this email.</p>
+    </div>`;
+  await transport.sendMail({
+    from: `"${fromName}" <${fromEmail}>`,
+    to: toEmail,
+    subject: `You're invited to manage ${venueName} on SoundScout`,
+    text: `You've been invited to manage ${venueName} on SoundScout. Sign in with this email address and accept your invitation: ${inviteUrl}\nInvitation expires: ${expiry}`,
+    html,
+  });
+}
+
+module.exports = { sendOtpEmail, sendAnnouncementEmail, sendVenuePartnerInvite };
