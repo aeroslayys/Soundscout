@@ -25,26 +25,35 @@
     <div class="panel-head"><div><h2>Your venues</h2><p>Choose which verified venue you're managing.</p></div><span id="venueTimezone"></span></div>
     <select id="venueSelect"><option>Loading your venues…</option></select>
   </section>
-  <section class="panel">
-    <div class="panel-head"><div><h2 id="formHeading">Schedule an event</h2><p>These announcements are shown separately from community noise ratings.</p></div></div>
-    <form id="eventForm">
-      <label>Event title<input id="eventTitle" maxlength="160" required placeholder="Live Music Night"></label>
-      <div class="two">
-        <label>Event type<select id="eventType"><option value="live_music">Live music</option><option value="dj_party">DJ / Party</option><option value="special_occasion">Special occasion</option><option value="sports_screening">Sports screening</option><option value="private_event">Private event</option><option value="other">Other</option></select></label>
-        <label>Expected crowd<select id="eventCrowd"><option value="unknown">Not sure</option><option value="low">Low</option><option value="moderate">Moderate</option><option value="high">High</option><option value="very_high">Very high</option></select></label>
-      </div>
-      <div class="two">
-        <label>Starts<input id="eventStart" type="datetime-local" required></label>
-        <label>Ends<input id="eventEnd" type="datetime-local" required></label>
-      </div>
-      <label>Description<textarea id="eventDescription" maxlength="2000" rows="3" placeholder="Optional details for visitors"></textarea></label>
-      <label class="check"><input id="eventAmplified" type="checkbox"> Amplified music or loudspeaker expected</label>
-      <div class="actions"><button class="primary" type="submit" id="saveEvent">Publish announcement</button><button type="button" id="cancelEdit" class="secondary" hidden>Cancel edit</button></div>
-      <p id="formStatus" role="status"></p>
-    </form>
+  <section class="dashboard-grid">
+    <section class="panel dashboard-column ratings-column">
+      <div class="panel-head"><div><h2>Sound ratings</h2><p>Community feedback and rating history for this venue.</p></div><button id="refreshRatings" class="secondary">Refresh</button></div>
+      <div class="rating-chart-wrap"><div class="chart-heading"><strong>Rating trend</strong><span>Score out of 5 · latest 30 ratings</span></div><div id="ratingChart" class="rating-chart"><p class="muted">Loading rating trend…</p></div></div>
+      <div class="rating-list-heading"><h3>Recent ratings</h3><span>Scroll to view older feedback</span></div>
+      <div id="ratingList" class="rating-list"><p class="muted">Loading recent ratings…</p></div>
+    </section>
+    <section class="dashboard-column announcements-column">
+      <section class="panel announcement-form-panel">
+        <div class="panel-head"><div><h2 id="formHeading">Schedule an event</h2><p>Share upcoming events and expected conditions.</p></div></div>
+        <form id="eventForm">
+          <label>Event title<input id="eventTitle" maxlength="160" required placeholder="Live Music Night"></label>
+          <div class="two">
+            <label>Event type<select id="eventType"><option value="live_music">Live music</option><option value="dj_party">DJ / Party</option><option value="special_occasion">Special occasion</option><option value="sports_screening">Sports screening</option><option value="private_event">Private event</option><option value="other">Other</option></select></label>
+            <label>Expected crowd<select id="eventCrowd"><option value="unknown">Not sure</option><option value="low">Low</option><option value="moderate">Moderate</option><option value="high">High</option><option value="very_high">Very high</option></select></label>
+          </div>
+          <div class="two">
+            <label>Starts<input id="eventStart" type="datetime-local" required></label>
+            <label>Ends<input id="eventEnd" type="datetime-local" required></label>
+          </div>
+          <label>Description<textarea id="eventDescription" maxlength="2000" rows="3" placeholder="Optional details for visitors"></textarea></label>
+          <label class="check"><input id="eventAmplified" type="checkbox"> Amplified music or loudspeaker expected</label>
+          <div class="actions"><button class="primary" type="submit" id="saveEvent">Publish announcement</button><button type="button" id="cancelEdit" class="secondary" hidden>Cancel edit</button></div>
+          <p id="formStatus" role="status"></p>
+        </form>
+      </section>
+      <section class="panel announcements-panel"><div class="panel-head"><div><h2>Announcements</h2><p>Upcoming and past notices for the selected venue.</p></div><button id="refreshEvents" class="secondary">Refresh</button></div><div id="eventList" class="event-list"><p class="muted">Loading events…</p></div></section>
+    </section>
   </section>
-  <section class="panel"><div class="panel-head"><div><h2>Scheduled announcements</h2><p>Upcoming and past event notices for the selected venue.</p></div><button id="refreshEvents" class="secondary">Refresh</button></div><div id="eventList" class="event-list"><p class="muted">Loading events…</p></div></section>
-  <section class="panel"><div class="panel-head"><div><h2>Recent community ratings</h2><p>Latest feedback submitted by SoundScout users for this venue.</p></div><button id="refreshRatings" class="secondary">Refresh</button></div><div id="ratingList" class="rating-list"><p class="muted">Loading recent ratings…</p></div></section>
   <p class="footnote">Information provided by the venue. Actual sound and crowd conditions may vary. Publishing an event does not create a community rating.</p>
 </main>
 <script src="partner.js"></script>
