@@ -389,12 +389,12 @@ async function loadAnnouncements() {
   try {
     const data = await api("/admin/announcements/recipients");
     const includeNonOptedIn = document.getElementById("announcementIncludeNonOptedIn").checked;
-    const optedIn = Number(data.recipients) || 0;
-    const eligible = Number(data.oneTimeEligible) || 0;
+    const partnersOnly = document.getElementById("announcementVenuePartnersOnly").checked;
+    const optedIn = Number(partnersOnly ? data.partnerRecipients : data.recipients) || 0;
+    const eligible = Number(partnersOnly ? data.partnerOneTimeEligible : data.oneTimeEligible) || 0;
     const count = includeNonOptedIn ? eligible : optedIn;
-    document.getElementById("announcementRecipientCount").textContent = includeNonOptedIn
-      ? count + " eligible recipients (all active users who haven't unsubscribed)"
-      : optedIn + " opted-in recipients";
+    document.getElementById("announcementRecipientCount").textContent = (partnersOnly ? "Venue partners: " : "") + count +
+      (includeNonOptedIn ? " eligible recipients (not unsubscribed)" : " opted-in recipients");
     document.getElementById("sendAnnouncementBtn").disabled = !count;
     const history = await api("/admin/announcements/history");
     const items = history.items || [];
@@ -419,16 +419,18 @@ async function publishUpdate() {
   const body = document.getElementById("announcementBody").value.trim();
   if (subject.length < 3 || body.length < 10) return showToast("Add a subject and message first.", true);
   const includeNonOptedIn = document.getElementById("announcementIncludeNonOptedIn").checked;
+  const partnersOnly = document.getElementById("announcementVenuePartnersOnly").checked;
   const audienceDescription = document.getElementById("announcementRecipientCount").textContent;
-  const confirmation = includeNonOptedIn
-    ? "This is a ONE-TIME broad announcement to " + audienceDescription + ". People who previously unsubscribed and suspended accounts are excluded. Continue?"
-    : "Publish this update to " + audienceDescription + "?";
+  const confirmation = "Send " + (partnersOnly ? "ONLY to active venue partners" : "to the selected community audience") +
+    " (" + audienceDescription + "). " +
+    (includeNonOptedIn ? "This includes people who have not opted in, but excludes anyone who unsubscribed and suspended accounts. " : "") +
+    "Continue?";
   if (!window.confirm(confirmation)) return;
   const button = document.getElementById("sendAnnouncementBtn");
   button.disabled = true;
   button.textContent = "Sending…";
   try {
-    const result = await api("/admin/announcements", { method: "POST", body: { subject: subject, body: body, includeNonOptedIn: includeNonOptedIn } });
+    const result = await api("/admin/announcements", { method: "POST", body: { subject: subject, body: body, includeNonOptedIn: includeNonOptedIn, partnersOnly: partnersOnly } });
     showToast(result.sent + " delivered, " + result.failed + " failed.");
     document.getElementById("announcementSubject").value = "";
     document.getElementById("announcementBody").value = "";
@@ -439,6 +441,7 @@ async function publishUpdate() {
 }
 document.getElementById("refreshAnnouncementCount").addEventListener("click", loadAnnouncements);
 document.getElementById("announcementIncludeNonOptedIn").addEventListener("change", loadAnnouncements);
+document.getElementById("announcementVenuePartnersOnly").addEventListener("change", loadAnnouncements);
 document.getElementById("refreshAnnouncementHistory").addEventListener("click", loadAnnouncements);
 document.getElementById("announcementSubject").addEventListener("input", updateAnnouncementPreview);
 document.getElementById("announcementBody").addEventListener("input", updateAnnouncementPreview);
@@ -462,20 +465,30 @@ async function loadAudit() {
 }
 
 
+let approvedPartnerVenues = [];
+function renderPartnerVenueOptions() {
+  const select = document.getElementById("partnerInviteVenue");
+  const search = document.getElementById("partnerInviteVenueSearch").value.trim().toLowerCase();
+  const selected = select.value;
+  const filtered = approvedPartnerVenues.filter(function (venue) { return venue.name.toLowerCase().includes(search); });
+  select.innerHTML = '<option value="">Select an approved venue</option>' + filtered.map(function (venue) {
+    return '<option value="' + escapeHtml(venue.id) + '">' + escapeHtml(venue.name) + '</option>';
+  }).join("");
+  if (!filtered.length) select.innerHTML = '<option value="">No matching approved venues</option>';
+  if (selected && filtered.some(function (venue) { return venue.id === selected; })) select.value = selected;
+}
 async function loadPartnerVenues() {
   const select = document.getElementById("partnerInviteVenue");
   try {
     const data = await api("/admin/venues?" + queryString({ status: "approved", search: "", page: 1, limit: 200 }));
-    const items = data.items || [];
-    select.innerHTML = '<option value="">Select an approved venue</option>' + items.map(function (venue) {
-      return '<option value="' + escapeHtml(venue.id) + '">' + escapeHtml(venue.name) + '</option>';
-    }).join("");
-    if (!items.length) select.innerHTML = '<option value="">No approved venues available</option>';
+    approvedPartnerVenues = (data.items || []).map(function (venue) { return { id: venue.id, name: String(venue.name || "") }; });
+    renderPartnerVenueOptions();
   } catch (err) {
     select.innerHTML = '<option value="">Could not load venues</option>';
     showToast(err.message, true);
   }
 }
+document.getElementById("partnerInviteVenueSearch").addEventListener("input", renderPartnerVenueOptions);
 async function loadPartners() {
   showLoading("partnerInviteList", "Loading invitations…");
   showLoading("partnerAssignmentList", "Loading partner assignments…");
