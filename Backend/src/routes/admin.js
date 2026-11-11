@@ -451,15 +451,29 @@ router.get('/announcements/recipients', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT
-        COUNT(*) FILTER (WHERE announcement_opt_in = TRUE)::int AS opted_in,
-        COUNT(*)::int AS one_time_eligible
-       FROM users
-       WHERE is_suspended = FALSE
-         AND announcement_unsubscribed_at IS NULL`
+        COUNT(*) FILTER (WHERE u.announcement_opt_in = TRUE)::int AS opted_in,
+        COUNT(*)::int AS one_time_eligible,
+        COUNT(*) FILTER (WHERE u.announcement_opt_in = TRUE AND EXISTS (
+          SELECT 1 FROM venue_partners vp
+          JOIN venues v ON v.id = vp.venue_id
+          WHERE vp.user_id = u.id AND vp.active = TRUE
+            AND v.deleted_at IS NULL AND v.approval_status = 'approved'
+        ))::int AS partner_opted_in,
+        COUNT(*) FILTER (WHERE EXISTS (
+          SELECT 1 FROM venue_partners vp
+          JOIN venues v ON v.id = vp.venue_id
+          WHERE vp.user_id = u.id AND vp.active = TRUE
+            AND v.deleted_at IS NULL AND v.approval_status = 'approved'
+        ))::int AS partner_one_time_eligible
+       FROM users u
+       WHERE u.is_suspended = FALSE
+         AND u.announcement_unsubscribed_at IS NULL`
     );
     res.json({
       recipients: result.rows[0].opted_in,
-      oneTimeEligible: result.rows[0].one_time_eligible
+      oneTimeEligible: result.rows[0].one_time_eligible,
+      partnerRecipients: result.rows[0].partner_opted_in,
+      partnerOneTimeEligible: result.rows[0].partner_one_time_eligible
     });
   } catch (err) {
     console.error('Announcement recipient count error:', err);
@@ -489,6 +503,7 @@ router.post('/announcements', async (req, res) => {
   const subject = typeof req.body?.subject === 'string' ? req.body.subject.trim() : '';
   const body = typeof req.body?.body === 'string' ? req.body.body.trim() : '';
   const includeNonOptedIn = req.body?.includeNonOptedIn === true;
+  const partnersOnly = req.body?.partnersOnly === true;
   if (subject.length < 3 || subject.length > 180) return res.status(400).json({ error: 'Subject must be between 3 and 180 characters.' });
   if (body.length < 10 || body.length > 20000) return res.status(400).json({ error: 'Message must be between 10 and 20,000 characters.' });
 
@@ -498,13 +513,19 @@ router.post('/announcements', async (req, res) => {
   let campaign;
   try {
     const recipients = await pool.query(
-      `SELECT id, email, announcement_unsubscribe_token
-       FROM users
-       WHERE is_suspended = FALSE
-         AND announcement_unsubscribed_at IS NULL
-         AND (announcement_opt_in = TRUE OR $1 = TRUE)
-       ORDER BY created_at ASC`,
-      [includeNonOptedIn]
+      `SELECT u.id, u.email, u.announcement_unsubscribe_token
+       FROM users u
+       WHERE u.is_suspended = FALSE
+         AND u.announcement_unsubscribed_at IS NULL
+         AND (u.announcement_opt_in = TRUE OR $1 = TRUE)
+         AND ($2 = FALSE OR EXISTS (
+           SELECT 1 FROM venue_partners vp
+           JOIN venues v ON v.id = vp.venue_id
+           WHERE vp.user_id = u.id AND vp.active = TRUE
+             AND v.deleted_at IS NULL AND v.approval_status = 'approved'
+         ))
+       ORDER BY u.created_at ASC`,
+      [includeNonOptedIn, partnersOnly]
     );
     if (!recipients.rowCount) return res.status(409).json({ error: 'There are no eligible recipients for this announcement.' });
 
@@ -548,7 +569,7 @@ router.post('/announcements', async (req, res) => {
       'UPDATE announcement_campaigns SET completed_at = NOW(), sent_count = $2, failed_count = $3 WHERE id = $1',
       [campaign.id, sent, failed]
     );
-    await writeAudit(pool, req, 'announcement_sent', 'announcement', campaign.id, null, { total: recipients.rowCount, sent, failed, subject });
+    await writeAudit(pool, req, 'announcement_sent', 'announcement', campaign.id, null, { total: recipients.rowCount, sent, failed, subject, partnersOnly, includeNonOptedIn });
     res.status(201).json({ campaignId: campaign.id, total: recipients.rowCount, sent, failed });
   } catch (err) {
     console.error('Announcement send error:', err);
