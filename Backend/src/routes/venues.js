@@ -667,6 +667,29 @@ function getCurrentTimeBucket(timeZone) {
 
 
 
+
+/* Public partner announcements are deliberately separate from community ratings. */
+router.get('/:id/events', async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT e.id, e.title, e.event_type, e.description, e.starts_at, e.ends_at,
+              e.expected_crowd, e.amplified_music, v.time_zone
+       FROM venue_events e
+       JOIN venues v ON v.id = e.venue_id
+       WHERE e.venue_id = $1 AND e.status = 'published'
+         AND v.deleted_at IS NULL AND v.approval_status = 'approved'
+         AND e.ends_at > NOW()
+       ORDER BY e.starts_at ASC LIMIT 20`,
+      [req.params.id]
+    );
+    res.setHeader('Cache-Control', 'public, max-age=60');
+    res.json({ events: result.rows });
+  } catch (error) {
+    console.error('Failed to load venue announcements:', error);
+    res.status(500).json({ error: 'Could not load venue announcements.' });
+  }
+});
+
 /* Full rating history is loaded only when a user opens a venue. */
 router.get('/:id', async (req, res) => {
   try {
