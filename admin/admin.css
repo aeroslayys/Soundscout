@@ -1233,3 +1233,11 @@ input::placeholder,textarea::placeholder{color:#777C87;}
 }
 .announcement-consent span{display:block;}
 .announcement-consent small{display:block;margin-top:3px;color:var(--muted);font-size:11px;}
+
+/* Venue partner administration */
+#panel-partners .announcement-composer input,#panel-partners .announcement-composer select{
+  display:block;width:100%;box-sizing:border-box;margin:7px 0 16px;padding:12px;
+  border:1px solid var(--border-strong);border-radius:9px;background:var(--surface);
+  color:var(--ink);font:13px 'Inter',sans-serif;
+}
+#panel-partners .record-actions{max-width:none;}
