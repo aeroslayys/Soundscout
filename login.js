@@ -229,14 +229,14 @@ verifyBtn.addEventListener('click', async () => {
     const acceptedInvite = await acceptPendingPartnerInvite(data.token);
     setStatus(verifyStatus, acceptedInvite ? 'Venue partner access activated. Redirecting...' : 'Success! Redirecting...', 'success');
     setTimeout(() => {
-
-  if (data.user.admin === true) {
-    window.location.href = 'admin/admin.html';
-  } else {
-    window.location.href = 'home/home.html';
-  }
-
-}, 600);
+      if (data.user.admin === true) {
+        window.location.href = 'admin/admin.html';
+      } else if (acceptedInvite) {
+        window.location.href = 'partner/partner.html';
+      } else {
+        window.location.href = 'home/home.html';
+      }
+    }, 600);
   } catch(err){
     setStatus(verifyStatus, err.message, 'error');
     verifyBtn.disabled = false;
