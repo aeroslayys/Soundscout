@@ -31,7 +31,7 @@
   var API_BASE = "/api";
   var LOGIN_PAGE_URL = "../index.html";
 
-  var TIME_BUCKET_LABELS = {morning:"11am", afternoon:"3pm", evening:"7pm", night:"11pm"};
+  var TIME_BUCKET_LABELS = {morning:"Morning", afternoon:"Afternoon", evening:"Evening", night:"Night"};
   var CATEGORY_LABELS = {cafe:"Café", restaurant:"Restaurant", library:"Library", gym:"Gym", coworking:"Coworking"};
 
   function escapeHTML(value){
