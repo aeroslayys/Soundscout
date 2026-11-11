@@ -1172,10 +1172,10 @@ function recentReportsHTML(v){
       .then(function(data){
         var events = Array.isArray(data.events) ? data.events : [];
         if(!events.length){
-          section.innerHTML = '<h4 style="margin:0 0 7px;font-size:12px;color:#263b36;">Upcoming at this venue</h4><p style="margin:0;font-size:11px;color:#71807b;">No upcoming events announced.</p>';
+          section.innerHTML = '<h4 class="ss-events-heading">Upcoming at this venue</h4><p class="ss-events-empty">No upcoming events announced.</p>';
           return;
         }
-        var html = '<h4 style="margin:0 0 7px;font-size:12px;color:#263b36;">Upcoming at this venue</h4>';
+        var html = '<h4 class="ss-events-heading">Upcoming at this venue</h4>';
         events.forEach(function(event){
           var start = new Date(event.starts_at);
           var end = new Date(event.ends_at);
@@ -1184,10 +1184,10 @@ function recentReportsHTML(v){
           var endLabel = isNaN(end.getTime()) ? '' : new Intl.DateTimeFormat(undefined, {hour:'numeric',minute:'2-digit',timeZone:event.time_zone || undefined}).format(end);
           var crowdLabels = { low:'Low crowd', moderate:'Moderate crowd', high:'High crowd', very_high:'Very busy', unknown:'Crowd level unknown' };
           var meta = [dateLabel + (endLabel ? ' – ' + endLabel : ''), crowdLabels[event.expected_crowd] || 'Crowd level unknown', event.amplified_music ? 'Amplified music' : 'No amplified music'].filter(Boolean).join(' · ');
-          html += '<article style="padding:8px 9px;margin:6px 0;background:#f3f7f5;border-radius:8px;">' +
-            '<strong style="display:block;font-size:12px;color:#263b36;">' + escapeHTML(event.title) + '</strong>' +
-            '<span style="display:block;margin-top:3px;font-size:10px;color:#607470;">' + escapeHTML(meta) + '</span>' +
-            (event.description ? '<p style="margin:5px 0 0;font-size:11px;line-height:1.4;color:#43534e;">' + escapeHTML(event.description) + '</p>' : '') +
+          html += '<article class="ss-event-card">' +
+            '<strong class="ss-event-title">' + escapeHTML(event.title) + '</strong>' +
+            '<span class="ss-event-meta">' + escapeHTML(meta) + '</span>' +
+            (event.description ? '<p class="ss-event-description">' + escapeHTML(event.description) + '</p>' : '') +
           '</article>';
         });
         section.innerHTML = html;
