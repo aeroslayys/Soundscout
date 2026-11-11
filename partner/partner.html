@@ -5,12 +5,20 @@
 <title>Venue partner · SoundScout</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script>
+(function(){
+  try {
+    var theme = localStorage.getItem('soundscout_partner_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : 'dark');
+  } catch (_) {}
+})();
+</script>
 <link rel="stylesheet" href="partner.css">
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#101114">
 </head>
 <body>
-<header class="topbar"><a href="../home/home.html" class="brand">SoundScout <span>VENUE PARTNER</span></a><div><a href="../profile/profile.html">My account</a><button id="logoutBtn">Log out</button></div></header>
+<header class="topbar"><a href="../home/home.html" class="brand">SoundScout <span>VENUE PARTNER</span></a><div><a href="../profile/profile.html">My account</a><button id="themeToggle" type="button" aria-label="Switch to light mode">Light mode</button><button id="logoutBtn">Log out</button></div></header>
 <main class="wrap">
   <section class="intro"><p class="eyebrow">BUSINESS TOOLS</p><h1>Venue announcements</h1><p>Share upcoming events and expected conditions with people checking your venue.</p></section>
   <section class="panel">
