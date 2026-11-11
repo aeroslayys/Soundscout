@@ -2056,3 +2056,56 @@ button,
     margin:0!important;
   }
 }
+
+
+
+/* Public venue announcements inherit SoundScout's active light/dark palette. */
+.ss-events{
+  margin:12px 0;
+  padding-top:10px;
+  border-top:1px solid var(--border);
+  color:var(--ink);
+}
+.ss-events-heading{
+  margin:0 0 8px;
+  color:var(--ink);
+  font-size:12px;
+  font-weight:700;
+  letter-spacing:.01em;
+}
+.ss-events-empty{
+  margin:0;
+  color:var(--muted);
+  font-size:11px;
+  line-height:1.5;
+}
+.ss-event-card{
+  margin:7px 0;
+  padding:10px 11px;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:var(--surface-soft);
+  color:var(--ink);
+}
+.ss-event-title{
+  display:block;
+  color:var(--ink);
+  font-size:12px;
+  font-weight:650;
+  line-height:1.4;
+  overflow-wrap:anywhere;
+}
+.ss-event-meta{
+  display:block;
+  margin-top:4px;
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.5;
+}
+.ss-event-description{
+  margin:7px 0 0;
+  color:var(--ink-soft);
+  font-size:11px;
+  line-height:1.5;
+  overflow-wrap:anywhere;
+}
