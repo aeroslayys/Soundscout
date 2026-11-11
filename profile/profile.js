@@ -113,6 +113,19 @@
     window.location.href = LOGIN_PAGE_URL;
   });
 
+  fetch(API_BASE + "/partner/venues", {
+    headers: { "Authorization": "Bearer " + token }
+  }).then(function(response) {
+    if (!response.ok) throw new Error("No partner access");
+    return response.json();
+  }).then(function(data) {
+    var partnerVenues = data.venues || [];
+    if (!partnerVenues.length) return;
+    document.getElementById("partnerAccessSection").hidden = false;
+    document.getElementById("partnerVenueSummary").textContent =
+      "You can manage announcements for " + partnerVenues.map(function(venue) { return venue.venue_name; }).join(", ") + ".";
+  }).catch(function() {});
+
   var announcementPreference = document.getElementById("announcementPreference");
   var announcementPreferenceStatus = document.getElementById("announcementPreferenceStatus");
   fetch(API_BASE + "/users/me/preferences", {
