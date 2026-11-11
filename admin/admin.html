@@ -21,6 +21,7 @@
     <button class="nav-tab" data-panel="reviews">Ratings &amp; reports</button>
     <button class="nav-tab" data-panel="moderation">Moderation queue <span id="pendingFlagBadge" class="nav-count">0</span></button>
     <button class="nav-tab" data-panel="users">Users</button>
+    <button class="nav-tab" data-panel="partners">Venue partners</button>
     <button class="nav-tab" data-panel="announcements">Email announcements</button>
     <button class="nav-tab" data-panel="audit">Audit log</button>
   </nav>
@@ -65,6 +66,21 @@
       <div class="filter-bar"><input id="userSearch" type="search" placeholder="Search name, email or user ID"><button class="secondary-btn" id="searchUsers">Search</button></div>
       <div id="userList" class="record-list"><p class="loading">Loading users…</p></div>
       <div class="pagination"><button class="secondary-btn" id="userPrev">Previous</button><span id="userPageLabel">Page 1</span><button class="secondary-btn" id="userNext">Next</button></div>
+    </section>
+
+    <section class="admin-panel" id="panel-partners">
+      <div class="panel-heading"><div><p class="eyebrow">BUSINESS PARTNERS</p><h2>Venue partners</h2><p class="panel-subtitle">Invite verified venue owners and manage their access. Invitations are tied to one email address and one approved venue.</p></div><button class="secondary-btn" id="refreshPartners">Refresh</button></div>
+      <div class="section-card announcement-composer">
+        <div class="section-card-heading"><div><h3>Invite a venue partner</h3><p>They can sign in with the existing SoundScout login and accept the invitation.</p></div></div>
+        <label class="field-label" for="partnerInviteVenue">Approved venue</label>
+        <select id="partnerInviteVenue"><option value="">Loading approved venues…</option></select>
+        <label class="field-label" for="partnerInviteEmail">Owner's email address</label>
+        <input id="partnerInviteEmail" type="email" maxlength="255" placeholder="owner@restaurant.com">
+        <button class="primary-btn" id="sendPartnerInvite">Send invitation</button>
+        <p class="helper-note">Invitation links expire after seven days. The invited person must sign in using the exact email address the invitation was sent to.</p>
+      </div>
+      <div class="section-card"><div class="section-card-heading"><div><h3>Pending and previous invitations</h3></div></div><div id="partnerInviteList" class="record-list"><p class="loading">Loading invitations…</p></div></div>
+      <div class="section-card"><div class="section-card-heading"><div><h3>Partner access</h3><p>One account can manage multiple assigned venues.</p></div></div><div id="partnerAssignmentList" class="record-list"><p class="loading">Loading partner assignments…</p></div></div>
     </section>
 
     <section class="admin-panel" id="panel-announcements">
