@@ -106,6 +106,25 @@ router.get('/venues/:venueId/events', requireVenuePartner, async (req, res) => {
   }
 });
 
+router.get('/venues/:venueId/ratings', requireVenuePartner, async (req, res) => {
+  const venue = req.partnerVenues.find((item) => item.venue_id === req.params.venueId);
+  if (!venue) return res.status(403).json({ error: 'You do not manage this venue.' });
+  try {
+    const result = await pool.query(
+      `SELECT r.id, r.score, r.time_of_day, r.measured_db, r.had_audio_clip, r.submitted_at
+       FROM ratings r
+       WHERE r.venue_id = $1 AND r.deleted_at IS NULL
+       ORDER BY r.submitted_at DESC
+       LIMIT 30`,
+      [req.params.venueId]
+    );
+    res.json({ ratings: result.rows });
+  } catch (error) {
+    console.error('Partner rating list error:', error);
+    res.status(500).json({ error: 'Could not load recent ratings.' });
+  }
+});
+
 router.post('/venues/:venueId/events', requireVenuePartner, async (req, res) => {
   const venueId = req.params.venueId;
   if (!req.partnerVenues.some((venue) => venue.venue_id === venueId)) {
