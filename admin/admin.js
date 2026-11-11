@@ -461,6 +461,69 @@ async function loadAudit() {
   } catch (err) { showEmpty("auditList", err.message); }
 }
 
+
+async function loadPartnerVenues() {
+  const select = document.getElementById("partnerInviteVenue");
+  try {
+    const data = await api("/admin/venues?" + queryString({ status: "approved", search: "", page: 1, limit: 200 }));
+    const items = data.items || [];
+    select.innerHTML = '<option value="">Select an approved venue</option>' + items.map(function (venue) {
+      return '<option value="' + escapeHtml(venue.id) + '">' + escapeHtml(venue.name) + '</option>';
+    }).join("");
+    if (!items.length) select.innerHTML = '<option value="">No approved venues available</option>';
+  } catch (err) {
+    select.innerHTML = '<option value="">Could not load venues</option>';
+    showToast(err.message, true);
+  }
+}
+async function loadPartners() {
+  showLoading("partnerInviteList", "Loading invitations…");
+  showLoading("partnerAssignmentList", "Loading partner assignments…");
+  try {
+    const data = await api("/admin/partners");
+    const invites = data.invitations || [];
+    document.getElementById("partnerInviteList").innerHTML = invites.length ? invites.map(function (item) {
+      const pending = !item.accepted_at && !item.revoked_at && new Date(item.expires_at) > new Date();
+      const status = item.accepted_at ? "accepted" : item.revoked_at ? "revoked" : new Date(item.expires_at) <= new Date() ? "expired" : "pending";
+      const action = pending ? '<div class="record-actions"><button class="danger-btn" data-action="revoke-partner-invite" data-id="' + escapeHtml(item.id) + '">Revoke</button></div>' : "";
+      return '<article class="record-row"><div class="record-main"><strong>' + escapeHtml(item.venue_name) + '</strong><p>' + escapeHtml(item.email) + '</p><p><span class="status-pill status-' + status + '">' + status + '</span> · Expires ' + escapeHtml(formatDate(item.expires_at)) + '</p></div>' + action + '</article>';
+    }).join("") : '<p class="empty-state">No partner invitations yet.</p>';
+    const partners = data.partners || [];
+    document.getElementById("partnerAssignmentList").innerHTML = partners.length ? partners.map(function (item) {
+      return '<article class="record-row"><div class="record-main"><strong>' + escapeHtml(item.partner_name || item.partner_email) + '</strong><p>' + escapeHtml(item.partner_email) + ' · ' + escapeHtml(item.venue_name) + '</p><p><span class="status-pill status-' + (item.active ? "approved" : "revoked") + '">' + (item.active ? "active" : "revoked") + '</span></p></div><div class="record-actions"><button class="secondary-btn" data-action="toggle-partner" data-id="' + escapeHtml(item.id) + '" data-active="' + (!item.active) + '">' + (item.active ? "Revoke access" : "Restore access") + '</button></div></article>';
+    }).join("") : '<p class="empty-state">No partner accounts have accepted invitations yet.</p>';
+  } catch (err) {
+    showEmpty("partnerInviteList", err.message);
+    showEmpty("partnerAssignmentList", err.message);
+  }
+}
+async function sendPartnerInvite() {
+  const venueId = document.getElementById("partnerInviteVenue").value;
+  const email = document.getElementById("partnerInviteEmail").value.trim();
+  if (!venueId || !email) return showToast("Choose a venue and enter the owner's email.", true);
+  const button = document.getElementById("sendPartnerInvite");
+  button.disabled = true; button.textContent = "Sending…";
+  try {
+    const result = await api("/admin/partners/invites", { method: "POST", body: { venueId: venueId, email: email } });
+    showToast(result.message || "Invitation created.");
+    document.getElementById("partnerInviteEmail").value = "";
+    await loadPartners();
+  } catch (err) { showToast(err.message, true); }
+  button.disabled = false; button.textContent = "Send invitation";
+}
+async function revokePartnerInvite(id) {
+  if (!window.confirm("Revoke this pending invitation? Its link will stop working.")) return;
+  try { await api("/admin/partners/invites/" + encodeURIComponent(id) + "/revoke", { method: "POST" }); showToast("Invitation revoked."); await loadPartners(); }
+  catch (err) { showToast(err.message, true); }
+}
+async function togglePartner(id, active) {
+  if (!window.confirm((active ? "Restore" : "Revoke") + " access for this venue partner?")) return;
+  try { await api("/admin/partners/" + encodeURIComponent(id), { method: "PATCH", body: { active: active } }); showToast(active ? "Partner access restored." : "Partner access revoked."); await loadPartners(); }
+  catch (err) { showToast(err.message, true); }
+}
+document.getElementById("refreshPartners").addEventListener("click", async function () { await loadPartnerVenues(); await loadPartners(); });
+document.getElementById("sendPartnerInvite").addEventListener("click", sendPartnerInvite);
+
 function activatePanel(name) {
   document.querySelectorAll(".nav-tab").forEach(function (button) { button.classList.toggle("active", button.dataset.panel === name); });
   document.querySelectorAll(".admin-panel").forEach(function (panel) { panel.classList.toggle("active", panel.id === "panel-" + name); });
@@ -469,6 +532,7 @@ function activatePanel(name) {
   if (name === "reviews") loadReviews();
   if (name === "moderation") loadFlags();
   if (name === "users") loadUsers();
+  if (name === "partners") { loadPartnerVenues(); loadPartners(); }
   if (name === "announcements") loadAnnouncements();
   if (name === "audit") loadAudit();
 }
@@ -533,6 +597,8 @@ document.addEventListener("click", function (event) {
   else if (action === "resolve-flag") resolveFlag(id, button.dataset.status);
   else if (action === "suspend-user") setUserSuspension(id, true);
   else if (action === "unsuspend-user") setUserSuspension(id, false);
+  else if (action === "revoke-partner-invite") revokePartnerInvite(id);
+  else if (action === "toggle-partner") togglePartner(id, button.dataset.active === "true");
 });
 
 loadDashboard();
