@@ -72,6 +72,8 @@
       <div class="panel-heading"><div><p class="eyebrow">BUSINESS PARTNERS</p><h2>Venue partners</h2><p class="panel-subtitle">Invite verified venue owners and manage their access. Invitations are tied to one email address and one approved venue.</p></div><button class="secondary-btn" id="refreshPartners">Refresh</button></div>
       <div class="section-card announcement-composer">
         <div class="section-card-heading"><div><h3>Invite a venue partner</h3><p>They can sign in with the existing SoundScout login and accept the invitation.</p></div></div>
+        <label class="field-label" for="partnerInviteVenueSearch">Find an approved venue</label>
+        <input id="partnerInviteVenueSearch" type="search" maxlength="120" placeholder="Search approved venues by name…">
         <label class="field-label" for="partnerInviteVenue">Approved venue</label>
         <select id="partnerInviteVenue"><option value="">Loading approved venues…</option></select>
         <label class="field-label" for="partnerInviteEmail">Owner's email address</label>
@@ -91,7 +93,8 @@
         <input id="announcementSubject" type="text" maxlength="180" placeholder="What's new in SoundScout?">
         <label class="field-label" for="announcementBody">Message</label>
         <textarea id="announcementBody" rows="9" maxlength="20000" placeholder="Write your update here. Plain text is supported; line breaks are preserved."></textarea>
-        <label class="announcement-consent"><input id="announcementIncludeNonOptedIn" type="checkbox"><span><strong>One-time announcement to all eligible users</strong><small>Include users who never opted in. Previously unsubscribed and suspended accounts remain excluded. Leave unchecked for opted-in recipients only.</small></span></label>
+        <label class="announcement-consent"><input id="announcementVenuePartnersOnly" type="checkbox"><span><strong>Send only to venue partners</strong><small>Restrict this announcement to users with active venue-partner access. Opt-in and unsubscribe preferences still apply.</small></span></label>
+        <label class="announcement-consent"><input id="announcementIncludeNonOptedIn" type="checkbox"><span><strong>One-time announcement to non-opted-in recipients</strong><small>Include eligible recipients who never opted in. Previously unsubscribed and suspended accounts remain excluded.</small></span></label>
         <div class="announcement-preview"><strong>Preview</strong><div id="announcementPreview">Your email preview will appear here.</div></div>
         <button class="primary-btn" id="sendAnnouncementBtn" disabled>Send announcement</button>
         <p class="helper-note">Emails are sent individually through the existing Gmail SMTP configuration. Every message includes an unsubscribe link. The broad-audience option excludes anyone who previously unsubscribed and does not change their preferences.</p>
