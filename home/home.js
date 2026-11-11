@@ -3375,7 +3375,8 @@ locationSelectedDisplay.style.color = "#5B6472";
           access: access,
           toilet: toilet,
           measured_db: lastMeasuredDb,
-          had_audio_clip: !!pendingAudioBlob
+          had_audio_clip: !!pendingAudioBlob,
+          time_zone: getClientTimeZone()
         })
       })
         .then(function(res){
