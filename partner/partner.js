@@ -2,6 +2,16 @@
 const API='/api/partner', token=localStorage.getItem('soundscout_token');
 let venues=[],selectedVenue=null,events=[],ratings=[],editingId=null;
 const $=id=>document.getElementById(id);
+const themeToggle=$('themeToggle');
+function applyTheme(theme){
+  const next=theme==='light'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',next);
+  localStorage.setItem('soundscout_partner_theme',next);
+  themeToggle.textContent=next==='dark'?'Light mode':'Dark mode';
+  themeToggle.setAttribute('aria-label',next==='dark'?'Switch to light mode':'Switch to dark mode');
+}
+applyTheme(document.documentElement.getAttribute('data-theme')||'dark');
+themeToggle.addEventListener('click',()=>applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'));
 function auth(){return {Authorization:'Bearer '+token,'Content-Type':'application/json'};}
 async function request(path,options){const res=await fetch(API+path,Object.assign({headers:auth()},options||{}));let data={};try{data=await res.json()}catch(_){}if(res.status===401){localStorage.removeItem('soundscout_token');localStorage.removeItem('soundscout_user');location.href='../index.html';throw Error('Please sign in again.')}if(!res.ok)throw Error(data.error||'Request failed.');return data;}
 function status(message,error){$('formStatus').textContent=message;$('formStatus').style.color=error?'#ff8b8b':'var(--accent)';}
