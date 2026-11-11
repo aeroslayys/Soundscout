@@ -64,6 +64,42 @@ function startResendCooldown(){
   }, 1000);
 }
 
+
+async function acceptPendingPartnerInvite(authToken) {
+  const params = new URLSearchParams(window.location.search);
+  const inviteToken = params.get('partnerInvite');
+  if (!inviteToken) return false;
+  const response = await fetch('/api/partner/invites/accept', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ' + authToken
+    },
+    body: JSON.stringify({ token: inviteToken })
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || 'Could not accept venue partner invitation.');
+  params.delete('partnerInvite');
+  const query = params.toString();
+  window.history.replaceState({}, '', window.location.pathname + (query ? '?' + query : '') + window.location.hash);
+  return true;
+}
+
+// If the invitation link is opened on a device that already has a SoundScout
+// session, accept it without asking the user to log in again.
+(async function handleExistingSessionInvite() {
+  const inviteToken = new URLSearchParams(window.location.search).get('partnerInvite');
+  const savedToken = localStorage.getItem('soundscout_token');
+  if (!inviteToken || !savedToken) return;
+  try {
+    await acceptPendingPartnerInvite(savedToken);
+    setStatus(emailStatus, 'Venue partner access activated. Opening SoundScout…', 'success');
+    setTimeout(function () { window.location.href = 'home/home.html'; }, 500);
+  } catch (error) {
+    setStatus(emailStatus, error.message, 'error');
+  }
+})();
+
 // ---------- Step 1: request OTP ----------
 async function requestOtp(email){
   const res = await fetch(`${API_BASE}/request-otp`, {
@@ -190,7 +226,8 @@ verifyBtn.addEventListener('click', async () => {
     localStorage.setItem('soundscout_token', data.token);
     localStorage.setItem('soundscout_user', JSON.stringify(data.user));
 
-    setStatus(verifyStatus, 'Success! Redirecting...', 'success');
+    const acceptedInvite = await acceptPendingPartnerInvite(data.token);
+    setStatus(verifyStatus, acceptedInvite ? 'Venue partner access activated. Redirecting...' : 'Success! Redirecting...', 'success');
     setTimeout(() => {
 
   if (data.user.admin === true) {
