@@ -47,6 +47,14 @@ var QUIET_NEAR_MIN_SCORE = 4;
     return t ? { "Authorization": "Bearer " + t } : {};
   }
 
+  function getClientTimeZone(){
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    } catch(err) {
+      return "UTC";
+    }
+  }
+
   function requireLogin(actionLabel){
     if(getToken()) return true;
     alert("Please log in to " + (actionLabel || "do that") + ".");
@@ -3339,7 +3347,8 @@ locationSelectedDisplay.style.color = "#5B6472";
           access: access,
           toilet: toilet,
           measured_db: lastMeasuredDb,
-          had_audio_clip: !!pendingAudioBlob
+          had_audio_clip: !!pendingAudioBlob,
+          time_zone: getClientTimeZone()
         })
       })
         .then(function(res){
