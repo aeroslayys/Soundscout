@@ -1266,7 +1266,7 @@ timeBarChartHTML(v) +
 
 recentReportsHTML(v) +
 
-'<section class="ss-events" data-loaded="false" style="margin:12px 0;padding-top:10px;border-top:1px solid #e3e9e7;"><h4 style="margin:0 0 7px;font-size:12px;color:#263b36;">Upcoming at this venue</h4><p style="margin:0;font-size:11px;color:#71807b;">Loading announcements…</p></section>' +
+'<section class="ss-events" data-loaded="false"><h4 class="ss-events-heading">Upcoming at this venue</h4><p class="ss-events-empty">Loading announcements…</p></section>' +
 
 '<button class="popup-rate-btn" '+
         'onclick="window.__ssOpenRate(\'' + v.id + '\')">' +
