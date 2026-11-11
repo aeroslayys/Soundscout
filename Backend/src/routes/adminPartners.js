@@ -79,7 +79,7 @@ router.post('/invites', async (req, res) => {
   }
 
   try {
-    const baseUrl = String(process.env.PUBLIC_APP_URL || '').replace(/\/$/, '');
+    const baseUrl = String(process.env.PUBLIC_APP_URL || process.env.PUBLIC_WEB_URL || '').replace(/\/$/, '');
     if (!baseUrl) throw new Error('PUBLIC_APP_URL is not configured');
     await sendVenuePartnerInvite(email, {
       venueName: venue.rows[0].name,
