@@ -20,3 +20,42 @@
 /* Phone-first PWA guidance */
 .hero-footnote{max-width:560px;line-height:1.7}
 @media(max-width:650px){.hero-actions{align-items:stretch}.hero-actions .button{width:100%;justify-content:center;text-align:center}.hero-footnote{font-size:9px}}
+
+
+/* Venue partner landing tab */
+.partner-hero{min-height:570px;display:grid;grid-template-columns:1.05fr .95fr;align-items:center;gap:7%;padding:75px 0 80px}
+.partner-hero h1{font:600 clamp(50px,6vw,78px)/1 var(--serif);letter-spacing:-3.5px;margin:27px 0 22px}
+.partner-hero h1 em{font-style:italic;color:var(--teal)}
+.partner-hero-copy{min-width:0}
+.partner-note{font:10px/1.7 var(--mono);color:var(--muted);margin-top:22px;max-width:470px}
+.partner-preview{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:var(--shadow);transform:rotate(1deg)}
+.partner-preview-top{display:flex;justify-content:space-between;gap:10px;font:9px var(--mono);letter-spacing:.8px;color:var(--muted);padding-bottom:17px;border-bottom:1px solid var(--border)}
+.partner-preview-top b{color:var(--quiet);font-weight:500}
+.partner-preview-card{position:relative;margin-top:15px;padding:19px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px}
+.partner-preview-card small{display:block;font:9px var(--mono);letter-spacing:.7px;color:var(--muted);margin-bottom:12px}
+.partner-preview-card strong{font:600 23px var(--serif);display:block}
+.partner-preview-card p{font-size:11px;line-height:1.7;color:var(--muted);margin:9px 0 0}
+.preview-pill{display:inline-block;margin-top:9px;padding:5px 8px;border-radius:20px;background:color-mix(in srgb,var(--quiet) 15%,transparent);color:var(--quiet);font:9px var(--mono)}
+.preview-rating strong{font-size:36px;color:var(--teal)}
+.preview-rating strong span{font:12px var(--mono);color:var(--muted)}
+.preview-foot{display:flex;align-items:center;gap:10px;padding:18px 3px 1px;color:var(--muted);font:10px var(--mono)}
+.preview-foot span{font-size:20px;color:var(--teal)}
+.partner-benefits{padding-top:35px}
+.partner-benefit-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}
+.partner-benefit-grid article{padding:23px 20px;background:var(--surface);border:1px solid var(--border);border-radius:9px;min-height:200px}
+.partner-benefit-grid article>span{display:block;font:9px var(--mono);letter-spacing:.8px;color:var(--teal);margin-bottom:24px}
+.partner-benefit-grid article>b{display:block;font:600 20px/1.2 var(--serif)}
+.partner-benefit-grid article>p{font-size:11px;line-height:1.8;color:var(--muted);margin:10px 0 0}
+.partner-how{display:grid;grid-template-columns:.8fr 1.2fr;gap:12%;border-top:1px solid var(--border)}
+.partner-how-intro h2{font:600 clamp(36px,4vw,52px)/1.08 var(--serif);letter-spacing:-1.5px;margin:16px 0}
+.partner-how-intro p{font-size:12px;line-height:1.8;color:var(--muted);max-width:330px}
+.partner-steps{display:grid}
+.partner-steps article{display:grid;grid-template-columns:42px 1fr;gap:15px;padding:0 0 23px;margin-bottom:22px;border-bottom:1px solid var(--border)}
+.partner-steps article>b{font:11px var(--mono);color:var(--teal);padding-top:4px}
+.partner-steps h3{font:600 21px var(--serif);margin:0 0 7px}
+.partner-steps p{font-size:11px;line-height:1.8;color:var(--muted);margin:0}
+.partner-final-cta{background:var(--surface-2);border:1px solid var(--border);border-radius:12px;text-align:center;padding:65px 25px;margin:10px 0 85px}
+.partner-final-cta h2{font:600 clamp(36px,4.5vw,55px)/1.08 var(--serif);margin:15px 0}
+.partner-final-cta p{font-size:12px;line-height:1.8;color:var(--muted);max-width:480px;margin:0 auto 24px}
+@media(max-width:900px){.partner-benefit-grid{grid-template-columns:1fr 1fr}.partner-how{gap:7%}}
+@media(max-width:650px){.partner-hero{grid-template-columns:1fr;gap:30px;padding:60px 0 45px}.partner-hero h1{font-size:clamp(49px,13vw,68px);letter-spacing:-2.8px}.partner-preview{transform:none;padding:15px}.partner-benefit-grid{grid-template-columns:1fr}.partner-benefit-grid article{min-height:0}.partner-benefit-grid article>span{margin-bottom:15px}.partner-how{grid-template-columns:1fr;gap:25px}.partner-final-cta{padding:48px 20px;margin-bottom:70px}.main-nav{gap:2px}.nav-tab{padding:9px 10px;font-size:9px}}
