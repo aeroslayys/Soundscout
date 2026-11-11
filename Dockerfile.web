@@ -9,6 +9,7 @@ COPY login.js /usr/share/nginx/html/
 COPY admin /usr/share/nginx/html/admin
 COPY home /usr/share/nginx/html/home
 COPY profile /usr/share/nginx/html/profile
+COPY partner /usr/share/nginx/html/partner
 
 COPY manifest.webmanifest /usr/share/nginx/html/manifest.webmanifest
 COPY sw.js /usr/share/nginx/html/sw.js
