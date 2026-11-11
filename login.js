@@ -65,6 +65,15 @@ function startResendCooldown(){
 }
 
 
+async function hasVenuePartnerAccess(authToken) {
+  const response = await fetch('/api/partner/venues', {
+    headers: { 'Authorization': 'Bearer ' + authToken }
+  });
+  if (!response.ok) return false;
+  const result = await response.json();
+  return Array.isArray(result.venues) && result.venues.length > 0;
+}
+
 async function acceptPendingPartnerInvite(authToken) {
   const params = new URLSearchParams(window.location.search);
   const inviteToken = params.get('partnerInvite');
@@ -93,8 +102,11 @@ async function acceptPendingPartnerInvite(authToken) {
   if (!inviteToken || !savedToken) return;
   try {
     await acceptPendingPartnerInvite(savedToken);
+    const isPartner = await hasVenuePartnerAccess(savedToken);
     setStatus(emailStatus, 'Venue partner access activated. Opening SoundScout…', 'success');
-    setTimeout(function () { window.location.href = 'home/home.html'; }, 500);
+    setTimeout(function () {
+      window.location.href = isPartner ? 'partner/partner.html' : 'home/home.html';
+    }, 500);
   } catch (error) {
     setStatus(emailStatus, error.message, 'error');
   }
@@ -227,11 +239,12 @@ verifyBtn.addEventListener('click', async () => {
     localStorage.setItem('soundscout_user', JSON.stringify(data.user));
 
     const acceptedInvite = await acceptPendingPartnerInvite(data.token);
-    setStatus(verifyStatus, acceptedInvite ? 'Venue partner access activated. Redirecting...' : 'Success! Redirecting...', 'success');
+    const isPartner = acceptedInvite || await hasVenuePartnerAccess(data.token);
+    setStatus(verifyStatus, isPartner ? 'Venue partner access activated. Redirecting...' : 'Success! Redirecting...', 'success');
     setTimeout(() => {
       if (data.user.admin === true) {
         window.location.href = 'admin/admin.html';
-      } else if (acceptedInvite) {
+      } else if (isPartner) {
         window.location.href = 'partner/partner.html';
       } else {
         window.location.href = 'home/home.html';
