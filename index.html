@@ -15,6 +15,7 @@
     var token = localStorage.getItem("soundscout_token");
     var userRaw = localStorage.getItem("soundscout_user");
     if (!token || !userRaw) return;
+    if (new URLSearchParams(window.location.search).has("partnerInvite")) return;
 
     var user = JSON.parse(userRaw);
     if (!user || typeof user !== "object") return;
