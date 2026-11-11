@@ -20,9 +20,29 @@
     var user = JSON.parse(userRaw);
     if (!user || typeof user !== "object") return;
 
-    window.location.replace(
-      user.admin === true ? "/admin/admin.html" : "/home/home.html"
-    );
+    if (user.admin === true) {
+      window.location.replace("/admin/admin.html");
+      return;
+    }
+
+    // Check partner access before falling back to the regular user homepage.
+    fetch("/api/partner/venues", {
+      headers: { "Authorization": "Bearer " + token }
+    })
+      .then(function (response) {
+        if (!response.ok) throw new Error("Could not verify partner access.");
+        return response.json();
+      })
+      .then(function (result) {
+        var destination = Array.isArray(result.venues) && result.venues.length > 0
+          ? "/partner/partner.html"
+          : "/home/home.html";
+        window.location.replace(destination);
+      })
+      .catch(function (error) {
+        console.warn("Could not check venue partner access:", error);
+        window.location.replace("/home/home.html");
+      });
   } catch (error) {
     console.warn("Could not restore the saved SoundScout session:", error);
   }
