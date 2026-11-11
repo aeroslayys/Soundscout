@@ -632,7 +632,7 @@ router.get('/nearby/search', async (req, res) => {
 function getCurrentTimeBucket(timeZone) {
   // Use the submitter's IANA timezone, never the Docker host's local timezone.
   // Older clients or invalid values safely fall back to UTC.
-  let hour;
+  let minutesSinceMidnight;
   try {
     const requestedTimeZone =
       typeof timeZone === 'string' && timeZone.length <= 100
@@ -641,21 +641,27 @@ function getCurrentTimeBucket(timeZone) {
     const parts = new Intl.DateTimeFormat('en-US', {
       timeZone: requestedTimeZone,
       hour: '2-digit',
+      minute: '2-digit',
       hourCycle: 'h23'
     }).formatToParts(new Date());
-    hour = Number(parts.find((part) => part.type === 'hour').value);
+    const hour = Number(parts.find((part) => part.type === 'hour').value);
+    const minute = Number(parts.find((part) => part.type === 'minute').value);
+    minutesSinceMidnight = hour * 60 + minute;
   } catch (error) {
     const parts = new Intl.DateTimeFormat('en-US', {
       timeZone: 'UTC',
       hour: '2-digit',
+      minute: '2-digit',
       hourCycle: 'h23'
     }).formatToParts(new Date());
-    hour = Number(parts.find((part) => part.type === 'hour').value);
+    const hour = Number(parts.find((part) => part.type === 'hour').value);
+    const minute = Number(parts.find((part) => part.type === 'minute').value);
+    minutesSinceMidnight = hour * 60 + minute;
   }
 
-  if (hour < 11) return 'morning';
-  if (hour < 16) return 'afternoon';
-  if (hour < 21) return 'evening';
+  if (minutesSinceMidnight >= 240 && minutesSinceMidnight <= 720) return 'morning';
+  if (minutesSinceMidnight <= 1080 && minutesSinceMidnight > 720) return 'afternoon';
+  if (minutesSinceMidnight <= 1320 && minutesSinceMidnight > 1080) return 'evening';
   return 'night';
 }
 
