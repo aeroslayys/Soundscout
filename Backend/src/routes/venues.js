@@ -238,7 +238,8 @@ router.post('/', requireAuth, async (req, res) => {
     access,
     toilet,
     measured_db,
-    had_audio_clip
+    had_audio_clip,
+    time_zone
   } = req.body;
 
 
@@ -381,7 +382,7 @@ router.post('/', requireAuth, async (req, res) => {
         venue.id,
         req.userId,
         ratingScore,
-        getCurrentTimeBucket(),
+        getCurrentTimeBucket(time_zone),
         measured_db !== null &&
         measured_db !== undefined
           ? parseFloat(measured_db)
@@ -434,7 +435,8 @@ router.post(
     const {
       score,
       measured_db,
-      had_audio_clip
+      had_audio_clip,
+      time_zone
     } = req.body;
 
 
@@ -507,7 +509,7 @@ router.post(
           venueId,
           req.userId,
           ratingScore,
-          getCurrentTimeBucket(),
+          getCurrentTimeBucket(time_zone),
           measured_db !== null &&
           measured_db !== undefined
             ? parseFloat(measured_db)
@@ -627,24 +629,34 @@ router.get('/nearby/search', async (req, res) => {
 // TIME OF DAY HELPER
 // ==========================================
 
-function getCurrentTimeBucket() {
-
-  const hour = new Date().getHours();
-
-  if (hour < 11) {
-    return 'morning';
+function getCurrentTimeBucket(timeZone) {
+  // Use the submitter's IANA timezone, never the Docker host's local timezone.
+  // Older clients or invalid values safely fall back to UTC.
+  let hour;
+  try {
+    const requestedTimeZone =
+      typeof timeZone === 'string' && timeZone.length <= 100
+        ? timeZone
+        : 'UTC';
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: requestedTimeZone,
+      hour: '2-digit',
+      hourCycle: 'h23'
+    }).formatToParts(new Date());
+    hour = Number(parts.find((part) => part.type === 'hour').value);
+  } catch (error) {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'UTC',
+      hour: '2-digit',
+      hourCycle: 'h23'
+    }).formatToParts(new Date());
+    hour = Number(parts.find((part) => part.type === 'hour').value);
   }
 
-  if (hour < 16) {
-    return 'afternoon';
-  }
-
-  if (hour < 21) {
-    return 'evening';
-  }
-
+  if (hour < 11) return 'morning';
+  if (hour < 16) return 'afternoon';
+  if (hour < 21) return 'evening';
   return 'night';
-
 }
 
 
