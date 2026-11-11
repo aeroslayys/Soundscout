@@ -13,3 +13,30 @@
 :root[data-theme="light"] .rating{background:rgba(57,123,66,.055)}
 :root[data-theme="light"] .pill{background:rgba(57,123,66,.07)}
 .topbar button{font:600 11px Inter,system-ui,sans-serif}
+
+
+/* Two-column venue dashboard */
+.dashboard-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:stretch}
+.dashboard-column{min-width:0;display:flex;flex-direction:column;gap:15px}
+.dashboard-column>.panel{margin:0}
+.ratings-column{height:calc(100vh - 235px);min-height:520px;overflow:hidden}
+.rating-chart-wrap{flex:0 0 auto;border:1px solid var(--line);border-radius:11px;padding:12px;background:var(--field)}
+.chart-heading,.rating-list-heading{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.chart-heading strong,.rating-list-heading h3{font-size:12px;margin:0}
+.chart-heading span,.rating-list-heading span{font-size:10px;color:var(--muted)}
+.rating-chart{margin-top:7px;min-height:80px}
+.rating-chart svg{display:block;width:100%;height:auto;max-height:190px;overflow:visible}
+.chart-grid{stroke:var(--line);stroke-width:1}
+.chart-axis{fill:var(--muted);font-size:10px}
+.chart-line{fill:none;stroke:var(--accent);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.chart-dot{fill:var(--accent);stroke:var(--surface);stroke-width:2}
+.chart-average{stroke:var(--muted);stroke-width:1.2;stroke-dasharray:5 4;opacity:.8}
+.chart-summary{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px;color:var(--muted);font-size:10px}
+.chart-summary strong{font-size:15px;color:var(--accent)}
+.rating-list-heading{padding:2px 1px 0}
+.rating-list{min-height:0;flex:1;overflow-y:auto;overscroll-behavior:contain;padding-right:5px;display:flex;flex-direction:column;gap:9px}
+.announcements-column{height:calc(100vh - 235px);min-height:520px}
+.announcement-form-panel{flex:0 0 auto;overflow-y:auto;max-height:62%}
+.announcements-panel{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.announcements-panel .event-list{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:5px}
+@media(max-width:760px){.dashboard-grid{grid-template-columns:1fr}.ratings-column,.announcements-column{height:auto;min-height:0}.ratings-column{min-height:520px}.rating-list{max-height:420px}.announcement-form-panel{max-height:none}.announcements-panel{min-height:300px}.announcements-panel .event-list{max-height:420px}}
