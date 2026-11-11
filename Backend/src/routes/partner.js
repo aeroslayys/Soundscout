@@ -160,7 +160,9 @@ router.patch('/events/:eventId', requireVenuePartner, async (req, res) => {
     const existing = await client.query(
       `SELECT e.* FROM venue_events e
        JOIN venue_partners vp ON vp.venue_id = e.venue_id
+       JOIN venues v ON v.id = e.venue_id
        WHERE e.id = $1 AND vp.user_id = $2 AND vp.active = TRUE
+         AND v.deleted_at IS NULL AND v.approval_status = 'approved'
        FOR UPDATE OF e`,
       [eventId, req.userId]
     );
