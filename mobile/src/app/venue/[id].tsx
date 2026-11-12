@@ -12,6 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { palettes, useAppTheme } from '@/context/theme';
+import { VenueEvents } from '@/components/venue-events';
 
 import { API_URL } from '@/constants/api';
 
@@ -157,6 +158,8 @@ export default function VenueDetailsScreen() {
                 {venue.toilet ? '✓ Available' : 'Not available'}
               </Text>
             </View>
+
+            <VenueEvents venueId={venue.id} />
 
             <Text style={styles.sectionTitle}>Sound by time of day</Text>
             <View style={styles.chartCard}>
