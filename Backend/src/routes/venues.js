@@ -380,7 +380,7 @@ router.post('/', requireAuth, async (req, res) => {
         venue.id,
         req.userId,
         ratingScore,
-        getCurrentTimeBucket(),
+        getCurrentTimeBucket(time_zone),
         measured_db !== null &&
         measured_db !== undefined
           ? parseFloat(measured_db)
@@ -433,7 +433,8 @@ router.post(
     const {
       score,
       measured_db,
-      had_audio_clip
+      had_audio_clip,
+      time_zone
     } = req.body;
 
 
@@ -626,24 +627,20 @@ router.get('/nearby/search', async (req, res) => {
 // TIME OF DAY HELPER
 // ==========================================
 
-function getCurrentTimeBucket() {
-
-  const hour = new Date().getHours();
-
-  if (hour < 11) {
-    return 'morning';
+function getCurrentTimeBucket(timeZone) {
+  let minutesSinceMidnight;
+  try {
+    const zone = typeof timeZone === 'string' && timeZone.length <= 100 ? timeZone : 'Asia/Kolkata';
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: zone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date());
+    minutesSinceMidnight = Number(parts.find((part) => part.type === 'hour').value) * 60 + Number(parts.find((part) => part.type === 'minute').value);
+  } catch (error) {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date());
+    minutesSinceMidnight = Number(parts.find((part) => part.type === 'hour').value) * 60 + Number(parts.find((part) => part.type === 'minute').value);
   }
-
-  if (hour < 16) {
-    return 'afternoon';
-  }
-
-  if (hour < 21) {
-    return 'evening';
-  }
-
+  if (minutesSinceMidnight >= 240 && minutesSinceMidnight <= 720) return 'morning';
+  if (minutesSinceMidnight <= 1080 && minutesSinceMidnight > 720) return 'afternoon';
+  if (minutesSinceMidnight <= 1320 && minutesSinceMidnight > 1080) return 'evening';
   return 'night';
-
 }
 
 
