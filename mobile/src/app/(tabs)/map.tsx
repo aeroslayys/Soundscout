@@ -21,6 +21,17 @@ import AudioCapture from '@/components/audio-capture';
 import { API_URL } from '@/constants/api';
 import { apiRequestJson } from '@/utils/api';
 
+function getClientTimeZone(): string {
+  try {
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return typeof timeZone === 'string' && timeZone.length > 0
+      ? timeZone
+      : 'Asia/Kolkata';
+  } catch {
+    return 'Asia/Kolkata';
+  }
+}
+
 type Rating = {
   id: string;
   score: number;
@@ -285,7 +296,7 @@ export default function MapScreen() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${authToken}`,
         },
-        body: JSON.stringify({ score: ratingScore, measured_db: ratingMeasuredDb, had_audio_clip: ratingHasAudio }),
+        body: JSON.stringify({ score: ratingScore, measured_db: ratingMeasuredDb, had_audio_clip: ratingHasAudio, time_zone: getClientTimeZone() }),
       });
       if (!response.ok) throw new Error(data.error || 'Could not save rating.');
 
