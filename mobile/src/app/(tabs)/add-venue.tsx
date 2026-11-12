@@ -7,6 +7,17 @@ import { useAuth } from '@/context/auth';
 import { palettes, useAppTheme } from '@/context/theme';
 import { API_URL } from '@/constants/api';
 import { apiRequestJson } from '@/utils/api';
+function getClientTimeZone(): string {
+  try {
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return typeof timeZone === 'string' && timeZone.length > 0
+      ? timeZone
+      : 'Asia/Kolkata';
+  } catch {
+    return 'Asia/Kolkata';
+  }
+}
+
 const START: Region = { latitude:12.0022, longitude:79.8100, latitudeDelta:0.018, longitudeDelta:0.018 };
 const CATEGORIES = ['cafe','restaurant','library','gym','coworking'];
 
@@ -56,7 +67,7 @@ export default function AddVenueScreen() {
         headers:{ 'Content-Type':'application/json', Authorization:`Bearer ${token}` },
         body:JSON.stringify({
           name:name.trim(), category, lat:coordinate.latitude, lng:coordinate.longitude,
-          score, access, toilet, measured_db:measuredDb, had_audio_clip:measuredDb !== null
+          score, access, toilet, measured_db:measuredDb, had_audio_clip:measuredDb !== null, time_zone:getClientTimeZone()
         })
       });
       if (!res.ok) throw new Error(data.error || 'Could not submit venue.');
