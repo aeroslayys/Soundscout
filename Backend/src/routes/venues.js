@@ -637,7 +637,7 @@ function getCurrentTimeBucket(timeZone) {
     const requestedTimeZone =
       typeof timeZone === 'string' && timeZone.length <= 100
         ? timeZone
-        : 'UTC';
+        : 'Asia/Kolkata';
     const parts = new Intl.DateTimeFormat('en-US', {
       timeZone: requestedTimeZone,
       hour: '2-digit',
@@ -649,7 +649,7 @@ function getCurrentTimeBucket(timeZone) {
     minutesSinceMidnight = hour * 60 + minute;
   } catch (error) {
     const parts = new Intl.DateTimeFormat('en-US', {
-      timeZone: 'UTC',
+      timeZone: 'Asia/Kolkata',
       hour: '2-digit',
       minute: '2-digit',
       hourCycle: 'h23'
