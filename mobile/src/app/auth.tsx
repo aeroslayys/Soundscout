@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
+import { Image } from 'expo-image';
 import { ActivityIndicator, Alert, Pressable, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/auth';
@@ -138,7 +139,12 @@ export default function AuthScreen() {
       <Pressable disabled={busy} onPress={finishGoogleSignup} style={s.button}>{busy ? <ActivityIndicator color={C.bg} /> : <Text style={s.buttonText}>CREATE ACCOUNT</Text>}</Pressable>
     </> : <>
       <Pressable accessibilityRole="button" accessibilityLabel="Continue with Google" disabled={busy} onPress={continueWithGoogle} style={({ pressed }) => [s.googleButton, pressed && s.googleButtonPressed, busy && s.googleButtonDisabled]}>
-        <View style={s.googleLogoCircle}><Text style={s.googleMark}>G</Text></View>
+        <Image
+          source={{ uri: 'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg' }}
+          style={s.googleLogo}
+          contentFit="contain"
+          accessibilityLabel="Google"
+        />
         <Text style={s.googleButtonText}>{busy ? 'CONNECTING…' : 'Continue with Google'}</Text>
       </Pressable>
       <View style={s.divider}><View style={s.dividerLine} /><Text style={s.dividerText}>OR CONTINUE WITH EMAIL</Text><View style={s.dividerLine} /></View>
@@ -157,8 +163,7 @@ const s = StyleSheet.create({
   googleButton:{minHeight:54,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:12,paddingHorizontal:18,marginTop:4,backgroundColor:'#FFFFFF',borderColor:'#DADCE0',borderWidth:1,borderRadius:12,elevation:2,shadowColor:'#000',shadowOpacity:0.12,shadowRadius:3,shadowOffset:{width:0,height:1}},
   googleButtonPressed:{backgroundColor:'#F5F7FA',borderColor:'#AEB4BC'},
   googleButtonDisabled:{opacity:0.65},
-  googleLogoCircle:{width:26,height:26,borderRadius:13,backgroundColor:'#FFFFFF',alignItems:'center',justifyContent:'center'},
-  googleMark:{color:'#4285F4',fontSize:23,fontWeight:'800',lineHeight:27,includeFontPadding:false},
+  googleLogo:{width:22,height:22},
   googleButtonText:{color:'#3C4043',fontSize:15,fontWeight:'600',letterSpacing:0.1},
   divider:{flexDirection:'row',alignItems:'center',gap:12,marginTop:22,marginBottom:8},
   dividerLine:{height:1,flex:1,backgroundColor:C.border},
