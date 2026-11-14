@@ -97,7 +97,9 @@ async function acceptPendingPartnerInvite(authToken) {
 // If the invitation link is opened on a device that already has a SoundScout
 // session, accept it without asking the user to log in again.
 (async function handleExistingSessionInvite() {
-  const inviteToken = new URLSearchParams(window.location.search).get('partnerInvite');
+  const currentParams = new URLSearchParams(window.location.search);
+  if (currentParams.has('googleCode')) return;
+  const inviteToken = currentParams.get('partnerInvite');
   const savedToken = localStorage.getItem('soundscout_token');
   if (!inviteToken || !savedToken) return;
   try {
