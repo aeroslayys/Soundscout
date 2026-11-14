@@ -14,3 +14,6 @@ COPY partner /usr/share/nginx/html/partner
 COPY manifest.webmanifest /usr/share/nginx/html/manifest.webmanifest
 COPY sw.js /usr/share/nginx/html/sw.js
 COPY pwa /usr/share/nginx/html/pwa
+
+# Include the official brand assets referenced by the website and PWA.
+COPY assets /usr/share/nginx/html/assets
