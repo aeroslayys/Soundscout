@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SoundScout</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<style>
+.soundscout-brand-logo{width:46px;height:46px;object-fit:contain;border-radius:12px;display:block;flex:0 0 auto}
+.soundscout-credit{padding:14px 18px;text-align:center;color:rgba(140,150,155,.78);font:500 11px/1.5 Inter,system-ui,sans-serif;letter-spacing:.02em}
+.soundscout-credit strong{color:inherit;font-weight:700}
+.auth-brand .soundscout-brand-logo{width:58px;height:58px;border-radius:14px}
+.admin-brand .soundscout-brand-logo{width:42px;height:42px;border-radius:10px}
+.brand-link .soundscout-brand-logo{width:38px;height:38px;border-radius:10px}
+.partner-brand-logo{width:34px;height:34px;border-radius:9px;vertical-align:middle;margin-right:9px}
+</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <link rel="manifest" href="/manifest.webmanifest">
@@ -17,6 +26,7 @@
 <div id="sidebar">
   <div class="sidebar-header">
     <div class="brand">
+      <img class="soundscout-brand-logo" src="/assets/brand/soundscout-logo.svg" alt="SoundScout logo">
       <h1>SoundScout</h1>
       <span class="dot" aria-hidden="true"></span>
     </div>
@@ -128,6 +138,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
 
+<footer class="soundscout-credit">Logo designed by <strong>Kavya Saraswati</strong></footer>
 <script src="/home/home.js"></script>
 
 <script>
