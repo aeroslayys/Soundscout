@@ -69,7 +69,10 @@
     <!-- STEP 1: email entry -->
     <div class="auth-step" id="stepEmail">
       <p class="auth-title">Log in or sign up</p>
-      <p class="auth-sub">We'll email you a one-time code — no passwords to remember.</p>
+      <p class="auth-sub">Sign in securely with Google or get a one-time code by email.</p>
+
+      <button class="btn-google full" id="googleBtn" type="button"><span class="google-g">G</span>Continue with Google</button>
+      <div class="oauth-divider"><span>or continue with email</span></div>
 
       <label class="field-label">Email</label>
       <input type="email" id="emailInput" placeholder="you@example.com" autocomplete="email" />
@@ -116,6 +119,23 @@
       <p class="auth-status" id="verifyStatus"></p>
 
       <button class="link-btn back-link" id="backBtn">← Use a different email</button>
+    </div>
+
+    <div class="auth-step" id="stepGoogleProfile" style="display:none;">
+      <p class="auth-title">Finish creating your account</p>
+      <p class="auth-sub">Your Google account is verified. Just a couple of details to personalize SoundScout.</p>
+      <label class="field-label">Name</label>
+      <input type="text" id="googleName" placeholder="Your name" autocomplete="name" />
+      <label class="field-label">Age</label>
+      <input type="number" id="googleAge" placeholder="Your age" min="1" max="119" />
+      <label class="field-label">Sound sensitivity</label>
+      <select id="googleSensitivity" class="google-select">
+        <option value="1">1 — Not sensitive</option><option value="2">2</option><option value="3" selected>3 — Moderate</option><option value="4">4</option><option value="5">5 — Very sensitive</option>
+      </select>
+      <label class="announcement-consent"><input type="checkbox" id="googleAnnouncementOptIn"> <span>Email me occasional SoundScout product updates and new features. Optional — unsubscribe anytime.</span></label>
+      <button class="btn-primary full" id="googleFinishBtn" type="button">Create account</button>
+      <p class="auth-status" id="googleProfileStatus"></p>
+      <button class="link-btn back-link" id="googleCancelBtn" type="button">← Back to sign in</button>
     </div>
 
   </div>
