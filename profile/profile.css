@@ -472,6 +472,42 @@ body{font-family:'Inter',sans-serif;}
 }
 
 
-/* Official SoundScout mark in the My Ratings profile identity tile. */
-.avatar{overflow:hidden;padding:0;background:transparent;border-radius:50%;}
-.avatar img{display:block;width:100%;height:100%;object-fit:cover;border-radius:50%;}
+/* Keep the brand mark constrained inside the My Ratings account avatar,
+   including narrow mobile-web layouts. */
+.profile-card .avatar{
+  box-sizing:border-box;
+  width:48px;
+  min-width:48px;
+  max-width:48px;
+  height:48px;
+  min-height:48px;
+  max-height:48px;
+  flex:0 0 48px;
+  overflow:hidden;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:50%;
+  background:var(--surface-soft);
+}
+.profile-card .avatar img{
+  display:block;
+  width:100%;
+  height:100%;
+  max-width:100%;
+  max-height:100%;
+  min-width:0;
+  min-height:0;
+  object-fit:contain;
+  border-radius:50%;
+}
+@media(max-width:600px){
+  .profile-card{gap:12px;min-width:0;}
+  .profile-card .avatar{
+    width:40px;min-width:40px;max-width:40px;
+    height:40px;min-height:40px;max-height:40px;
+    flex-basis:40px;
+  }
+  .profile-info{min-width:0;}
+}
