@@ -44,3 +44,5 @@ mono = mono.resize((432, 432), Image.Resampling.LANCZOS)
 mono_canvas = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
 mono_canvas.alpha_composite(mono, (40, 40))
 mono_canvas.save(OUT / "android-icon-monochrome.png", optimize=True)
+
+# Regenerate icon assets from the canonical SVG source.
