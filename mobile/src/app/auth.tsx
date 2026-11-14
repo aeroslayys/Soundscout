@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import * as Linking from 'expo-linking';
+import * as WebBrowser from 'expo-web-browser';
 import { ActivityIndicator, Alert, Pressable, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/auth';
@@ -25,6 +27,8 @@ export default function AuthScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [draftReady, setDraftReady] = useState(false);
+  const [googleCode, setGoogleCode] = useState('');
+  const [googleProfileRequired, setGoogleProfileRequired] = useState(false);
 
   // Android may reclaim the app process while the user switches to their email app.
   // Restore the OTP form instead of returning to the initial sign-in screen.
@@ -55,6 +59,48 @@ export default function AuthScreen() {
       .catch((e) => console.warn('Could not save OTP form:', e));
   }, [draftReady, email, code, name, age, sensitivity, announcementOptIn, newUser, sent]);
 
+  const continueWithGoogle = async () => {
+    setBusy(true); setError('');
+    try {
+      const result = await WebBrowser.openAuthSessionAsync(
+        API_URL + '/api/auth/google/start?platform=android',
+        'mobile://auth'
+      );
+      if (result.type !== 'success' || !result.url) return;
+      const parsed = Linking.parse(result.url);
+      const code = typeof parsed.queryParams?.googleCode === 'string' ? parsed.queryParams.googleCode : '';
+      if (!code) throw new Error('Google sign-in did not return a verification code.');
+      setGoogleCode(code);
+      const { response, data } = await apiRequestJson<any>('Google sign-in', API_URL + '/api/auth/google/exchange', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-SoundScout-Platform': 'android' }, body: JSON.stringify({ code })
+      });
+      if (!response.ok) throw new Error(data.error || 'Google sign-in failed.');
+      if (data.needsProfile) { setName(data.name || ''); setGoogleProfileRequired(true); return; }
+      if (!data.token) throw new Error('Authentication token was not returned.');
+      await setToken(data.token, data.user);
+    } catch (e) { setError(e instanceof Error ? e.message : 'Google sign-in failed.'); }
+    finally { setBusy(false); }
+  };
+
+  const finishGoogleSignup = async () => {
+    const numericAge = Number(age);
+    const numericSensitivity = Number(sensitivity);
+    if (!name.trim() || !Number.isInteger(numericAge) || numericAge < 1 || numericAge > 119) return setError('Enter your name and a valid age.');
+    if (!Number.isInteger(numericSensitivity) || numericSensitivity < 1 || numericSensitivity > 5) return setError('Enter a sound sensitivity from 1 to 5.');
+    setBusy(true); setError('');
+    try {
+      const { response, data } = await apiRequestJson<any>('Google account setup', API_URL + '/api/auth/google/exchange', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', 'X-SoundScout-Platform': 'android' },
+        body: JSON.stringify({ code: googleCode, name: name.trim(), age: numericAge, sensitivity: numericSensitivity })
+      });
+      if (!response.ok) throw new Error(data.error || 'Could not create your account.');
+      if (!data.token) throw new Error('Authentication token was not returned.');
+      setGoogleProfileRequired(false);
+      await setToken(data.token, data.user);
+    } catch (e) { setError(e instanceof Error ? e.message : 'Could not create your account.'); }
+    finally { setBusy(false); }
+  };
+
   const requestCode = async () => {
     if (!email.trim()) return setError('Enter your email address.');
     setBusy(true); setError('');
@@ -83,14 +129,24 @@ export default function AuthScreen() {
   };
 
   return <SafeAreaView style={s.safe}><StatusBar barStyle="light-content" /><View style={s.content}>
-    <Text style={s.brand}>SOUNDSCOUT</Text><Text style={s.title}>Welcome</Text>
-    <Text style={s.subtitle}>Sign in or create an account to explore venues and contribute ratings.</Text>
-    <TextInput value={email} onChangeText={setEmail} placeholder="Email address" placeholderTextColor={C.muted} keyboardType="email-address" autoCapitalize="none" style={s.input} />
-    {sent && newUser ? <><TextInput value={name} onChangeText={setName} placeholder="Your name" placeholderTextColor={C.muted} style={s.input} /><TextInput value={age} onChangeText={setAge} placeholder="Age" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} /><TextInput value={sensitivity} onChangeText={setSensitivity} placeholder="Sound sensitivity (1–5)" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} /><Pressable accessibilityRole="checkbox" accessibilityState={{ checked: announcementOptIn }} onPress={() => setAnnouncementOptIn((value) => !value)} style={s.consent}><View style={[s.checkbox, announcementOptIn && s.checkboxChecked]}>{announcementOptIn ? <Text style={s.checkmark}>✓</Text> : null}</View><Text style={s.consentText}>Email me occasional SoundScout product updates. I can unsubscribe anytime.</Text></Pressable></> : null}
-    {sent ? <TextInput value={code} onChangeText={setCode} placeholder="Email verification code" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} /> : null}
-    <Pressable disabled={busy} onPress={sent ? verify : requestCode} style={s.button}>{busy ? <ActivityIndicator color={C.bg} /> : <Text style={s.buttonText}>{sent ? 'VERIFY & CONTINUE' : 'CONTINUE WITH EMAIL'}</Text>}</Pressable>
-    {sent ? <Pressable onPress={requestCode} style={s.resend}><Text style={s.resendText}>Resend code</Text></Pressable> : null}
+    <Text style={s.brand}>SOUNDSCOUT</Text><Text style={s.title}>{googleProfileRequired ? 'Almost there' : 'Welcome'}</Text>
+    <Text style={s.subtitle}>{googleProfileRequired ? 'Add a couple of details to finish creating your SoundScout account.' : 'Sign in securely with Google or receive a one-time code by email.'}</Text>
+    {googleProfileRequired ? <>
+      <TextInput value={name} onChangeText={setName} placeholder="Your name" placeholderTextColor={C.muted} style={s.input} />
+      <TextInput value={age} onChangeText={setAge} placeholder="Age" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} />
+      <TextInput value={sensitivity} onChangeText={setSensitivity} placeholder="Sound sensitivity (1–5)" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} />
+      <Pressable disabled={busy} onPress={finishGoogleSignup} style={s.button}>{busy ? <ActivityIndicator color={C.bg} /> : <Text style={s.buttonText}>CREATE ACCOUNT</Text>}</Pressable>
+    </> : <>
+      <Pressable disabled={busy} onPress={continueWithGoogle} style={s.googleButton}><Text style={s.googleMark}>G</Text><Text style={s.googleButtonText}>{busy ? 'CONNECTING…' : 'CONTINUE WITH GOOGLE'}</Text></Pressable>
+      <View style={s.divider}><View style={s.dividerLine} /><Text style={s.dividerText}>OR CONTINUE WITH EMAIL</Text><View style={s.dividerLine} /></View>
+      <TextInput value={email} onChangeText={setEmail} placeholder="Email address" placeholderTextColor={C.muted} keyboardType="email-address" autoCapitalize="none" style={s.input} />
+      {sent && newUser ? <><TextInput value={name} onChangeText={setName} placeholder="Your name" placeholderTextColor={C.muted} style={s.input} /><TextInput value={age} onChangeText={setAge} placeholder="Age" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} /><TextInput value={sensitivity} onChangeText={setSensitivity} placeholder="Sound sensitivity (1–5)" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} /><Pressable accessibilityRole="checkbox" accessibilityState={{ checked: announcementOptIn }} onPress={() => setAnnouncementOptIn((value) => !value)} style={s.consent}><View style={[s.checkbox, announcementOptIn && s.checkboxChecked]}>{announcementOptIn ? <Text style={s.checkmark}>✓</Text> : null}</View><Text style={s.consentText}>Email me occasional SoundScout product updates. I can unsubscribe anytime.</Text></Pressable></> : null}
+      {sent ? <TextInput value={code} onChangeText={setCode} placeholder="Email verification code" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} /> : null}
+      <Pressable disabled={busy} onPress={sent ? verify : requestCode} style={s.button}>{busy ? <ActivityIndicator color={C.bg} /> : <Text style={s.buttonText}>{sent ? 'VERIFY & CONTINUE' : 'CONTINUE WITH EMAIL'}</Text>}</Pressable>
+      {sent ? <Pressable onPress={requestCode} style={s.resend}><Text style={s.resendText}>Resend code</Text></Pressable> : null}
+    </>}
     {error ? <Text style={s.error}>{error}</Text> : null}
   </View></SafeAreaView>;
+}
 }
 const s = StyleSheet.create({ safe:{flex:1,backgroundColor:C.bg},content:{flex:1,justifyContent:'center',padding:26},brand:{color:C.accent,fontSize:11,fontWeight:'900',letterSpacing:3},title:{color:C.text,fontSize:34,fontWeight:'900',marginTop:14},subtitle:{color:C.muted,fontSize:14,lineHeight:22,marginTop:8,marginBottom:24},input:{color:C.text,backgroundColor:C.surface,borderColor:C.border,borderWidth:1,borderRadius:11,padding:14,marginTop:10},button:{backgroundColor:C.accent,borderRadius:11,minHeight:48,alignItems:'center',justifyContent:'center',marginTop:18},buttonText:{color:C.bg,fontSize:11,fontWeight:'900',letterSpacing:1},consent:{flexDirection:'row',alignItems:'center',gap:10,marginTop:14},checkbox:{width:19,height:19,borderRadius:5,borderWidth:1,borderColor:C.muted,alignItems:'center',justifyContent:'center'},checkboxChecked:{backgroundColor:C.accent,borderColor:C.accent},checkmark:{color:C.bg,fontSize:13,fontWeight:'900',lineHeight:16},consentText:{color:C.muted,fontSize:11,lineHeight:17,flex:1},resend:{alignItems:'center',padding:14},resendText:{color:C.muted,fontSize:12,textDecorationLine:'underline'},error:{color:'#F08A8A',marginTop:14,fontSize:12} });
