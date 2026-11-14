@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Pressable, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAppTheme } from '@/context/theme';
@@ -18,7 +19,7 @@ export default function WelcomeScreen() {
       <StatusBar barStyle={resolved === 'dark' ? 'light-content' : 'dark-content'} />
       <View style={s.content}>
         <View style={s.brandRow}>
-          <View style={s.brandMark}><View style={s.brandDot} /></View>
+          <Image source={{ uri: 'https://raw.githubusercontent.com/aeroslayys/Soundscout/main/assets/brand/soundscout-logo.svg' }} style={s.brandLogo} contentFit="contain" accessibilityLabel="SoundScout logo" />
           <Text style={s.brand}>SOUNDSCOUT</Text>
         </View>
 
@@ -64,6 +65,7 @@ export default function WelcomeScreen() {
             <Text style={s.signIn}>Sign in</Text>
           </Pressable>
         </View>
+        <Text style={s.credit}>Logo designed by Kavya Saraswati</Text>
       </View>
     </SafeAreaView>
   );
@@ -73,8 +75,7 @@ const createStyles = (C: any) => StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.bg },
   content: { flex: 1, justifyContent: 'space-between', paddingHorizontal: 25, paddingTop: 22, paddingBottom: 20 },
   brandRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  brandMark: { width: 27, height: 27, borderRadius: 9, backgroundColor: C.accent, alignItems: 'center', justifyContent: 'center' },
-  brandDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: C.bg },
+  brandLogo: { width: 42, height: 42, borderRadius: 10 },
   brand: { color: C.text, fontSize: 12, fontWeight: '900', letterSpacing: 2.5 },
   hero: { marginTop: 42, marginBottom: 34 },
   eyebrow: { color: C.accent, fontSize: 10, fontWeight: '900', letterSpacing: 2.2, marginBottom: 14 },
@@ -98,5 +99,6 @@ const createStyles = (C: any) => StyleSheet.create({
   pressed: { opacity: 0.78, transform: [{ scale: 0.99 }] },
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 5, marginTop: 25 },
   footerText: { color: C.muted, fontSize: 12 },
-  signIn: { color: C.accent, fontSize: 12, fontWeight: '800' }
+  signIn: { color: C.accent, fontSize: 12, fontWeight: '800' },
+  credit: { color: C.muted, fontSize: 10, textAlign: 'center', marginTop: 12 }
 });
