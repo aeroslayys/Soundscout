@@ -191,7 +191,7 @@ router.get('/google/start', (req, res) => {
     ? String(process.env.MOBILE_AUTH_REDIRECT_URI || 'mobile://auth')
     : webLoginUrl();
 
-  googleStates.set(state, { platform, redirectBack, expiresAt: Date.now() + 10 * 60 * 1000 });
+  googleStates.set(state, { platform, redirectBack, partnerInvite: String(req.query.partnerInvite || '').slice(0, 256), expiresAt: Date.now() + 10 * 60 * 1000 });
   for (const [key, value] of googleStates) if (value.expiresAt < Date.now()) googleStates.delete(key);
   for (const [key, value] of googleExchangeCodes) if (value.expiresAt < Date.now()) googleExchangeCodes.delete(key);
 
@@ -271,8 +271,10 @@ router.get('/google/callback', async (req, res) => {
     const identity = await verifyGoogleIdToken(tokenData.id_token);
     const oneTimeCode = crypto.randomBytes(32).toString('hex');
     googleExchangeCodes.set(oneTimeCode, { identity, expiresAt: Date.now() + 5 * 60 * 1000 });
-    const separator = pending.redirectBack.includes('?') ? '&' : '?';
-    return res.redirect(pending.redirectBack + separator + 'googleCode=' + encodeURIComponent(oneTimeCode));
+    const callbackUrl = new URL(pending.redirectBack);
+    callbackUrl.searchParams.set('googleCode', oneTimeCode);
+    if (pending.platform === 'web' && /^[a-f0-9]{32,128}$/i.test(pending.partnerInvite)) callbackUrl.searchParams.set('partnerInvite', pending.partnerInvite);
+    return res.redirect(callbackUrl.toString());
   } catch (err) {
     console.error('Google OAuth callback error:', err);
     return res.status(401).send('Google sign-in could not be completed. Please return to SoundScout and try again.');
