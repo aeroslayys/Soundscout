@@ -1,4 +1,4 @@
-const CACHE_NAME = "soundscout-shell-v3";
+const CACHE_NAME = "soundscout-shell-v4";
 const APP_SHELL = [
   "/",
   "/index.html",
@@ -12,6 +12,7 @@ const APP_SHELL = [
   "/profile/profile.js",
   "/manifest.webmanifest",
   "/pwa/icon.svg",
+  "/assets/brand/soundscout-logo.svg",
   "/pwa/install-prompt.css",
   "/pwa/install-prompt.js"
 ];
