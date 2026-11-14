@@ -101,7 +101,6 @@
     return initials.toUpperCase();
   }
 
-  document.getElementById("avatarInitials").textContent = initialsFor(user.name);
   document.getElementById("profileName").textContent = user.name || "—";
   document.getElementById("profileEmail").textContent = user.email || "—";
   document.getElementById("profileAge").textContent = "Age " + (user.age !== undefined ? user.age : "—");
