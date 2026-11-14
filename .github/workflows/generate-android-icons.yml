@@ -1,0 +1,34 @@
+name: Generate Android Launcher Icons
+
+on:
+  push:
+    branches:
+      - feature/react-native-app
+    paths:
+      - "mobile/scripts/generate-android-icons.py"
+      - "assets/brand/soundscout-logo.svg"
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/react-native-app
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install cairosvg pillow
+      - run: python mobile/scripts/generate-android-icons.py
+      - name: Commit generated launcher assets
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mobile/assets/images/icon.png mobile/assets/images/android-icon-foreground.png mobile/assets/images/android-icon-background.png mobile/assets/images/android-icon-monochrome.png
+          if ! git diff --cached --quiet; then
+            git commit -m "Update Android launcher icons with circular SoundScout logo"
+            git push origin HEAD:feature/react-native-app
+          fi
