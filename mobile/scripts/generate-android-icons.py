@@ -1,7 +1,7 @@
 from pathlib import Path
 from io import BytesIO
 import cairosvg
-from PIL import Image, ImageDraw
+from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "assets/brand/soundscout-logo.svg"
@@ -12,15 +12,11 @@ OUT.mkdir(parents=True, exist_ok=True)
 rendered = cairosvg.svg2png(url=str(SOURCE), output_width=SIZE, output_height=SIZE)
 logo = Image.open(BytesIO(rendered)).convert("RGBA")
 
-# Keep the original artwork and colours, but crop it to a circular launcher mark.
-circle = Image.new("L", (SIZE, SIZE), 0)
-ImageDraw.Draw(circle).ellipse((16, 16, SIZE - 16, SIZE - 16), fill=255)
-launcher = logo.copy()
-launcher.putalpha(circle)
-launcher.save(OUT / "icon.png", optimize=True)
+# Keep the original square artwork completely unchanged for the main launcher icon.
+logo.save(OUT / "icon.png", optimize=True)
 
-# Android adaptive foreground: inset the circular mark into the safe zone.
-foreground = launcher.resize((432, 432), Image.Resampling.LANCZOS)
+# Android adaptive foreground: inset the original square artwork into Android's safe zone.
+foreground = logo.resize((432, 432), Image.Resampling.LANCZOS)
 foreground_canvas = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
 foreground_canvas.alpha_composite(foreground, (40, 40))
 foreground_canvas.save(OUT / "android-icon-foreground.png", optimize=True)
@@ -30,7 +26,7 @@ Image.new("RGBA", (SIZE, SIZE), (22, 163, 74, 255)).save(
     OUT / "android-icon-background.png", optimize=True
 )
 
-# Monochrome Android themed icon: white silhouette of the dark logo mark.
+# Monochrome Android themed icon: preserve the original logo silhouette for themed-icon support.
 rgb = Image.open(BytesIO(rendered)).convert("RGB")
 pixels = rgb.load()
 mono = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
