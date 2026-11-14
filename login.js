@@ -270,3 +270,111 @@ backBtn.addEventListener('click', () => {
   if (announcementOptIn) announcementOptIn.checked = false;
   setStatus(verifyStatus, '', '');
 });
+
+// ---------- Google sign-in ----------
+const googleBtn = document.getElementById('googleBtn');
+const stepGoogleProfile = document.getElementById('stepGoogleProfile');
+const googleName = document.getElementById('googleName');
+const googleAge = document.getElementById('googleAge');
+const googleSensitivity = document.getElementById('googleSensitivity');
+const googleAnnouncementOptIn = document.getElementById('googleAnnouncementOptIn');
+const googleFinishBtn = document.getElementById('googleFinishBtn');
+const googleProfileStatus = document.getElementById('googleProfileStatus');
+const googleCancelBtn = document.getElementById('googleCancelBtn');
+let pendingGoogleCode = null;
+
+function cleanGoogleCodeFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  params.delete('googleCode');
+  const query = params.toString();
+  window.history.replaceState({}, '', window.location.pathname + (query ? '?' + query : '') + window.location.hash);
+}
+
+async function exchangeGoogleCode(code, profile) {
+  const response = await fetch(API_BASE + '/google/exchange', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-SoundScout-Platform': 'web' },
+    body: JSON.stringify({ code, ...(profile || {}) })
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || 'Google sign-in failed.');
+  return data;
+}
+
+async function finishGoogleLogin(data, statusElement) {
+  localStorage.setItem('soundscout_token', data.token);
+  localStorage.setItem('soundscout_user', JSON.stringify(data.user));
+  const acceptedInvite = await acceptPendingPartnerInvite(data.token);
+  const isPartner = acceptedInvite || await hasVenuePartnerAccess(data.token);
+  setStatus(statusElement, isPartner ? 'Venue partner access activated. Redirecting…' : 'Success! Redirecting…', 'success');
+  setTimeout(() => {
+    window.location.href = data.user.admin === true ? 'admin/admin.html' : (isPartner ? 'partner/partner.html' : 'home/home.html');
+  }, 500);
+}
+
+if (googleBtn) {
+  googleBtn.addEventListener('click', () => {
+    googleBtn.disabled = true;
+    setStatus(emailStatus, 'Opening Google sign-in…', '');
+    const invite = new URLSearchParams(window.location.search).get('partnerInvite');
+    window.location.href = API_BASE + '/google/start?platform=web' + (invite ? '&partnerInvite=' + encodeURIComponent(invite) : '');
+  });
+}
+
+if (googleFinishBtn) {
+  googleFinishBtn.addEventListener('click', async () => {
+    const age = Number(googleAge.value);
+    if (!googleName.value.trim() || !Number.isInteger(age) || age < 1 || age > 119) {
+      setStatus(googleProfileStatus, 'Enter your name and a valid age.', 'error');
+      return;
+    }
+    googleFinishBtn.disabled = true;
+    setStatus(googleProfileStatus, 'Creating your account…', '');
+    try {
+      const data = await exchangeGoogleCode(pendingGoogleCode, {
+        name: googleName.value.trim(),
+        age,
+        sensitivity: Number(googleSensitivity.value),
+        announcementOptIn: Boolean(googleAnnouncementOptIn.checked)
+      });
+      if (data.needsProfile) throw new Error('Please complete the required profile details.');
+      await finishGoogleLogin(data, googleProfileStatus);
+    } catch (error) {
+      setStatus(googleProfileStatus, error.message, 'error');
+      googleFinishBtn.disabled = false;
+    }
+  });
+}
+
+if (googleCancelBtn) {
+  googleCancelBtn.addEventListener('click', () => {
+    pendingGoogleCode = null;
+    stepGoogleProfile.style.display = 'none';
+    stepEmail.style.display = 'block';
+    setStatus(emailStatus, '', '');
+  });
+}
+
+(async function handleGoogleCallback() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('googleCode');
+  if (!code) return;
+  cleanGoogleCodeFromUrl();
+  pendingGoogleCode = code;
+  stepEmail.style.display = 'none';
+  stepVerify.style.display = 'none';
+  stepGoogleProfile.style.display = 'block';
+  setStatus(googleProfileStatus, 'Completing Google sign-in…', '');
+  try {
+    const data = await exchangeGoogleCode(code);
+    if (data.needsProfile) {
+      googleName.value = data.name || '';
+      setStatus(googleProfileStatus, 'Add your age and sound sensitivity to finish signing up.', '');
+      return;
+    }
+    await finishGoogleLogin(data, googleProfileStatus);
+  } catch (error) {
+    setStatus(googleProfileStatus, error.message, 'error');
+    googleCancelBtn.textContent = '← Back to sign in';
+  }
+})();
