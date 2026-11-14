@@ -158,6 +158,186 @@ const token = jwt.sign(
 });
 
 
+
+/*
+ * Google OAuth (authorization-code flow).
+ * The client secret stays on the backend. A short-lived one-time code is
+ * handed back to the web/native client; Google tokens never enter app storage.
+ */
+const googleStates = new Map();
+const googleExchangeCodes = new Map();
+let googleJwks = null;
+let googleJwksExpiresAt = 0;
+
+function configuredGoogleClientId() {
+  return String(process.env.GOOGLE_CLIENT_ID || '').trim();
+}
+
+function webLoginUrl() {
+  const base = String(process.env.PUBLIC_WEB_URL || process.env.PUBLIC_APP_URL || 'https://jellyfin-server.tail0a3780.ts.net').replace(/\/$/, '');
+  return base + '/index.html';
+}
+
+router.get('/google/start', (req, res) => {
+  const clientId = configuredGoogleClientId();
+  const redirectUri = String(process.env.GOOGLE_REDIRECT_URI || '').trim();
+  if (!clientId || !process.env.GOOGLE_CLIENT_SECRET || !redirectUri) {
+    return res.status(503).send('Google sign-in is not configured yet.');
+  }
+
+  const platform = req.query.platform === 'android' ? 'android' : 'web';
+  const state = crypto.randomBytes(32).toString('hex');
+  const redirectBack = platform === 'android'
+    ? String(process.env.MOBILE_AUTH_REDIRECT_URI || 'mobile://auth')
+    : webLoginUrl();
+
+  googleStates.set(state, { platform, redirectBack, expiresAt: Date.now() + 10 * 60 * 1000 });
+  for (const [key, value] of googleStates) if (value.expiresAt < Date.now()) googleStates.delete(key);
+  for (const [key, value] of googleExchangeCodes) if (value.expiresAt < Date.now()) googleExchangeCodes.delete(key);
+
+  const params = new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: 'openid email profile',
+    state,
+    prompt: 'select_account'
+  });
+  return res.redirect('https://accounts.google.com/o/oauth2/v2/auth?' + params.toString());
+});
+
+async function verifyGoogleIdToken(idToken) {
+  const parts = String(idToken || '').split('.');
+  if (parts.length !== 3) throw new Error('Invalid Google identity token.');
+  const header = JSON.parse(Buffer.from(parts[0], 'base64url').toString('utf8'));
+  const claims = JSON.parse(Buffer.from(parts[1], 'base64url').toString('utf8'));
+  if (header.alg !== 'RS256' || !header.kid) throw new Error('Unsupported Google identity token.');
+
+  if (!googleJwks || Date.now() >= googleJwksExpiresAt) {
+    const response = await fetch('https://www.googleapis.com/oauth2/v3/certs');
+    if (!response.ok) throw new Error('Could not retrieve Google signing keys.');
+    googleJwks = await response.json();
+    const cacheControl = response.headers.get('cache-control') || '';
+    const maxAge = Number((cacheControl.match(/max-age=(\d+)/i) || [])[1] || 300);
+    googleJwksExpiresAt = Date.now() + Math.min(maxAge, 3600) * 1000;
+  }
+
+  const jwk = (googleJwks.keys || []).find(key => key.kid === header.kid && key.alg === 'RS256');
+  if (!jwk) {
+    googleJwksExpiresAt = 0;
+    throw new Error('Google signing key was not found.');
+  }
+  const publicKey = crypto.createPublicKey({ key: jwk, format: 'jwk' });
+  const validSignature = crypto.verify(
+    'RSA-SHA256',
+    Buffer.from(parts[0] + '.' + parts[1]),
+    publicKey,
+    Buffer.from(parts[2], 'base64url')
+  );
+  if (!validSignature) throw new Error('Google identity token signature is invalid.');
+
+  const now = Math.floor(Date.now() / 1000);
+  const audience = claims.aud;
+  if (claims.iss !== 'https://accounts.google.com' && claims.iss !== 'accounts.google.com') throw new Error('Invalid Google token issuer.');
+  if (audience !== configuredGoogleClientId() && !(Array.isArray(audience) && audience.includes(configuredGoogleClientId()))) throw new Error('Google token audience does not match.');
+  if (!claims.sub || !claims.email || claims.email_verified !== true || !claims.exp || claims.exp <= now) throw new Error('Google account email is not verified or the token has expired.');
+  return {
+    email: String(claims.email).trim().toLowerCase(),
+    name: String(claims.name || claims.given_name || '').trim().slice(0, 255)
+  };
+}
+
+router.get('/google/callback', async (req, res) => {
+  const state = String(req.query.state || '');
+  const pending = googleStates.get(state);
+  googleStates.delete(state);
+  if (!pending || pending.expiresAt < Date.now()) return res.status(400).send('Google sign-in session expired. Please try again.');
+  if (req.query.error) return res.redirect(pending.redirectBack);
+
+  try {
+    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code: String(req.query.code || ''),
+        client_id: configuredGoogleClientId(),
+        client_secret: process.env.GOOGLE_CLIENT_SECRET,
+        redirect_uri: String(process.env.GOOGLE_REDIRECT_URI || ''),
+        grant_type: 'authorization_code'
+      })
+    });
+    const tokenData = await tokenResponse.json();
+    if (!tokenResponse.ok || !tokenData.id_token) throw new Error('Google could not complete sign-in.');
+    const identity = await verifyGoogleIdToken(tokenData.id_token);
+    const oneTimeCode = crypto.randomBytes(32).toString('hex');
+    googleExchangeCodes.set(oneTimeCode, { identity, expiresAt: Date.now() + 5 * 60 * 1000 });
+    const separator = pending.redirectBack.includes('?') ? '&' : '?';
+    return res.redirect(pending.redirectBack + separator + 'googleCode=' + encodeURIComponent(oneTimeCode));
+  } catch (err) {
+    console.error('Google OAuth callback error:', err);
+    return res.status(401).send('Google sign-in could not be completed. Please return to SoundScout and try again.');
+  }
+});
+
+router.post('/google/exchange', async (req, res) => {
+  const code = String(req.body.code || '');
+  const pending = googleExchangeCodes.get(code);
+  if (!pending || pending.expiresAt < Date.now()) {
+    googleExchangeCodes.delete(code);
+    return res.status(401).json({ error: 'Google sign-in session expired. Please try again.' });
+  }
+
+  const { email, name: googleName } = pending.identity;
+  try {
+    let result = await pool.query(
+      'SELECT id, email, name, age, sensitivity, is_suspended FROM users WHERE LOWER(email) = $1',
+      [email]
+    );
+    let user = result.rows[0];
+
+    if (!user) {
+      const name = String(req.body.name || googleName || '').trim();
+      const age = Number(req.body.age);
+      const sensitivity = Number(req.body.sensitivity);
+      if (!name || !Number.isInteger(age) || age < 1 || age > 119 || !Number.isInteger(sensitivity) || sensitivity < 1 || sensitivity > 5) {
+        return res.json({ needsProfile: true, email, name: googleName });
+      }
+
+      const signupPlatformHeader = String(req.get('X-SoundScout-Platform') || '').toLowerCase();
+      const signupPlatform = ['web', 'android'].includes(signupPlatformHeader) ? signupPlatformHeader : 'unknown';
+      const announcementOptIn = req.body.announcementOptIn === true;
+      const unsubscribeToken = crypto.randomBytes(32).toString('hex');
+      result = await pool.query(
+        `INSERT INTO users (email, name, age, sensitivity, signup_platform, announcement_opt_in, announcement_unsubscribe_token)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (email) DO NOTHING
+         RETURNING id, email, name, age, sensitivity, signup_platform, announcement_opt_in, is_suspended`,
+        [email, name, age, sensitivity, signupPlatform, announcementOptIn, unsubscribeToken]
+      );
+      user = result.rows[0];
+      if (!user) {
+        const existing = await pool.query(
+          'SELECT id, email, name, age, sensitivity, is_suspended FROM users WHERE LOWER(email) = $1',
+          [email]
+        );
+        user = existing.rows[0];
+      }
+    }
+
+    if (!user) return res.status(500).json({ error: 'Could not create your SoundScout account.' });
+    if (user.is_suspended === true) return res.status(403).json({ error: 'This account has been suspended. Contact SoundScout support if you believe this is a mistake.' });
+
+    const adminEmail = String(process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    const isAdmin = Boolean(adminEmail && user.email.trim().toLowerCase() === adminEmail);
+    const token = jwt.sign({ sub: user.id, email: user.email, admin: isAdmin }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    googleExchangeCodes.delete(code);
+    return res.json({ token, user: { ...user, admin: isAdmin } });
+  } catch (err) {
+    console.error('Google account exchange error:', err);
+    return res.status(500).json({ error: 'Could not finish Google sign-in. Please try again.' });
+  }
+});
+
 router.get('/unsubscribe/:token', (req, res) => {
   const token = String(req.params.token || '');
   if (!/^[a-f0-9]{64}$/i.test(token)) return res.status(400).send('Invalid unsubscribe link.');
