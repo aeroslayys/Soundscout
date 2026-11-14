@@ -11,10 +11,16 @@
   "theme_color": "#101918",
   "icons": [
     {
-      "src": "/assets/brand/soundscout-pwa-icon-v2.svg",
-      "sizes": "any",
+      "src": "/pwa/icon.svg?v=2",
+      "sizes": "2000x2000",
       "type": "image/svg+xml",
       "purpose": "any"
+    },
+    {
+      "src": "/pwa/icon.svg?v=2",
+      "sizes": "2000x2000",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ]
 }
