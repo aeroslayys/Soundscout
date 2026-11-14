@@ -157,6 +157,12 @@ ADMIN_EMAIL=admin@example.com
 CORS_ORIGIN=https://your-soundscout-url.example
 PUBLIC_WEB_URL=https://jellyfin-server.tail0a3780.ts.net
 
+# Google OAuth (create a Web application OAuth client in Google Cloud)
+GOOGLE_CLIENT_ID=your-google-oauth-client-id
+GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
+GOOGLE_REDIRECT_URI=https://jellyfin-server.tail0a3780.ts.net/api/auth/google/callback
+MOBILE_AUTH_REDIRECT_URI=mobile://auth
+
 DATABASE_SSL=true # Use false for a local PostgreSQL server without TLS
 
 SMTP_HOST=smtp.gmail.com
@@ -245,15 +251,22 @@ The temporary audio file is removed after analysis.
 
 ## Authentication
 
-SoundScout uses passwordless email OTP authentication.
+SoundScout supports passwordless email OTP and Google sign-in. Google OAuth runs through the backend authorization-code flow; the client secret stays on the server, Google identity tokens are signature-verified against Google's rotating public keys, and a short-lived one-time exchange code is returned to the web or Android app. Existing accounts are matched by their verified Google email address. New Google accounts are asked for age and sound-sensitivity details before a SoundScout JWT is issued.
 
-Typical flow:
+To enable Google sign-in:
+
+1. Create an OAuth 2.0 **Web application** client in Google Cloud Console and configure the OAuth consent screen.
+2. Add `https://jellyfin-server.tail0a3780.ts.net/api/auth/google/callback` as an authorized redirect URI (replace the host if your public app URL differs).
+3. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` in the backend environment. Keep the client secret private.
+4. Rebuild/redeploy the backend and web containers. Android uses the existing `mobile` URL scheme and the backend redirects back to `mobile://auth`; no Google client secret belongs in the APK.
+
+Typical email OTP flow:
 
 ```text
-Enter email
+Choose Google sign-in or enter email
     |
     v
-Request OTP
+Google OAuth or request email OTP
     |
     v
 Mailtrap sends verification code
