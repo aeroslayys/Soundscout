@@ -30,6 +30,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add mobile/assets/images/icon.png mobile/assets/images/android-icon-foreground.png mobile/assets/images/android-icon-background.png mobile/assets/images/android-icon-monochrome.png
           if ! git diff --cached --quiet; then
-            git commit -m "Update Android launcher icons with circular SoundScout logo"
-            git push origin HEAD:feature/react-native-app
+            git commit -m "Update Android launcher icons with original SoundScout artwork"
+            git pull --rebase origin feature/react-native-app
+          git push origin HEAD:feature/react-native-app
           fi
