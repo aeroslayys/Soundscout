@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Image,
   Platform,
   PermissionsAndroid,
   Pressable,
@@ -348,9 +349,12 @@ export default function MapScreen() {
         accessibilityRole="button"
         accessibilityLabel={searchVisible ? 'Close venue search' : 'Search venues'}
       >
-        <View style={styles.brandMark}>
-          <Text style={styles.brandMarkText}>S</Text>
-        </View>
+        <Image
+          source={require('../../../assets/images/icon.png')}
+          style={styles.brandLogo}
+          resizeMode="cover"
+          accessibilityLabel="SoundScout logo"
+        />
         <Text style={styles.brandName}>SoundScout</Text>
         <Text style={styles.brandSearchHint}>{searchVisible ? '×' : '⌕'}</Text>
       </Pressable>
@@ -639,15 +643,11 @@ const styles = StyleSheet.create({
     paddingLeft: 6,
     paddingRight: 14,
   },
-  brandMark: {
+  brandLogo: {
     width: 30,
     height: 30,
-    borderRadius: 15,
-    backgroundColor: COLORS.accent,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderRadius: 7,
   },
-  brandMarkText: { color: COLORS.background, fontSize: 17, fontWeight: '900' },
   brandName: { color: COLORS.text, fontSize: 13, fontWeight: '900', letterSpacing: 0.2 },
   brandSearchHint: { color: COLORS.accent, fontSize: 19, fontWeight: '800', marginLeft: 2 },
   searchPanel: {
