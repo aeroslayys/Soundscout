@@ -2110,3 +2110,9 @@ button,
   line-height:1.5;
   overflow-wrap:anywhere;
 }
+
+
+/* Keep the designer credit in the desktop sidebar; it must not float over the mobile map. */
+@media (max-width:760px){
+  #sidebar .soundscout-credit{display:none!important;}
+}
