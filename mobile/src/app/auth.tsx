@@ -137,7 +137,10 @@ export default function AuthScreen() {
       <TextInput value={sensitivity} onChangeText={setSensitivity} placeholder="Sound sensitivity (1–5)" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} />
       <Pressable disabled={busy} onPress={finishGoogleSignup} style={s.button}>{busy ? <ActivityIndicator color={C.bg} /> : <Text style={s.buttonText}>CREATE ACCOUNT</Text>}</Pressable>
     </> : <>
-      <Pressable disabled={busy} onPress={continueWithGoogle} style={s.googleButton}><Text style={s.googleMark}>G</Text><Text style={s.googleButtonText}>{busy ? 'CONNECTING…' : 'CONTINUE WITH GOOGLE'}</Text></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Continue with Google" disabled={busy} onPress={continueWithGoogle} style={({ pressed }) => [s.googleButton, pressed && s.googleButtonPressed, busy && s.googleButtonDisabled]}>
+        <View style={s.googleLogoCircle}><Text style={s.googleMark}>G</Text></View>
+        <Text style={s.googleButtonText}>{busy ? 'CONNECTING…' : 'Continue with Google'}</Text>
+      </Pressable>
       <View style={s.divider}><View style={s.dividerLine} /><Text style={s.dividerText}>OR CONTINUE WITH EMAIL</Text><View style={s.dividerLine} /></View>
       <TextInput value={email} onChangeText={setEmail} placeholder="Email address" placeholderTextColor={C.muted} keyboardType="email-address" autoCapitalize="none" style={s.input} />
       {sent && newUser ? <><TextInput value={name} onChangeText={setName} placeholder="Your name" placeholderTextColor={C.muted} style={s.input} /><TextInput value={age} onChangeText={setAge} placeholder="Age" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} /><TextInput value={sensitivity} onChangeText={setSensitivity} placeholder="Sound sensitivity (1–5)" placeholderTextColor={C.muted} keyboardType="number-pad" style={s.input} /><Pressable accessibilityRole="checkbox" accessibilityState={{ checked: announcementOptIn }} onPress={() => setAnnouncementOptIn((value) => !value)} style={s.consent}><View style={[s.checkbox, announcementOptIn && s.checkboxChecked]}>{announcementOptIn ? <Text style={s.checkmark}>✓</Text> : null}</View><Text style={s.consentText}>Email me occasional SoundScout product updates. I can unsubscribe anytime.</Text></Pressable></> : null}
@@ -148,4 +151,16 @@ export default function AuthScreen() {
     {error ? <Text style={s.error}>{error}</Text> : null}
   </View></SafeAreaView>;
 }
-const s = StyleSheet.create({ safe:{flex:1,backgroundColor:C.bg},content:{flex:1,justifyContent:'center',padding:26},brand:{color:C.accent,fontSize:11,fontWeight:'900',letterSpacing:3},title:{color:C.text,fontSize:34,fontWeight:'900',marginTop:14},subtitle:{color:C.muted,fontSize:14,lineHeight:22,marginTop:8,marginBottom:24},input:{color:C.text,backgroundColor:C.surface,borderColor:C.border,borderWidth:1,borderRadius:11,padding:14,marginTop:10},button:{backgroundColor:C.accent,borderRadius:11,minHeight:48,alignItems:'center',justifyContent:'center',marginTop:18},buttonText:{color:C.bg,fontSize:11,fontWeight:'900',letterSpacing:1},consent:{flexDirection:'row',alignItems:'center',gap:10,marginTop:14},checkbox:{width:19,height:19,borderRadius:5,borderWidth:1,borderColor:C.muted,alignItems:'center',justifyContent:'center'},checkboxChecked:{backgroundColor:C.accent,borderColor:C.accent},checkmark:{color:C.bg,fontSize:13,fontWeight:'900',lineHeight:16},consentText:{color:C.muted,fontSize:11,lineHeight:17,flex:1},resend:{alignItems:'center',padding:14},resendText:{color:C.muted,fontSize:12,textDecorationLine:'underline'},error:{color:'#F08A8A',marginTop:14,fontSize:12} });
+const s = StyleSheet.create({
+  safe:{flex:1,backgroundColor:C.bg},
+  content:{flex:1,justifyContent:'center',padding:26},
+  googleButton:{minHeight:54,flexDirection:'row',alignItems:'center',justifyContent:'center',gap:12,paddingHorizontal:18,marginTop:4,backgroundColor:'#FFFFFF',borderColor:'#DADCE0',borderWidth:1,borderRadius:12,elevation:2,shadowColor:'#000',shadowOpacity:0.12,shadowRadius:3,shadowOffset:{width:0,height:1}},
+  googleButtonPressed:{backgroundColor:'#F5F7FA',borderColor:'#AEB4BC'},
+  googleButtonDisabled:{opacity:0.65},
+  googleLogoCircle:{width:26,height:26,borderRadius:13,backgroundColor:'#FFFFFF',alignItems:'center',justifyContent:'center'},
+  googleMark:{color:'#4285F4',fontSize:23,fontWeight:'800',lineHeight:27,includeFontPadding:false},
+  googleButtonText:{color:'#3C4043',fontSize:15,fontWeight:'600',letterSpacing:0.1},
+  divider:{flexDirection:'row',alignItems:'center',gap:12,marginTop:22,marginBottom:8},
+  dividerLine:{height:1,flex:1,backgroundColor:C.border},
+  dividerText:{color:C.muted,fontSize:10,fontWeight:'700',letterSpacing:1},
+  brand:{color:C.accent,fontSize:11,fontWeight:'900',letterSpacing:3},title:{color:C.text,fontSize:34,fontWeight:'900',marginTop:14},subtitle:{color:C.muted,fontSize:14,lineHeight:22,marginTop:8,marginBottom:24},input:{color:C.text,backgroundColor:C.surface,borderColor:C.border,borderWidth:1,borderRadius:11,padding:14,marginTop:10},button:{backgroundColor:C.accent,borderRadius:11,minHeight:48,alignItems:'center',justifyContent:'center',marginTop:18},buttonText:{color:C.bg,fontSize:11,fontWeight:'900',letterSpacing:1},consent:{flexDirection:'row',alignItems:'center',gap:10,marginTop:14},checkbox:{width:19,height:19,borderRadius:5,borderWidth:1,borderColor:C.muted,alignItems:'center',justifyContent:'center'},checkboxChecked:{backgroundColor:C.accent,borderColor:C.accent},checkmark:{color:C.bg,fontSize:13,fontWeight:'900',lineHeight:16},consentText:{color:C.muted,fontSize:11,lineHeight:17,flex:1},resend:{alignItems:'center',padding:14},resendText:{color:C.muted,fontSize:12,textDecorationLine:'underline'},error:{color:'#F08A8A',marginTop:14,fontSize:12} });
