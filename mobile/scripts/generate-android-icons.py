@@ -44,3 +44,5 @@ mono_canvas.save(OUT / "android-icon-monochrome.png", optimize=True)
 # Regenerate icon assets from the canonical SVG source.
 
 # Source logo is present on this branch; regenerate the native icon assets.
+
+# Keep generated launcher assets in sync with the original square brand artwork.
