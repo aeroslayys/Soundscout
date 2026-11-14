@@ -1,6 +1,7 @@
 name: Generate Android Launcher Icons
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - feature/react-native-app
