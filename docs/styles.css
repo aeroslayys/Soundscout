@@ -323,3 +323,26 @@ button{color:inherit}
 .release-note-card ul{padding-left:18px;margin:15px 0 0}
 .release-notes-loading,.release-notes-empty{color:var(--muted);font-size:13px;line-height:1.8}
 @media(max-width:700px){.release-notes-list{grid-template-columns:1fr}.release-note-card{padding:22px}}
+
+
+/* Click-to-read release notes */
+.release-note-card{cursor:pointer;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.release-note-card:hover,.release-note-card:focus-visible{transform:translateY(-3px);border-color:var(--quiet);box-shadow:var(--shadow)}
+.release-note-card:focus-visible{outline:3px solid var(--focus);outline-offset:3px}
+.release-note-card h2{margin-bottom:10px}
+.release-note-card p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:0}
+.release-note-card-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:22px;padding-top:15px;border-top:1px solid var(--border);font:10px var(--mono);color:var(--muted)}
+.release-note-read{color:var(--quiet-deep);font-weight:600}
+.release-note-read span{font-size:14px;margin-left:5px}
+.release-note-dialog{width:min(680px,calc(100vw - 32px));max-width:none;max-height:min(82vh,850px);padding:0;border:1px solid var(--border);border-radius:22px;background:var(--surface);color:var(--ink);box-shadow:0 28px 90px rgba(0,0,0,.3)}
+.release-note-dialog::backdrop{background:rgba(9,20,17,.68);backdrop-filter:blur(4px)}
+.release-note-dialog-inner{position:relative;padding:clamp(25px,5vw,44px);max-height:82vh;overflow:auto}
+.release-note-dialog-inner form{position:absolute;top:16px;right:16px}
+.release-note-close{width:38px;height:38px;border:0;border-radius:50%;background:var(--surface-soft);color:var(--ink);font-size:25px;line-height:1;cursor:pointer}
+.release-note-dialog-content{padding-top:12px}
+.release-note-dialog-content h2{font:600 clamp(30px,5vw,43px)/1.12 var(--serif);letter-spacing:-1px;margin:25px 48px 14px 0}
+.release-note-dialog-summary{font-size:14px;line-height:1.9;color:var(--muted);margin:0 0 30px}
+.release-note-dialog-content h3{font:600 20px var(--serif);margin:25px 0 12px}
+.release-note-dialog-content ul{padding-left:22px;margin:0}
+.release-note-dialog-content li{font-size:13px;line-height:1.9;color:var(--ink-soft);padding:5px 0 5px 4px}
+@media(max-width:700px){.release-note-dialog{border-radius:18px}.release-note-dialog-inner{padding:24px 21px}.release-note-card-footer{margin-top:17px}}
