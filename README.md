@@ -1,170 +1,204 @@
 # SoundScout
 
-SoundScout is a map-based web app for discovering places by **how they sound**.
+**Find places that sound right for you.**
 
-Instead of relying only on photos or generic venue reviews, SoundScout lets people log quietness ratings, optionally analyze a short ambient recording, compare sound levels by time of day, and find calmer places nearby.
+SoundScout is a community-powered, map-based web application for discovering places by how they sound. Instead of relying only on photos or generic venue reviews, people can compare quietness ratings, review sound patterns by time of day, and check recent venue updates before visiting.
 
-## Features
+- **Public landing page:** https://aeroslayys.github.io/Soundscout/
+- **Repository:** https://github.com/aeroslayys/Soundscout
 
-- Interactive Leaflet map with venue markers
-- Quietness ratings on a 1–5 scale
-  - 1 = Loud
-  - 2 = Lively
-  - 3 = Moderate
-  - 4 = Calm
-  - 5 = Silent
-- Optional 5–10 second ambient audio analysis
-- Mean and maximum recording level analysis in **dBFS** using FFmpeg
-- Average recorded-level display for venues
-- Time-of-day recorded sound graph
-- Recent sound reports
-- Sound heatmap
-- **Quiet Near Me** filtering
-- Browser geolocation with an accuracy indicator
-- Venue search through OpenStreetMap Nominatim
-- Accessibility and gender-neutral toilet tags
-- Passwordless email OTP authentication
-- User profiles
-- Admin operations dashboard with searchable venues, ratings, users, and audit history
-- Soft-delete and restore for ratings and venues, with required moderation reasons
-- Venue approval/rejection and likely-duplicate detection
-- Community flags and moderation queue
-- User suspension controls enforced by the backend
-- Light and dark themes
-- Responsive mobile layout
+## What SoundScout does
+
+### Discover places by sound
+- Interactive map built with Leaflet and OpenStreetMap.
+- Browse approved venues and search for places by name or location.
+- Filter venues by category, wheelchair/step-free access, and gender-neutral toilet availability.
+- View community quietness ratings, recent reports, recorded sound measurements, and time-of-day trends.
+- Explore a sound heatmap and use **Quiet Near Me** with browser geolocation.
+- Compare quietness across four time periods: morning, afternoon, evening, and night.
+- Venue location search uses OpenStreetMap Nominatim.
+
+### Contribute community sound data
+- Add a venue and submit its first quietness rating.
+- Rate a place on a five-point scale:
+  1. Loud
+  2. Lively
+  3. Moderate
+  4. Calm
+  5. Silent
+- Optionally submit a short ambient recording for on-demand audio analysis.
+- Add accessibility information for wheelchair/step-free access and gender-neutral toilets.
+- Review your own contribution history from your profile.
+
+### Understand recorded sound
+- Optional short audio analysis runs on the backend with FFmpeg.
+- SoundScout reports mean and maximum digital recording levels in **dBFS**.
+- Venue views can show average recorded levels and time-of-day sound trends.
+
+> **Measurement note:** dBFS is a digital recording level, not a calibrated sound-pressure-level (dB SPL) measurement. Results vary with microphones, devices, and recording conditions. A community quietness rating is not a professional acoustic measurement.
+
+### Venue partner tools
+SoundScout includes an invitation-based venue partner role alongside the regular community account.
+
+- Admins invite a partner by email for a specific approved venue.
+- Invitations are time-limited and tied to the invited email address.
+- Partners sign in through the existing SoundScout account system and accept their invitation.
+- Partners can manage their assigned venues, review recent community ratings, and view rating trends.
+- Partners can publish, edit, and cancel event announcements.
+- Event details include event type, schedule, expected crowd level, description, and whether amplified music is expected.
+- Admins can activate or revoke partner access and invitations.
+
+### Admin and community operations
+The Admin Console provides:
+- Dashboard metrics and recent administrative activity.
+- Searchable venue management, venue editing, approval/rejection, duplicate detection, and deleted-venue restoration.
+- Rating and sound-report management, including soft-delete and restore.
+- Community flags and a moderation queue.
+- User lookup and account suspension controls.
+- Venue partner invitations and access management.
+- Email announcement campaigns, including an option to target active venue partners only.
+- Release-note drafting, publishing, unpublishing, and deletion.
+- An audit log for administrative actions.
+
+Moderation actions that require a reason are recorded in the audit history. User suspension is enforced by the backend, not only hidden in the interface.
+
+### Installable web experience
+- Responsive desktop and mobile layouts.
+- Progressive Web App manifest, service worker, and install prompt.
+- Mobile navigation for Map, Venues, and My Ratings.
+- Light and dark themes on supported application surfaces.
+
+The installable phone experience is the web app/PWA. The repository's `mobile/` directory is not currently a complete standalone native application.
 
 ## Audio privacy
 
-SoundScout does **not** persist uploaded or recorded audio clips.
+SoundScout does **not** retain uploaded or recorded audio clips.
 
-A clip is temporarily uploaded to the backend, analyzed with FFmpeg, and deleted immediately after analysis. The application stores only derived information such as the measured dBFS value and whether audio analysis was used.
+A clip is temporarily uploaded to the backend, analyzed with FFmpeg, and removed after analysis. The application stores derived information such as measured dBFS values and whether audio analysis was used, rather than the audio itself.
 
-> dBFS is a digital recording level, not a calibrated sound-pressure-level (dB SPL) measurement. Results can vary between microphones and devices.
+## Technology
 
-## Tech stack
-
-### Frontend
-
-- HTML
-- CSS
-- Vanilla JavaScript
-- Leaflet
-- Leaflet.heat
-- OpenStreetMap
-
-### Backend
-
-- Node.js
-- Express
-- PostgreSQL
-- PostGIS
-- JSON Web Tokens
-- bcryptjs
-- Nodemailer / Mailtrap
-- Multer
-- FFmpeg
+| Area | Technologies |
+|---|---|
+| Frontend | HTML, CSS, Vanilla JavaScript |
+| Maps | Leaflet, Leaflet.heat, OpenStreetMap, Nominatim |
+| Backend | Node.js, Express |
+| Database | PostgreSQL, PostGIS |
+| Authentication | Email OTP, Google OAuth, JWT |
+| Password/security utilities | bcryptjs, server-side token verification |
+| Audio | FFmpeg, Multer |
+| Email | Nodemailer, Gmail SMTP (legacy Mailtrap configuration is also supported) |
+| Deployment | Docker images, Nginx, HTTPS reverse proxy |
 
 ## Architecture
 
 ```text
-Browser / Phone
-      |
-      v
-SoundScout frontend
-      |
-      | HTTPS / REST
-      v
-Node.js + Express
-      |
-      +--> PostgreSQL + PostGIS
-      |
-      +--> FFmpeg
-      |     temporary audio analysis
-      |     clip deleted after analysis
-      |
-      +--> Mailtrap
-            OTP email delivery
+Browser / Installed PWA
+        |
+        | HTTPS / REST API
+        v
+Nginx / Web frontend
+        |
+        v
+Node.js + Express API
+   |       |        |
+   |       |        +--> Gmail SMTP / email provider
+   |       |
+   |       +-----------> FFmpeg
+   |                     temporary audio analysis
+   |
+   +-------------------> PostgreSQL + PostGIS
+                          venues, ratings, accounts,
+                          moderation, partners,
+                          events, campaigns, release notes
 ```
 
-The project can be self-hosted and exposed securely over HTTPS using a service such as **Tailscale Funnel**.
+The web frontend is served as static files. Nginx can forward `/api/` requests to the backend service. PostgreSQL should remain private and should not be exposed directly to the public internet.
 
-## Project structure
+## Repository layout
 
 ```text
 Soundscout/
-├── index.html
+├── Backend/
+│   ├── Dockerfile
+│   ├── package.json
+│   └── src/
+│       ├── server.js
+│       ├── db.js
+│       ├── mailer.js
+│       ├── middleware/
+│       ├── routes/
+│       │   ├── auth.js
+│       │   ├── audio.js
+│       │   ├── venues.js
+│       │   ├── users.js
+│       │   ├── admin.js
+│       │   ├── adminPartners.js
+│       │   ├── partner.js
+│       │   └── releaseNotes.js
+│       └── migrations/
+├── admin/                 # Admin Console
+├── assets/                # Shared brand assets
+├── docs/                  # Public GitHub Pages landing page
+├── home/                  # Main map and discovery experience
+├── partner/               # Venue partner dashboard
+├── profile/               # User profile and contribution history
+├── pwa/                   # PWA install prompt assets
+├── index.html             # Authentication entry point
 ├── login.css
 ├── login.js
-├── home/
-│   ├── home.html
-│   ├── home.css
-│   └── home.js
-├── profile/
-├── admin/
-└── Backend/
-    ├── package.json
-    └── src/
-        ├── server.js
-        ├── db.js
-        ├── mailer.js
-        ├── middleware/
-        └── routes/
-            ├── auth.js
-            ├── audio.js
-            ├── venues.js
-            ├── users.js
-            └── admin.js
+├── manifest.webmanifest
+├── sw.js
+├── Dockerfile.web
+└── nginx.conf
 ```
 
 ## Requirements
 
-Before running the backend, install:
+For local backend development:
 
 - Node.js 18 or newer
-- PostgreSQL
-- PostGIS
-- FFmpeg
+- PostgreSQL with PostGIS enabled
+- FFmpeg available on the backend host
+- A configured SMTP account for email delivery
+- A Google OAuth Web application client if Google sign-in is enabled
 
-A PostgreSQL database with the SoundScout tables is also required. The current application expects tables including users, OTP codes, venues, and ratings.
+The application also depends on an existing base SoundScout database schema. The SQL files listed below are additive migrations; they are not a replacement for provisioning the original users, OTP, venues, and ratings tables.
 
-## Backend setup
+## Local backend setup
 
-Clone the repository:
+Clone the repository and install backend dependencies:
 
 ```bash
 git clone https://github.com/aeroslayys/Soundscout.git
 cd Soundscout/Backend
-```
-
-Install dependencies:
-
-```bash
 npm install
 ```
 
-Create a `.env` file inside `Backend/`.
-
-Example:
+Create `Backend/.env`:
 
 ```env
 PORT=4000
-
 DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE
+DATABASE_SSL=true
 
 JWT_SECRET=replace-with-a-long-random-secret
 ADMIN_EMAIL=admin@example.com
 
-CORS_ORIGIN=https://your-soundscout-url.example
-PUBLIC_WEB_URL=https://jellyfin-server.tail0a3780.ts.net
+# Comma-separated list of browser origins allowed to call the API
+CORS_ORIGIN=http://127.0.0.1:5500,https://aeroslayys.github.io
 
-# Google OAuth (create a Web application OAuth client in Google Cloud)
+# Public web application URL used when generating email links
+PUBLIC_WEB_URL=https://your-public-soundscout-host.example
+PUBLIC_APP_URL=https://your-public-soundscout-host.example
+
+# Google OAuth (optional)
 GOOGLE_CLIENT_ID=your-google-oauth-client-id
 GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
-GOOGLE_REDIRECT_URI=https://jellyfin-server.tail0a3780.ts.net/api/auth/google/callback
+GOOGLE_REDIRECT_URI=https://your-public-soundscout-host.example/api/auth/google/callback
 MOBILE_AUTH_REDIRECT_URI=mobile://auth
 
-DATABASE_SSL=true # Use false for a local PostgreSQL server without TLS
-
+# Gmail SMTP (use an App Password where required)
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=your-smtp-user
@@ -172,27 +206,13 @@ SMTP_PASS=your-smtp-password
 MAIL_FROM=no-reply@example.com
 MAIL_FROM_NAME=SoundScout
 
-# Legacy MAILTRAP_* variables are also supported.
-
 OTP_EXPIRY_MINUTES=10
 OTP_RESEND_COOLDOWN_SECONDS=30
 ```
 
-Do not commit your real `.env` file or credentials.
+Use only the origins and URLs that actually belong to your deployment. If you are not using Google sign-in, the Google OAuth variables can be omitted. Keep real credentials and `.env` files out of source control.
 
-### Apply the admin-console database migration
-
-Before starting the updated backend, apply the additive migration to the same PostgreSQL database configured by `DATABASE_URL`. It adds soft-delete fields, venue approval state, account suspension fields, moderation flags, and admin audit logs. Existing venues are marked approved by default; newly submitted venues wait for admin approval.
-
-Run this from the `Backend/` directory, with `DATABASE_URL` set in your shell:
-
-```bash
-psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f src/migrations/20261029_admin_console.sql
-```
-
-Back up the database before applying schema changes. The migration is designed to be repeatable, but it should still be applied to the intended database and verified before deploying the updated API.
-
-Start the backend:
+Install and start the API:
 
 ```bash
 npm start
@@ -204,118 +224,101 @@ For development with Node's watch mode:
 npm run dev
 ```
 
-The default API port is:
+The API listens on port `4000` by default. Check its health endpoint at:
 
 ```text
-http://localhost:4000
+GET http://localhost:4000/health
 ```
 
-Health check:
+## Database migrations
 
-```text
-GET /health
+Apply migrations to the same PostgreSQL database configured by `DATABASE_URL`. Back up the database first, and apply each migration once in chronological order after the original SoundScout schema is present.
+
+From the `Backend/` directory:
+
+```bash
+psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f src/migrations/20261029_admin_console.sql
+psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f src/migrations/20261104_email_announcements.sql
+psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f src/migrations/20261111_venue_partners.sql
+psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f src/migrations/20261115_release_notes.sql
 ```
+
+These migrations add:
+- Admin moderation, soft-delete/restore, venue approval, suspension, flags, and audit support.
+- Announcement preferences, unsubscribe tokens, campaign records, and delivery history.
+- Invitation-based venue partner access, venue events, and event audit history.
+- Draft and published release notes.
+
+The migrations enable row-level security or revoke client-facing table privileges on sensitive feature tables. The trusted backend database connection is expected to perform those operations. Verify database role permissions and migration results before deploying.
+
+## Authentication
+
+SoundScout supports:
+- **Email OTP:** users request a one-time code by email and exchange a verified code for a JWT.
+- **Google sign-in:** an optional backend-managed OAuth authorization-code flow. The Google client secret remains on the server.
+
+Configure SMTP for OTP and transactional email delivery. Configure the Google OAuth redirect URI in Google Cloud Console to match `GOOGLE_REDIRECT_URI`. Never place the Google client secret in frontend code.
+
+Venue partner invitations are accepted after signing in with the email address to which the invitation was sent. A normal account does not automatically receive partner permissions; an administrator must issue and manage the invitation.
 
 ## Main API areas
 
-```text
-/api/auth
-/api/audio
-/api/venues
-/api/users
-/api/admin
-```
+| Route | Purpose |
+|---|---|
+| `/health` | Backend health check |
+| `/api/auth` | Email OTP and Google authentication |
+| `/api/audio` | Temporary audio analysis |
+| `/api/venues` | Venue discovery, search, submission, and ratings |
+| `/api/users` | User profile and account actions |
+| `/api/admin` | Admin dashboard, moderation, and management |
+| `/api/admin/partners` | Partner invitations and access administration |
+| `/api/partner` | Partner venues, ratings, and event management |
+| `/api/release-notes` | Public published release notes |
+| `/api/admin/release-notes` | Admin release-note management |
 
-Venue creation, ratings, user actions, and admin operations use authenticated API routes where appropriate.
+Authenticated routes require a valid SoundScout JWT unless the endpoint is explicitly public.
 
 ## Audio analysis
 
-SoundScout accepts a short audio clip as multipart form data at:
+Submit a short clip as multipart form data to:
 
 ```text
 POST /api/audio/analyze
 ```
 
-The backend runs FFmpeg's `volumedetect` filter and returns values such as:
-
-```json
-{
-  "mean_volume_dbfs": -36.8,
-  "max_volume_dbfs": -20.1,
-  "loudness_10": 4,
-  "suggested_score": 4
-}
-```
-
-The temporary audio file is removed after analysis.
-
-## Authentication
-
-SoundScout supports passwordless email OTP and Google sign-in. Google OAuth runs through the backend authorization-code flow; the client secret stays on the server, Google identity tokens are signature-verified against Google's rotating public keys, and a short-lived one-time exchange code is returned to the web or Android app. Existing accounts are matched by their verified Google email address. New Google accounts are asked for age and sound-sensitivity details before a SoundScout JWT is issued.
-
-To enable Google sign-in:
-
-1. Create an OAuth 2.0 **Web application** client in Google Cloud Console and configure the OAuth consent screen.
-2. Add `https://jellyfin-server.tail0a3780.ts.net/api/auth/google/callback` as an authorized redirect URI (replace the host if your public app URL differs).
-3. Set `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, and `GOOGLE_REDIRECT_URI` in the backend environment. Keep the client secret private.
-4. Rebuild/redeploy the backend and web containers. Android uses the existing `mobile` URL scheme and the backend redirects back to `mobile://auth`; no Google client secret belongs in the APK.
-
-Typical email OTP flow:
-
-```text
-Choose Google sign-in or enter email
-    |
-    v
-Google OAuth or request email OTP
-    |
-    v
-Mailtrap sends verification code
-    |
-    v
-Verify code
-    |
-    v
-JWT issued
-```
-
-JWTs are used by the frontend for authenticated API requests.
+The backend uses FFmpeg's `volumedetect` filter and returns derived measurements such as mean and maximum volume in dBFS, along with a suggested quietness score. Temporary uploaded files are removed after processing.
 
 ## Deployment
 
-The application can be hosted on a Linux machine with:
+The repository includes:
+- `Backend/Dockerfile` for the API image, including FFmpeg.
+- `Dockerfile.web` for the static frontend served by Nginx.
+- `nginx.conf` for forwarding API requests to a backend service named `backend` on port `4000`.
 
-- Node.js / Express
-- PostgreSQL + PostGIS
-- FFmpeg
+The production Compose/orchestration file and environment configuration are deployment-specific and are not included in this repository. Keep the web and backend containers on a shared Docker network so the Nginx upstream can resolve `backend`. Expose the web/API endpoint over HTTPS; keep PostgreSQL private.
 
-For a self-hosted setup, Tailscale Funnel can provide a public HTTPS endpoint without directly exposing the database.
+For a self-hosted deployment, a private-network or tunnel-based HTTPS endpoint can be used. Do not expose the database directly to the internet.
 
-Only the web/API service should be exposed. PostgreSQL should remain private.
+## Release notes
 
-### Docker and Nginx
+Published release notes are served by `GET /api/release-notes` and displayed on the public landing page in `docs/`. Administrators can create drafts, edit entries, publish or unpublish them, and remove entries from **Admin Console → Release notes**.
 
-The deployment files are:
+Apply `20261115_release_notes.sql` before deploying the release-note API. Only published entries are returned by the public endpoint.
 
-- `Backend/Dockerfile`: backend image with FFmpeg installed.
-- `Dockerfile.web`: static frontend served by Nginx.
-- `nginx.conf`: forwards `/api/` requests to a backend service named `backend` on port `4000`.
+## Security and operational notes
 
-The web and backend containers must share a Docker network, and the backend service must resolve as `backend` for the Nginx upstream to work. These files do not include a Compose manifest; keep the existing deployment orchestration and do not commit `.env` files or credentials.
+- Never commit `.env`, JWT secrets, database credentials, SMTP passwords, or OAuth client secrets.
+- Use HTTPS in production and keep PostgreSQL private.
+- Keep `CORS_ORIGIN` limited to the origins that should access the API; multiple origins are comma-separated.
+- OTPs are time-limited and consumed after successful verification.
+- Google identity tokens are verified server-side.
+- Audio uploads are temporary and should not be persisted.
+- Sensitive partner, campaign, release-note, and moderation operations are performed through authenticated backend routes.
+- Back up the database before applying migrations and verify the target database before running SQL.
 
-## Security notes
+## Project status
 
-- Keep `JWT_SECRET`, database credentials, and Mailtrap credentials outside source control.
-- Do not expose PostgreSQL directly to the public internet.
-- Use HTTPS in production.
-- Audio clips should remain temporary and should not be persisted.
-- OTP codes are hashed before being stored.
-- OTPs expire and are marked as consumed after successful verification.
-
-## Status
-
-SoundScout is under active development.
-
-Current focus areas include improving the venue sound-data experience, mobile usability, deployment, and production email delivery.
+SoundScout is an actively developed web application with working discovery, community rating, audio-analysis, account, admin, and venue-partner feature areas. The installable mobile experience is delivered as a PWA. Features that depend on deployment configuration—such as SMTP delivery, Google OAuth, database migrations, and public HTTPS access—must be configured in the target environment.
 
 ## Author
 
@@ -326,9 +329,3 @@ Current focus areas include improving the venue sound-data experience, mobile us
 ---
 
 Built around a simple idea: **find places that sound right for you.**
-
-## Release notes
-
-The public landing page reads published release notes from `GET /api/release-notes`. Administrators manage drafts and published entries from the Admin Console under **Release notes**.
-
-Apply `Backend/src/migrations/20261115_release_notes.sql` to the production PostgreSQL database before deploying the updated backend. Create a draft in the admin console, review it, and publish it when ready. Unpublishing moves it back to drafts; only published entries are exposed publicly.
