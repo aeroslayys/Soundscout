@@ -32,6 +32,7 @@
     <button class="nav-tab" data-panel="users">Users</button>
     <button class="nav-tab" data-panel="partners">Venue partners</button>
     <button class="nav-tab" data-panel="announcements">Email announcements</button>
+    <button class="nav-tab" data-panel="release-notes">Release notes</button>
     <button class="nav-tab" data-panel="audit">Audit log</button>
   </nav>
 
@@ -109,6 +110,20 @@
         <p class="helper-note">Emails are sent individually through the existing Gmail SMTP configuration. Every message includes an unsubscribe link. The broad-audience option excludes anyone who previously unsubscribed and does not change their preferences.</p>
       </div>
       <div class="section-card"><div class="section-card-heading"><div><h3>Previous announcements</h3><p>Delivery totals for the last 30 campaigns.</p></div><button class="secondary-btn" id="refreshAnnouncementHistory">Refresh history</button></div><div id="announcementHistory" class="record-list"><p class="loading">Loading announcement history…</p></div></div>
+    </section>
+
+    <section class="admin-panel" id="panel-release-notes">
+      <div class="panel-heading"><div><p class="eyebrow">PRODUCT UPDATES</p><h2>Release notes</h2><p class="panel-subtitle">Write user-facing summaries of product updates. Drafts stay private until published.</p></div><button class="secondary-btn" id="refreshReleaseNotes">Refresh</button></div>
+      <div class="section-card announcement-composer">
+        <div class="section-card-heading"><div><h3 id="releaseEditorHeading">Create a release note</h3><p>Publish only when the update is ready for visitors.</p></div></div>
+        <input type="hidden" id="releaseNoteId">
+        <label class="field-label" for="releaseVersion">Version</label><input id="releaseVersion" type="text" maxlength="40" placeholder="1.4.0">
+        <label class="field-label" for="releaseTitle">Title</label><input id="releaseTitle" type="text" maxlength="120" placeholder="Venue Partners are here">
+        <label class="field-label" for="releaseSummary">Summary</label><textarea id="releaseSummary" rows="3" maxlength="500" placeholder="A short overview of this update."></textarea>
+        <label class="field-label" for="releaseChanges">What's changed? <small>One item per line</small></label><textarea id="releaseChanges" rows="6" maxlength="5000" placeholder="Partner dashboard for approved venues&#10;Publish events and announcements&#10;View recent community feedback"></textarea>
+        <div class="record-actions"><button class="secondary-btn" id="saveReleaseDraft">Save draft</button><button class="primary-btn" id="publishReleaseNote">Publish release</button><button class="secondary-btn" id="cancelReleaseEdit" type="button">Clear</button></div>
+      </div>
+      <div class="section-card"><div class="section-card-heading"><div><h3>All release notes</h3><p>Published entries appear on the public landing page; drafts are visible only here.</p></div></div><div id="releaseNoteList" class="record-list"><p class="loading">Loading release notes…</p></div></div>
     </section>
 
     <section class="admin-panel" id="panel-audit">
