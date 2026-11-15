@@ -52,7 +52,7 @@ adminRouter.post('/', async (req, res) => {
   if (entry.error) return res.status(400).json({ error: entry.error });
   try {
     const result = await pool.query(
-      "INSERT INTO release_notes(version,title,summary,changes,status,created_by,published_at) VALUES($1,$2,$3,$4::jsonb,$5,$6,CASE WHEN $5='published' THEN NOW() ELSE NULL END) RETURNING *",
+      "INSERT INTO release_notes(version,title,summary,changes,status,created_by,published_at) VALUES($1,$2,$3,$4::jsonb,$5,$6,CASE WHEN $5::varchar='published' THEN NOW() ELSE NULL END) RETURNING *",
       [entry.version,entry.title,entry.summary,JSON.stringify(entry.changes),entry.status,req.userId]
     );
     await writeAudit(pool,req,entry.status === 'published' ? 'release_note_published' : 'release_note_created',result.rows[0].id,{version:entry.version,title:entry.title});
@@ -71,7 +71,7 @@ adminRouter.patch('/:id', async (req,res) => {
     const entry = validate(Object.assign({},current.rows[0],req.body || {}));
     if (entry.error) return res.status(400).json({ error:entry.error });
     const result = await pool.query(
-      "UPDATE release_notes SET version=$2,title=$3,summary=$4,changes=$5::jsonb,status=$6,updated_at=NOW(),published_at=CASE WHEN $6='published' THEN COALESCE(published_at,NOW()) ELSE NULL END WHERE id=$1 RETURNING *",
+      "UPDATE release_notes SET version=$2,title=$3,summary=$4,changes=$5::jsonb,status=$6,updated_at=NOW(),published_at=CASE WHEN $6::varchar='published' THEN COALESCE(published_at,NOW()) ELSE NULL END WHERE id=$1 RETURNING *",
       [id,entry.version,entry.title,entry.summary,JSON.stringify(entry.changes),entry.status]
     );
     await writeAudit(pool,req,entry.status === 'published' ? 'release_note_updated' : 'release_note_unpublished',id,{version:entry.version,title:entry.title,status:entry.status});
