@@ -1241,3 +1241,8 @@ input::placeholder,textarea::placeholder{color:#777C87;}
   color:var(--ink);font:13px 'Inter',sans-serif;
 }
 #panel-partners .record-actions{max-width:none;}
+
+#panel-release-notes .announcement-composer input,#panel-release-notes .announcement-composer textarea{display:block;width:100%;box-sizing:border-box;margin:7px 0 16px;padding:12px;border:1px solid var(--border-strong);border-radius:9px;background:var(--surface);color:var(--ink);font:13px 'Inter',sans-serif}
+#panel-release-notes .announcement-composer textarea{resize:vertical;line-height:1.6}
+#panel-release-notes .record-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+#panel-release-notes .record-main ul{margin:10px 0 0;padding-left:20px;color:var(--muted);font-size:12px;line-height:1.7}
