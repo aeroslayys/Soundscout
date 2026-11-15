@@ -53,6 +53,19 @@
     window.open(url, '_blank', 'noopener,noreferrer');
   });
 
+  const releaseNotesRoot = document.getElementById('publicReleaseNotes');
+  if (releaseNotesRoot) {
+    const apiBase = 'https://jellyfin-server.tail0a3780.ts.net/api';
+    const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+    fetch(apiBase + '/release-notes?limit=8')
+      .then(response => { if (!response.ok) throw new Error('Could not load updates.'); return response.json(); })
+      .then(data => {
+        const items = data.items || [];
+        releaseNotesRoot.innerHTML = items.length ? items.map(item => '<article class="release-note-card"><div class="release-note-meta"><span>v' + escapeHtml(item.version) + '</span><time datetime="' + escapeHtml(item.published_at) + '">' + escapeHtml(new Date(item.published_at).toLocaleDateString(undefined, {year:"numeric",month:"short",day:"numeric"})) + '</time></div><h2>' + escapeHtml(item.title) + '</h2><p>' + escapeHtml(item.summary) + '</p><ul>' + (item.changes || []).map(change => '<li>' + escapeHtml(change) + '</li>').join('') + '</ul></article>').join('') : '<p class="release-notes-empty">No release notes yet. Check back soon.</p>';
+      })
+      .catch(() => { releaseNotesRoot.innerHTML = '<p class="release-notes-empty">Release notes are temporarily unavailable.</p>'; });
+  }
+
   const year = document.getElementById('year');
   if (year) year.textContent = new Date().getFullYear();
 })();
