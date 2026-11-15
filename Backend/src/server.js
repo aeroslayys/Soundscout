@@ -10,6 +10,7 @@ const userRoutes = require('./routes/users');
 const adminRoutes = require('./routes/admin');
 const adminPartnerRoutes = require('./routes/adminPartners');
 const partnerRoutes = require('./routes/partner');
+const releaseNotesRoutes = require('./routes/releaseNotes');
 
 const app = express();
 
@@ -31,6 +32,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/admin/partners', adminPartnerRoutes);
 app.use('/api/partner', partnerRoutes);
+app.use('/api/release-notes', releaseNotesRoutes.publicRouter);
+app.use('/api/admin/release-notes', releaseNotesRoutes.adminRouter);
 
 // HEALTH CHECK
 
