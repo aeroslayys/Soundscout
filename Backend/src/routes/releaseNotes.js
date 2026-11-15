@@ -20,8 +20,8 @@ function validate(body) {
   };
   if (!entry.version || entry.version.length > 40) return { error: 'Version is required (max 40 characters).' };
   if (!entry.title || entry.title.length > 120) return { error: 'Title is required (max 120 characters).' };
-  if (!entry.summary || entry.summary.length > 500) return { error: 'Summary is required (max 500 characters).' };
-  if (!entry.changes.length || entry.changes.length > 30 || entry.changes.some(value => value.length > 300)) return { error: 'Add 1–30 change items, each max 300 characters.' };
+  if (!entry.summary) return { error: 'Summary is required.' };
+  if (!entry.changes.length || entry.changes.length > 30) return { error: 'Add 1–30 change items.' };
   return entry;
 }
 
