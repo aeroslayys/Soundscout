@@ -88,4 +88,4 @@ SoundScout is a community-powered place-discovery project created by **Shwetha P
 - **Website:** https://aeroslayys.github.io/Soundscout/
 - **GitHub:** https://github.com/aeroslayys/Soundscout
 
-**Find places that sound right for you.**
+
