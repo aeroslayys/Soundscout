@@ -326,3 +326,15 @@ Current focus areas include improving the venue sound-data experience, mobile us
 ---
 
 Built around a simple idea: **find places that sound right for you.**
+
+## Release notes
+
+The public landing page reads published release notes from `GET /api/release-notes`. Administrators manage drafts and published entries from the Admin Console under **Release notes**.
+
+Before deploying the updated backend, apply the schema migration to the same PostgreSQL database used by the backend:
+
+```bash
+psql -v ON_ERROR_STOP=1 "$DATABASE_URL" -f src/migrations/20261115_release_notes.sql
+```
+
+Create a draft in the admin console, review the version/title/summary/change list, then publish it to make it visible on the landing page. Unpublishing moves an entry back to drafts.
