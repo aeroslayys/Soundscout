@@ -200,7 +200,9 @@ async function updateVenue(id, body, successMessage) {
   await api("/admin/venues/" + encodeURIComponent(id), { method: "PATCH", body: body });
   showToast(successMessage || "Venue updated.");
   await loadVenues();
-  await 
+  await loadVenues();
+}
+
 function resetReleaseEditor() {
   ["releaseNoteId","releaseVersion","releaseTitle","releaseSummary","releaseChanges"].forEach(function (id) {
     document.getElementById(id).value = "";
@@ -268,8 +270,6 @@ document.getElementById("releaseNoteList").addEventListener("click", async funct
   } catch (err) { showToast(err.message, true); }
 });
 
-loadDashboard();
-}
 async function editVenue(id) {
   const venue = venues.find(function (v) { return String(v.id) === String(id); });
   if (!venue) return;
