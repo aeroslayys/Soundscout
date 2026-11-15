@@ -57,7 +57,7 @@
   if (releaseNotesRoot) {
     const apiBase = 'https://jellyfin-server.tail0a3780.ts.net/api';
     const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
-    fetch(apiBase + '/release-notes?limit=8')
+    fetch(apiBase + '/release-notes?limit=2')
       .then(response => { if (!response.ok) throw new Error('Could not load updates.'); return response.json(); })
       .then(data => {
         const items = data.items || [];
