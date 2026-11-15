@@ -447,6 +447,71 @@ document.getElementById("announcementSubject").addEventListener("input", updateA
 document.getElementById("announcementBody").addEventListener("input", updateAnnouncementPreview);
 document.getElementById("sendAnnouncementBtn").addEventListener("click", publishUpdate);
 
+function resetReleaseEditor() {
+  ["releaseNoteId","releaseVersion","releaseTitle","releaseSummary","releaseChanges"].forEach(function (id) { document.getElementById(id).value = ""; });
+  document.getElementById("releaseEditorHeading").textContent = "Create a release note";
+}
+function releaseEditorValues() {
+  return {
+    version: document.getElementById("releaseVersion").value.trim(),
+    title: document.getElementById("releaseTitle").value.trim(),
+    summary: document.getElementById("releaseSummary").value.trim(),
+    changes: document.getElementById("releaseChanges").value.split("\n").map(function (line) { return line.trim(); }).filter(Boolean)
+  };
+}
+async function loadReleaseNotes() {
+  showLoading("releaseNoteList", "Loading release notes…");
+  try {
+    const data = await api("/admin/release-notes");
+    const items = data.items || [];
+    window.releaseNotesCache = items;
+    if (!items.length) return showEmpty("releaseNoteList", "No release notes yet. Create the first one above.");
+    document.getElementById("releaseNoteList").innerHTML = items.map(function (item) {
+      const published = item.status === "published";
+      return '<article class="record-row"><div class="record-main"><strong>' + escapeHtml(item.version) + ' · ' + escapeHtml(item.title) + '</strong><p>' + escapeHtml(item.summary) + '</p><p><span class="status-pill ' + (published ? 'status-approved' : '') + '">' + (published ? 'Published' : 'Draft') + '</span> · ' + escapeHtml(formatDate(item.published_at || item.created_at)) + '</p><ul>' + (item.changes || []).map(function (change) { return '<li>' + escapeHtml(change) + '</li>'; }).join("") + '</ul></div><div class="record-actions"><button class="secondary-btn" data-release-edit="' + escapeHtml(item.id) + '">Edit</button>' + (published ? '<button class="secondary-btn" data-release-unpublish="' + escapeHtml(item.id) + '">Unpublish</button>' : '<button class="success-btn" data-release-publish="' + escapeHtml(item.id) + '">Publish</button>') + '<button class="danger-btn" data-release-delete="' + escapeHtml(item.id) + '">Delete</button></div></article>';
+    }).join("");
+  } catch (err) { showEmpty("releaseNoteList", err.message); }
+}
+async function saveReleaseNote(status) {
+  const id = document.getElementById("releaseNoteId").value;
+  const payload = Object.assign(releaseEditorValues(), { status: status });
+  if (!payload.version || !payload.title || !payload.summary || !payload.changes.length) return showToast("Add a version, title, summary and at least one change.", true);
+  try {
+    await api(id ? "/admin/release-notes/" + encodeURIComponent(id) : "/admin/release-notes", { method: id ? "PATCH" : "POST", body: payload });
+    showToast(status === "published" ? "Release note published." : "Draft saved.");
+    resetReleaseEditor();
+    await loadReleaseNotes();
+  } catch (err) { showToast(err.message, true); }
+}
+document.getElementById("saveReleaseDraft").addEventListener("click", function () { saveReleaseNote("draft"); });
+document.getElementById("publishReleaseNote").addEventListener("click", function () { saveReleaseNote("published"); });
+document.getElementById("cancelReleaseEdit").addEventListener("click", resetReleaseEditor);
+document.getElementById("refreshReleaseNotes").addEventListener("click", loadReleaseNotes);
+document.getElementById("releaseNoteList").addEventListener("click", async function (event) {
+  const button = event.target.closest("[data-release-edit], [data-release-publish], [data-release-unpublish], [data-release-delete]");
+  if (!button) return;
+  const id = button.dataset.releaseEdit || button.dataset.releasePublish || button.dataset.releaseUnpublish || button.dataset.releaseDelete;
+  const item = (window.releaseNotesCache || []).find(function (entry) { return String(entry.id) === String(id); });
+  if (button.dataset.releaseEdit) {
+    if (!item) return;
+    document.getElementById("releaseNoteId").value = item.id;
+    document.getElementById("releaseVersion").value = item.version || "";
+    document.getElementById("releaseTitle").value = item.title || "";
+    document.getElementById("releaseSummary").value = item.summary || "";
+    document.getElementById("releaseChanges").value = (item.changes || []).join("\n");
+    document.getElementById("releaseEditorHeading").textContent = "Edit release note";
+    document.getElementById("releaseVersion").focus();
+    return;
+  }
+  if (button.dataset.releaseDelete && !window.confirm("Permanently delete this release note?")) return;
+  try {
+    if (button.dataset.releaseDelete) await api("/admin/release-notes/" + encodeURIComponent(id), { method: "DELETE" });
+    else await api("/admin/release-notes/" + encodeURIComponent(id), { method: "PATCH", body: { status: button.dataset.releasePublish ? "published" : "draft" } });
+    showToast(button.dataset.releaseDelete ? "Release note deleted." : button.dataset.releasePublish ? "Release published." : "Release moved to drafts.");
+    await loadReleaseNotes();
+  } catch (err) { showToast(err.message, true); }
+});
+
 async function loadAudit() {
   showLoading("auditList", "Loading audit log…");
   const search = document.getElementById("auditSearch").value.trim();
@@ -547,6 +612,7 @@ function activatePanel(name) {
   if (name === "users") loadUsers();
   if (name === "partners") { loadPartnerVenues(); loadPartners(); }
   if (name === "announcements") loadAnnouncements();
+  if (name === "release-notes") loadReleaseNotes();
   if (name === "audit") loadAudit();
 }
 document.querySelectorAll(".nav-tab").forEach(function (button) {
