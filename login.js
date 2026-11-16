@@ -144,10 +144,9 @@ continueBtn.addEventListener('click', async () => {
     verifyEmailLabel.textContent = email;
     newUserFields.style.display = isNewUser ? 'block' : 'none';
     verifyTitle.textContent = isNewUser ? 'Verify your email' : 'Enter your code';
-    verifySub.innerHTML = isNewUser
-      ? `We sent a 6-digit code to <span>${email}</span>. Finish setting up your account below.`
-      : `We sent a 6-digit code to <span>${email}</span>.`;
-    verifyBtn.textContent = isNewUser ? 'Verify & create account' : 'Verify & log in';
+    verifySub.textContent = isNewUser
+      ? `We sent a 6-digit code to ${email}. Finish setting up your account below.`
+      : `We sent a 6-digit code to ${email}.`;
 
     stepEmail.style.display = 'none';
     stepVerify.style.display = 'block';

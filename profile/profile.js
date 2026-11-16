@@ -382,10 +382,7 @@ function loadMyVenues(){
 
           '<p class="added-venue-meta">' +
 
-            (
-              CATEGORY_LABELS[v.category] ||
-              v.category
-            ) +
+            escapeHTML(CATEGORY_LABELS[v.category] || v.category) +
 
             ' · ' +
 

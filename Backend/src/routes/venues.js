@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const pool = require('../db');
 
 const router = express.Router();
+const VALID_CATEGORIES = new Set(['cafe', 'restaurant', 'library', 'gym', 'coworking']);
 
 // Short-lived process-local cache for repeated venue lookups.
 const locationSearchCache = new Map();
@@ -247,42 +248,27 @@ router.post('/', requireAuth, async (req, res) => {
   // Validate required fields
   // -------------------------
 
-  if (!name || !category) {
-
-    return res.status(400).json({
-      error: 'Venue name and category are required.'
-    });
-
+  if (typeof name !== 'string' || !name.trim() || name.trim().length > 255) {
+    return res.status(400).json({ error: 'Venue name must be between 1 and 255 characters.' });
+  }
+  if (typeof category !== 'string' || !VALID_CATEGORIES.has(category)) {
+    return res.status(400).json({ error: 'Choose a valid venue category.' });
   }
 
+  const latitude = Number(lat);
+  const longitude = Number(lng);
+  const ratingScore = Number(score);
+  const measuredDb = measured_db == null ? null : Number(measured_db);
 
-  const latitude = parseFloat(lat);
-  const longitude = parseFloat(lng);
-  const ratingScore = parseInt(score, 10);
-
-
-  if (
-    Number.isNaN(latitude) ||
-    Number.isNaN(longitude)
-  ) {
-
-    return res.status(400).json({
-      error: 'Valid latitude and longitude are required.'
-    });
-
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 ||
+      !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    return res.status(400).json({ error: 'Valid latitude and longitude are required.' });
   }
-
-
-  if (
-    Number.isNaN(ratingScore) ||
-    ratingScore < 1 ||
-    ratingScore > 5
-  ) {
-
-    return res.status(400).json({
-      error: 'Score must be between 1 and 5.'
-    });
-
+  if (!Number.isInteger(ratingScore) || ratingScore < 1 || ratingScore > 5) {
+    return res.status(400).json({ error: 'Score must be between 1 and 5.' });
+  }
+  if (measuredDb !== null && (!Number.isFinite(measuredDb) || measuredDb < -160 || measuredDb > 0)) {
+    return res.status(400).json({ error: 'Measured sound level must be between -160 and 0 dBFS.' });
   }
 
 
@@ -383,10 +369,7 @@ router.post('/', requireAuth, async (req, res) => {
         req.userId,
         ratingScore,
         getCurrentTimeBucket(time_zone),
-        measured_db !== null &&
-        measured_db !== undefined
-          ? parseFloat(measured_db)
-          : null,
+        measuredDb,
         Boolean(had_audio_clip)
       ]
     );
@@ -440,22 +423,15 @@ router.post(
     } = req.body;
 
 
-    const ratingScore = parseInt(score, 10);
+    const ratingScore = Number(score);
+    const measuredDb = measured_db == null ? null : Number(measured_db);
 
-
-    if (
-      Number.isNaN(ratingScore) ||
-      ratingScore < 1 ||
-      ratingScore > 5
-    ) {
-
-      return res.status(400).json({
-        error: 'Score must be between 1 and 5.'
-      });
-
+    if (!Number.isInteger(ratingScore) || ratingScore < 1 || ratingScore > 5) {
+      return res.status(400).json({ error: 'Score must be between 1 and 5.' });
     }
-
-
+    if (measuredDb !== null && (!Number.isFinite(measuredDb) || measuredDb < -160 || measuredDb > 0)) {
+      return res.status(400).json({ error: 'Measured sound level must be between -160 and 0 dBFS.' });
+    }
     try {
 
       // Check venue exists
@@ -510,10 +486,7 @@ router.post(
           req.userId,
           ratingScore,
           getCurrentTimeBucket(time_zone),
-          measured_db !== null &&
-          measured_db !== undefined
-            ? parseFloat(measured_db)
-            : null,
+          measuredDb,
           Boolean(had_audio_clip)
         ]
       );

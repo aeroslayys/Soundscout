@@ -18,18 +18,14 @@ const releaseNotesRoutes = require('./routes/releaseNotes');
 
 const app = express();
 
-const allowedOrigins = (process.env.CORS_ORIGIN || '*')
+const allowedOrigins = (process.env.CORS_ORIGIN || '')
   .split(',')
   .map(origin => origin.trim())
   .filter(Boolean);
-
 app.use(cors({
   origin(origin, callback) {
     // Requests without an Origin header (e.g. server-to-server or curl) are not browser CORS requests.
-    if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
     return callback(null, false);
   }
 }));

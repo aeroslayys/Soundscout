@@ -3050,6 +3050,7 @@ audioField.appendChild(
   function analyzeAudioClip(){
     fetch(AUDIO_API_BASE + '/analyze', {
       method: 'POST',
+      headers: authHeaders(),
       body: (function(){
         var form = new FormData();
         form.append('clip', pendingAudioBlob, 'clip.webm');

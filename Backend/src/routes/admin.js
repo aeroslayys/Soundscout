@@ -144,7 +144,7 @@ router.patch('/venues/:id', async (req, res) => {
 
   if (!validId(id)) return res.status(400).json({ error: 'Invalid venue ID.' });
   if (name !== null && (!name || name.length > 255)) return res.status(400).json({ error: 'Venue name must be between 1 and 255 characters.' });
-  if (category !== null && (!category || category.length > 100)) return res.status(400).json({ error: 'Category must be between 1 and 100 characters.' });
+  if (category !== null && !['cafe', 'restaurant', 'library', 'gym', 'coworking'].includes(category)) return res.status(400).json({ error: 'Choose a valid venue category.' });
   if (hasLat !== hasLng) return res.status(400).json({ error: 'Latitude and longitude must be supplied together.' });
   if (hasLat && (!Number.isFinite(lat) || lat < -90 || lat > 90 || !Number.isFinite(lng) || lng < -180 || lng > 180)) return res.status(400).json({ error: 'Valid latitude and longitude are required.' });
   if (status !== null && !['pending', 'approved', 'rejected'].includes(status)) return res.status(400).json({ error: 'Invalid approval status.' });

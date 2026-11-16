@@ -19,7 +19,9 @@ function generateOtp() {
 }
 
 function isValidEmail(email) {
-  return typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return typeof email === 'string' &&
+    email.length <= 255 &&
+    /^[^\s@<>()[\]{},"']+@[^\s@<>()[\]{},"']+\.[^\s@<>()[\]{},"']+$/.test(email.trim());
 }
 
 // POST /api/auth/request-otp
@@ -27,21 +29,28 @@ function isValidEmail(email) {
 // Sends a fresh OTP by email. Tells the frontend whether this email is new
 // (so it knows to show the name/age/sensitivity fields) or returning.
 router.post('/request-otp', async (req, res) => {
-  const { email } = req.body;
+  const emailInput = req.body?.email;
 
-  if (!isValidEmail(email)) {
+  if (!isValidEmail(emailInput)) {
     return res.status(400).json({ error: 'Enter a valid email address.' });
   }
 
-  const cooldownKey = email.toLowerCase();
+  const email = emailInput.trim().toLowerCase();
+  const now = Date.now();
+  for (const [key, sentAt] of lastSentAt) {
+    if (now - sentAt >= RESEND_COOLDOWN_SECONDS * 1000) lastSentAt.delete(key);
+  }
+  const cooldownKey = email;
   const lastSent = lastSentAt.get(cooldownKey);
   if (lastSent && Date.now() - lastSent < RESEND_COOLDOWN_SECONDS * 1000) {
     const waitSeconds = Math.ceil((RESEND_COOLDOWN_SECONDS * 1000 - (Date.now() - lastSent)) / 1000);
     return res.status(429).json({ error: `Please wait ${waitSeconds}s before requesting another code.` });
   }
+  lastSentAt.set(cooldownKey, now);
+  while (lastSentAt.size > 10000) lastSentAt.delete(lastSentAt.keys().next().value);
 
   try {
-    const existingUser = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+    const existingUser = await pool.query('SELECT id FROM users WHERE LOWER(email) = $1', [email]);
     const isNewUser = existingUser.rowCount === 0;
     const purpose = isNewUser ? 'signup' : 'login';
 
@@ -50,110 +59,144 @@ router.post('/request-otp', async (req, res) => {
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
     await pool.query(
+      `UPDATE otp_codes SET consumed_at = NOW()
+       WHERE LOWER(email) = $1 AND consumed_at IS NULL`,
+      [email]
+    );
+    await pool.query(
       `INSERT INTO otp_codes (email, code_hash, purpose, expires_at)
        VALUES ($1, $2, $3, $4)`,
       [email, codeHash, purpose, expiresAt]
     );
 
     await sendOtpEmail(email, code, { isNewUser });
-    lastSentAt.set(cooldownKey, Date.now());
 
     return res.json({ isNewUser, expiresInMinutes: OTP_EXPIRY_MINUTES });
   } catch (err) {
+    if (lastSentAt.get(cooldownKey) === now) lastSentAt.delete(cooldownKey);
     console.error('request-otp error:', err);
     return res.status(500).json({ error: 'Could not send verification code. Try again shortly.' });
   }
 });
 
+
 // POST /api/auth/verify-otp
 // body for returning users: { email, code }
 // body for new users:       { email, code, name, age, sensitivity }
 router.post('/verify-otp', async (req, res) => {
-  const { email, code, name, age, sensitivity } = req.body;
+  const { code, name, age, sensitivity } = req.body || {};
+  const emailInput = req.body?.email;
 
-  if (!isValidEmail(email) || !code) {
-    return res.status(400).json({ error: 'Email and code are required.' });
+  if (!isValidEmail(emailInput) || typeof code !== 'string' || !/^\d{6}$/.test(code)) {
+    return res.status(400).json({ error: 'Enter a valid email address and 6-digit code.' });
   }
 
+  const email = emailInput.trim().toLowerCase();
+  let client;
+  let inTransaction = false;
+
   try {
-    const otpResult = await pool.query(
-      `SELECT id, code_hash, purpose FROM otp_codes
-       WHERE email = $1 AND consumed_at IS NULL AND expires_at > NOW()
-       ORDER BY created_at DESC LIMIT 1`,
+    client = await pool.connect();
+    await client.query('BEGIN');
+    inTransaction = true;
+    const otpResult = await client.query(
+      `SELECT id, code_hash, purpose, attempts FROM otp_codes
+       WHERE LOWER(email) = $1 AND consumed_at IS NULL AND expires_at > NOW()
+       ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
       [email]
     );
 
-    if (otpResult.rowCount === 0) {
+    if (!otpResult.rowCount) {
+      await client.query('ROLLBACK');
+      inTransaction = false;
       return res.status(401).json({ error: 'Code expired or not found. Request a new one.' });
     }
 
     const otpRow = otpResult.rows[0];
-    const isMatch = await bcrypt.compare(code, otpRow.code_hash);
-    if (!isMatch) {
+    if (otpRow.attempts >= 5) {
+      await client.query('UPDATE otp_codes SET consumed_at = NOW() WHERE id = $1', [otpRow.id]);
+      await client.query('COMMIT');
+      inTransaction = false;
+      return res.status(401).json({ error: 'Too many incorrect attempts. Request a new code.' });
+    }
+
+    if (!await bcrypt.compare(code, otpRow.code_hash)) {
+      await client.query(
+        `UPDATE otp_codes SET attempts = attempts + 1,
+           consumed_at = CASE WHEN attempts + 1 >= 5 THEN NOW() ELSE consumed_at END
+         WHERE id = $1`,
+        [otpRow.id]
+      );
+      await client.query('COMMIT');
+      inTransaction = false;
       return res.status(401).json({ error: 'Incorrect code.' });
     }
 
-    await pool.query('UPDATE otp_codes SET consumed_at = NOW() WHERE id = $1', [otpRow.id]);
+    const existing = await client.query(
+      'SELECT id, email, name, age, sensitivity, is_suspended FROM users WHERE LOWER(email) = $1',
+      [email]
+    );
 
     let user;
-    const existing = await pool.query('SELECT id, email, name, age, sensitivity, is_suspended FROM users WHERE email = $1', [email]);
-
-    if (existing.rowCount > 0) {
+    if (existing.rowCount) {
       user = existing.rows[0];
     } else {
-      // New user — signup fields are required at this step
       if (!name || !age || !sensitivity) {
+        await client.query('ROLLBACK');
+        inTransaction = false;
         return res.status(400).json({ error: 'Name, age, and sensitivity are required to finish creating your account.' });
       }
-      if (age < 1 || age > 119) {
+      if (!Number.isInteger(Number(age)) || Number(age) < 1 || Number(age) > 119) {
+        await client.query('ROLLBACK');
+        inTransaction = false;
         return res.status(400).json({ error: 'Enter a valid age.' });
       }
-      if (sensitivity < 1 || sensitivity > 5) {
+      if (!Number.isInteger(Number(sensitivity)) || Number(sensitivity) < 1 || Number(sensitivity) > 5) {
+        await client.query('ROLLBACK');
+        inTransaction = false;
         return res.status(400).json({ error: 'Sensitivity must be between 1 and 5.' });
+      }
+      if (typeof name !== 'string' || !name.trim() || name.trim().length > 255) {
+        await client.query('ROLLBACK');
+        inTransaction = false;
+        return res.status(400).json({ error: 'Enter a valid name (1–255 characters).' });
       }
 
       const signupPlatformHeader = String(req.get('X-SoundScout-Platform') || '').toLowerCase();
       const signupPlatform = ['web', 'android'].includes(signupPlatformHeader) ? signupPlatformHeader : 'unknown';
       const announcementOptIn = req.body.announcementOptIn === true;
       const unsubscribeToken = crypto.randomBytes(32).toString('hex');
-      const created = await pool.query(
+      const created = await client.query(
         `INSERT INTO users (email, name, age, sensitivity, signup_platform, announcement_opt_in, announcement_unsubscribe_token)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
-         RETURNING id, email, name, age, sensitivity, signup_platform, announcement_opt_in`,
-        [email, name, age, sensitivity, signupPlatform, announcementOptIn, unsubscribeToken]
+         RETURNING id, email, name, age, sensitivity, signup_platform, announcement_opt_in, is_suspended`,
+        [email, name.trim(), Number(age), Number(sensitivity), signupPlatform, announcementOptIn, unsubscribeToken]
       );
       user = created.rows[0];
     }
+
+    await client.query('UPDATE otp_codes SET consumed_at = NOW() WHERE id = $1', [otpRow.id]);
+    await client.query('COMMIT');
+    inTransaction = false;
 
     if (user.is_suspended === true) {
       return res.status(403).json({ error: 'This account has been suspended. Contact SoundScout support if you believe this is a mistake.' });
     }
 
     const adminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
-
-const isAdmin =
-  adminEmail &&
-  user.email.trim().toLowerCase() === adminEmail;
-
-const token = jwt.sign(
-  {
-    sub: user.id,
-    email: user.email,
-    admin: isAdmin
-  },
-  process.env.JWT_SECRET,
-  { expiresIn: '7d' }
-);
-    return res.json({
-  token,
-  user: {
-    ...user,
-    admin: isAdmin
-  }
-});
+    const isAdmin = Boolean(adminEmail && user.email.trim().toLowerCase() === adminEmail);
+    const token = jwt.sign(
+      { sub: user.id, email: user.email, admin: isAdmin },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+    return res.json({ token, user: { ...user, admin: isAdmin } });
   } catch (err) {
+    if (inTransaction && client) await client.query('ROLLBACK').catch(() => {});
     console.error('verify-otp error:', err);
     return res.status(500).json({ error: 'Could not verify code. Try again.' });
+  } finally {
+    client?.release();
   }
 });
 

@@ -15,6 +15,7 @@ RUN if [ -f package-lock.json ]; then \
     fi
 
 COPY src ./src
+USER node
 
 EXPOSE 4000
 

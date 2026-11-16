@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS otp_codes (
   purpose VARCHAR(20) NOT NULL CHECK (purpose IN ('signup', 'login')),
   expires_at TIMESTAMP NOT NULL,
   consumed_at TIMESTAMP,
+  attempts SMALLINT NOT NULL DEFAULT 0 CHECK (attempts BETWEEN 0 AND 5),
   created_at TIMESTAMP DEFAULT NOW()
 );
 
