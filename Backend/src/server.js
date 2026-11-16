@@ -1,4 +1,8 @@
 require('dotenv').config();
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret || Buffer.byteLength(jwtSecret, 'utf8') < 32 || /^(replace-with-a-long-random-secret|change[-_ ]?me|your[-_ ]?secret|example)$/i.test(jwtSecret)) {
+  throw new Error('JWT_SECRET must be a non-placeholder secret of at least 32 bytes.');
+}
 
 const express = require('express');
 const cors = require('cors');
