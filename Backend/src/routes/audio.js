@@ -130,7 +130,7 @@ router.post('/analyze', requireAuth, (req, res) => {
     const finish = (exitCode) => {
       if (completed) return;
       completed = true;
-      if (timeout) clearTimeout(timeout);
+      clearTimeout(timeout);
       inputStream?.destroy();
       unlinkTempFile(uploadedPath);
       releaseAnalysis();

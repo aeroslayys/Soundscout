@@ -21,7 +21,7 @@ otpRateLimiter.startCleanup();
 
 const app = express();
 const trustProxyHops = process.env.TRUST_PROXY_HOPS === undefined
-  ? 1
+  ? 0
   : Number(process.env.TRUST_PROXY_HOPS);
 if (!Number.isInteger(trustProxyHops) || trustProxyHops < 0 || trustProxyHops > 1) {
   throw new Error('TRUST_PROXY_HOPS must be 0 or 1 for the configured single-proxy deployment.');
