@@ -15,8 +15,19 @@ const adminRoutes = require('./routes/admin');
 const adminPartnerRoutes = require('./routes/adminPartners');
 const partnerRoutes = require('./routes/partner');
 const releaseNotesRoutes = require('./routes/releaseNotes');
+const otpRateLimiter = require('./otpRateLimiter');
+
+otpRateLimiter.startCleanup();
 
 const app = express();
+const trustProxyHops = process.env.TRUST_PROXY_HOPS === undefined
+  ? 1
+  : Number(process.env.TRUST_PROXY_HOPS);
+if (!Number.isInteger(trustProxyHops) || trustProxyHops < 0 || trustProxyHops > 1) {
+  throw new Error('TRUST_PROXY_HOPS must be 0 or 1 for the configured single-proxy deployment.');
+}
+app.set('trust proxy', trustProxyHops);
+
 
 const allowedOrigins = (process.env.CORS_ORIGIN || '')
   .split(',')

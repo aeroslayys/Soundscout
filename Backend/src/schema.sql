@@ -24,6 +24,16 @@ CREATE TABLE IF NOT EXISTS otp_codes (
 CREATE INDEX IF NOT EXISTS otp_codes_email_idx
 ON otp_codes (email, consumed_at, expires_at);
 
+CREATE TABLE IF NOT EXISTS auth_rate_limits (
+  key_hash CHAR(64) PRIMARY KEY,
+  window_started_at TIMESTAMPTZ NOT NULL,
+  hit_count INTEGER NOT NULL CHECK (hit_count > 0),
+  expires_at TIMESTAMPTZ NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS auth_rate_limits_expires_at_idx
+  ON auth_rate_limits (expires_at);
+
 CREATE TABLE IF NOT EXISTS venues (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,

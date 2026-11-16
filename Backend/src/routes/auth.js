@@ -4,14 +4,50 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const pool = require('../db');
 const { sendOtpEmail } = require('../mailer');
+const otpRateLimiter = require('../otpRateLimiter');
 
 const router = express.Router();
 
-const OTP_EXPIRY_MINUTES = Number(process.env.OTP_EXPIRY_MINUTES || 10);
-const RESEND_COOLDOWN_SECONDS = Number(process.env.OTP_RESEND_COOLDOWN_SECONDS || 30);
+function positiveIntegerFromEnv(name, fallback, max = 100000) {
+  const value = process.env[name];
+  if (value === undefined || value === '') return fallback;
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 1 || parsed > max) {
+    throw new Error(`${name} must be an integer between 1 and ${max}.`);
+  }
+  return parsed;
+}
 
-// In-memory cooldown tracker (swap for Redis if you scale past one instance)
-const lastSentAt = new Map();
+const OTP_EXPIRY_MINUTES = Number(process.env.OTP_EXPIRY_MINUTES || 10);
+const RESEND_COOLDOWN_SECONDS = positiveIntegerFromEnv('OTP_RESEND_COOLDOWN_SECONDS', 30, 3600);
+const EMAIL_REQUEST_LIMIT_PER_HOUR = positiveIntegerFromEnv('OTP_EMAIL_REQUEST_LIMIT_PER_HOUR', 5);
+const REQUEST_IP_LIMIT_PER_HOUR = positiveIntegerFromEnv('OTP_REQUEST_IP_LIMIT_PER_HOUR', 20);
+const VERIFY_IP_LIMIT_PER_15_MINUTES = positiveIntegerFromEnv('OTP_VERIFY_IP_LIMIT_PER_15_MINUTES', 60);
+
+function clientIp(req) {
+  return req.ip || req.socket?.remoteAddress || 'unknown';
+}
+
+function rateLimitResponse(res, decision, message) {
+  const retryAfterSeconds = Math.max(1, decision.retryAfterSeconds);
+  res.set('Retry-After', String(retryAfterSeconds));
+  return res.status(429).json({
+    error: `${message} Try again in ${retryAfterSeconds}s.`,
+    retryAfterSeconds,
+  });
+}
+
+async function consumeIpLimit(res, key, limit, windowSeconds, message) {
+  try {
+    const decision = await otpRateLimiter.consume(key, limit, windowSeconds);
+    if (!decision.allowed) rateLimitResponse(res, decision, message);
+    return decision.allowed;
+  } catch (error) {
+    console.error('[SoundScout] OTP rate-limit storage unavailable.');
+    res.status(503).json({ error: 'Verification service is temporarily unavailable. Try again shortly.' });
+    return false;
+  }
+}
 
 function generateOtp() {
   // 6-digit numeric code, zero-padded
@@ -29,25 +65,41 @@ function isValidEmail(email) {
 // Sends a fresh OTP by email. Tells the frontend whether this email is new
 // (so it knows to show the name/age/sensitivity fields) or returning.
 router.post('/request-otp', async (req, res) => {
-  const emailInput = req.body?.email;
+  const ip = clientIp(req);
+  if (!await consumeIpLimit(
+    res, `otp-request-ip:${ip}`, REQUEST_IP_LIMIT_PER_HOUR, 3600,
+    'Too many code requests from this network.'
+  )) return;
 
+  const emailInput = req.body?.email;
   if (!isValidEmail(emailInput)) {
     return res.status(400).json({ error: 'Enter a valid email address.' });
   }
 
   const email = emailInput.trim().toLowerCase();
-  const now = Date.now();
-  for (const [key, sentAt] of lastSentAt) {
-    if (now - sentAt >= RESEND_COOLDOWN_SECONDS * 1000) lastSentAt.delete(key);
+  let cooldownReservation;
+  let hourlyReservation;
+  try {
+    const cooldown = await otpRateLimiter.consume(
+      `otp-email-cooldown:${email}`, 1, RESEND_COOLDOWN_SECONDS
+    );
+    if (!cooldown.allowed) {
+      return rateLimitResponse(res, cooldown, 'A code was requested recently.');
+    }
+    cooldownReservation = cooldown.reservation;
+
+    const hourly = await otpRateLimiter.consume(
+      `otp-email-hour:${email}`, EMAIL_REQUEST_LIMIT_PER_HOUR, 3600
+    );
+    if (!hourly.allowed) {
+      await otpRateLimiter.release(cooldownReservation).catch(() => {});
+      return rateLimitResponse(res, hourly, 'Too many codes requested for this email.');
+    }
+    hourlyReservation = hourly.reservation;
+  } catch (error) {
+    console.error('[SoundScout] OTP rate-limit storage unavailable.');
+    return res.status(503).json({ error: 'Verification service is temporarily unavailable. Try again shortly.' });
   }
-  const cooldownKey = email;
-  const lastSent = lastSentAt.get(cooldownKey);
-  if (lastSent && Date.now() - lastSent < RESEND_COOLDOWN_SECONDS * 1000) {
-    const waitSeconds = Math.ceil((RESEND_COOLDOWN_SECONDS * 1000 - (Date.now() - lastSent)) / 1000);
-    return res.status(429).json({ error: `Please wait ${waitSeconds}s before requesting another code.` });
-  }
-  lastSentAt.set(cooldownKey, now);
-  while (lastSentAt.size > 10000) lastSentAt.delete(lastSentAt.keys().next().value);
 
   try {
     const existingUser = await pool.query('SELECT id FROM users WHERE LOWER(email) = $1', [email]);
@@ -70,10 +122,12 @@ router.post('/request-otp', async (req, res) => {
     );
 
     await sendOtpEmail(email, code, { isNewUser });
-
     return res.json({ isNewUser, expiresInMinutes: OTP_EXPIRY_MINUTES });
   } catch (err) {
-    if (lastSentAt.get(cooldownKey) === now) lastSentAt.delete(cooldownKey);
+    await Promise.allSettled([
+      otpRateLimiter.release(cooldownReservation),
+      otpRateLimiter.release(hourlyReservation),
+    ]);
     console.error('request-otp error:', err);
     return res.status(500).json({ error: 'Could not send verification code. Try again shortly.' });
   }
@@ -84,6 +138,11 @@ router.post('/request-otp', async (req, res) => {
 // body for returning users: { email, code }
 // body for new users:       { email, code, name, age, sensitivity }
 router.post('/verify-otp', async (req, res) => {
+  if (!await consumeIpLimit(
+    res, `otp-verify-ip:${clientIp(req)}`, VERIFY_IP_LIMIT_PER_15_MINUTES, 900,
+    'Too many verification attempts from this network.'
+  )) return;
+
   const { code, name, age, sensitivity } = req.body || {};
   const emailInput = req.body?.email;
 

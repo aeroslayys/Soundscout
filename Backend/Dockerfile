@@ -1,7 +1,8 @@
 FROM node:22-bookworm-slim
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ffmpeg \
+    && apt-get install -y --no-install-recommends ffmpeg ca-certificates \
+    && chmod 1777 /tmp \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
