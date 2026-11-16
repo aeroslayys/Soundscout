@@ -1,41 +1,64 @@
-# --- Dependencies ---
-/Backend/node_modules/
+# Dependencies
+**/node_modules/
 
-# --- Environment variables (never commit real secrets) ---
+# Environment files: keep templates, never commit real values
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!**/.env.example
 
-# --- Logs ---
+# Private keys, certificates and local secrets
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+/secrets/
+/certs/
+**/secrets/
+**/certs/
+*service-account*.json
+*credentials*.json
+
+# Local databases, dumps and backups
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.sql.bak
+*.backup
+*.bak
+
+# Logs and process/runtime files
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-*.log
+*.pid
+*.seed
+*.pid.lock
 
-# --- OS files ---
-.DS_Store
-Thumbs.db
+# Build output and generated assets
+dist/
+build/
+coverage/
+.nyc_output/
+.tmp/
+temp/
+tmp/
 
-# --- Editor / IDE ---
+# Expo / React Native local state and generated output
+**/.expo/
+**/.expo-shared/
+**/web-build/
+**/android/.gradle/
+**/android/app/build/
+**/ios/Pods/
+
+# Editors and operating-system files
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# --- Build output (if you add a bundler later) ---
-dist/
-build/
-
-# --- Coverage / test output ---
-coverage/
-
-# --- Runtime data ---
-*.pid
-*.seed
-
-# --- Optional: local SQLite/Postgres dumps if you ever export one ---
-*.sql.bak
-*.dump
-# --- React Native / Expo ---
-/mobile/node_modules/
-/mobile/.expo/
+.DS_Store
+Thumbs.db
