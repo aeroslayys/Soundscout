@@ -699,13 +699,11 @@ function deactivateQuietNearMe(){
   }
 
   var map = L.map('map', {zoomControl:true}).setView([12.0022, 79.8100], 14);
-  // Use CARTO's raster basemap instead of the public OSM tile servers.
-  // Keep Leaflet for map interaction; CARTO provides only the background tiles.
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-    subdomains: 'abcd',
-    maxZoom: 20,
-    maxNativeZoom: 20
+  // Official OpenStreetMap standard raster tiles.
+  // Keep the URL on the canonical host and let the browser honour tile cache headers.
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>',
+    maxZoom: 19
   }).addTo(map);
 
   var markers = {};
